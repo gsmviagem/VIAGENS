@@ -48,13 +48,14 @@ export default async function DashboardPage() {
   return (
     <div className="relative min-h-[calc(100vh-4rem)] p-6 overflow-hidden">
       {/* Background with Overlay */}
+      {/* Background with Overlay */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none opacity-40 mix-blend-lighten"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none opacity-30"
         style={{ backgroundImage: "url('/images/dashboard-bg.png')" }}
       ></div>
-      <div className="absolute inset-0 bg-gradient-to-b from-[#020817]/60 via-transparent to-[#020817]/90 pointer-events-none"></div>
+      <div className="absolute inset-0 bg-[#020817]/40 pointer-events-none"></div>
 
-      <div className="relative z-10 space-y-8 max-w-[1600px] mx-auto">
+      <div className="relative z-10 space-y-8 max-w-[1400px] mx-auto pt-4">
         {/* Header section with some glow */}
         <div className="flex justify-between items-end">
           <div>

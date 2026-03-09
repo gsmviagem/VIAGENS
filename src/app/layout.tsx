@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/layout/sidebar";
-import { Topbar } from "@/components/layout/topbar";
+import { Navbar } from "@/components/layout/navbar";
 import { Toaster } from "@/components/ui/sonner";
 import { createClient } from "@/utils/supabase/server";
 
@@ -26,15 +25,14 @@ export default async function RootLayout({
     <html lang="pt-BR" className="dark">
       <body className={`${inter.className} bg-[#020817] text-slate-50 min-h-screen antialiased`}>
         {isAuthenticated ? (
-          <div className="flex h-screen overflow-hidden">
-            <Sidebar />
-            <div className="flex-1 flex flex-col md:ml-64 relative min-w-0">
-              <Topbar />
-              <main className="flex-1 overflow-y-auto relative bg-[#020817]">
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4px_4px] opacity-10 pointer-events-none"></div>
-                <div className="relative z-10 h-full">{children}</div>
-              </main>
-            </div>
+          <div className="flex flex-col min-h-screen overflow-x-hidden">
+            <Navbar />
+            <main className="flex-1 relative bg-[#020817]">
+              {/* Removed grid overlay for smoother UI */}
+              <div className="relative z-10 w-full">
+                {children}
+              </div>
+            </main>
           </div>
         ) : (
           <main className="min-h-screen">
