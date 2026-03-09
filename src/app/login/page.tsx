@@ -2,8 +2,8 @@ import { login, signup } from './actions'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
 import { PlaneTakeoff, ShieldCheck, AlertCircle } from 'lucide-react'
+import { SubmitButton } from './submit-button'
 
 type Props = {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -78,12 +78,12 @@ export default async function LoginPage({ searchParams }: Props) {
                         </div>
 
                         <div className="flex flex-col gap-3 pt-4">
-                            <Button formAction={login} className="w-full bg-cyan-600 hover:bg-cyan-700 text-white shadow-lg shadow-cyan-900/20 font-semibold py-5">
+                            <SubmitButton formAction={login} className="w-full bg-cyan-600 hover:bg-cyan-700 text-white shadow-lg shadow-cyan-900/20 font-semibold py-5">
                                 <ShieldCheck className="mr-2 h-5 w-5" /> Autenticar
-                            </Button>
-                            <Button formAction={signup} variant="outline" className="w-full border-slate-700 bg-transparent hover:bg-slate-800 text-slate-400">
+                            </SubmitButton>
+                            <SubmitButton formAction={signup} variant="outline" className="w-full border-slate-700 bg-transparent hover:bg-slate-800 text-slate-400">
                                 Solicitar Acesso (Signup)
-                            </Button>
+                            </SubmitButton>
                         </div>
                     </form>
                 </CardContent>
