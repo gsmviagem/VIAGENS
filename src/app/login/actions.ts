@@ -36,10 +36,14 @@ export async function signup(formData: FormData) {
         }
     }
 
-    const { error } = await supabase.auth.signUp(data)
+    const { data: authData, error } = await supabase.auth.signUp(data)
 
     if (error) {
         return redirect(`/login?error=${encodeURIComponent(error.message)}`)
+    }
+
+    if (authData.user && !authData.session) {
+        return redirect('/login?message=Conta criada! Verifique seu e-mail para confirmar o acesso.')
     }
 
     revalidatePath('/', 'layout')
