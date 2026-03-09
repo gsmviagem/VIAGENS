@@ -139,6 +139,74 @@
   .text-glow {
     text-shadow: 0 0 10px oklch(0.7 0.15 200 / 50%);
   }
+
+  .animate-scanline {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .animate-scanline::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom,
+        transparent,
+        oklch(0.7 0.15 200 / 5%) 50%,
+        transparent 100%);
+    height: 100px;
+    width: 100%;
+    animation: scanline 4s linear infinite;
+    pointer-events: none;
+  }
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+
+  100% {
+    transform: translateY(400%);
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    opacity: 0.8;
+    box-shadow: 0 0 10px oklch(0.7 0.15 200 / 20%);
+  }
+
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 20px oklch(0.7 0.15 200 / 40%);
+  }
+}
+
+.pulse-primary {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Staggered entry classes */
+.stagger-1 {
+  animation-delay: 100ms;
+}
+
+.stagger-2 {
+  animation-delay: 200ms;
+}
+
+.stagger-3 {
+  animation-delay: 300ms;
+}
+
+.stagger-4 {
+  animation-delay: 400ms;
+}
+
+.stagger-5 {
+  animation-delay: 500ms;
 }
 
 

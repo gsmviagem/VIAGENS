@@ -24,7 +24,7 @@ export function Navbar() {
     const pathname = usePathname();
 
     return (
-        <header className="h-16 border-b border-white/5 bg-slate-950/20 backdrop-blur-xl sticky top-0 z-50 flex items-center justify-between px-6">
+        <header className="h-16 border-b border-white/5 bg-slate-950/10 backdrop-blur-xl sticky top-0 z-50 flex items-center justify-between px-6 animate-in fade-in slide-in-from-top-4 duration-500">
             <div className="flex items-center gap-8">
                 <Link href="/" className="flex items-center text-cyan-400 font-black text-xl tracking-tighter uppercase text-glow">
                     <PlaneTakeoff className="mr-2 h-6 w-6 text-cyan-400" />
