@@ -3,9 +3,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { PlaneTakeoff, ShieldCheck } from 'lucide-react'
+import { PlaneTakeoff, ShieldCheck, AlertCircle } from 'lucide-react'
 
-export default function LoginPage() {
+type Props = {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export default async function LoginPage({ searchParams }: Props) {
+    const resolvedSearchParams = await searchParams;
+    const errorMsg = resolvedSearchParams?.error as string;
+
     return (
         <div className="min-h-screen bg-[#020817] flex items-center justify-center p-4 relative overflow-hidden">
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20 pointer-events-none"></div>
@@ -25,6 +32,15 @@ export default function LoginPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="px-8 pb-8">
+                    {errorMsg && (
+                        <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-md flex items-start gap-3">
+                            <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+                            <div className="text-sm text-red-200">
+                                <p className="font-semibold text-red-400 mb-1">Erro na Autenticação</p>
+                                <p>{errorMsg === 'true' ? 'E-mail ou senha inválidos, ou o usuário já existe.' : errorMsg}</p>
+                            </div>
+                        </div>
+                    )}
                     <form className="space-y-5">
                         <div className="space-y-2">
                             <Label htmlFor="email" className="text-slate-300">Credencial (E-mail)</Label>
