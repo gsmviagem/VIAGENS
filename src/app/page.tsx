@@ -46,7 +46,7 @@ export default async function DashboardPage() {
     .limit(8);
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] p-6 overflow-hidden">
+    <div className="relative min-h-[calc(100vh-8rem)] overflow-hidden">
       {/* Background with Overlay */}
       {/* Background with Overlay */}
       <div
@@ -55,7 +55,7 @@ export default async function DashboardPage() {
       ></div>
       <div className="absolute inset-0 bg-[#020817]/40 pointer-events-none"></div>
 
-      <div className="relative z-10 space-y-8 max-w-[1400px] mx-auto pt-4">
+      <div className="relative z-10 space-y-8 pt-2">
         {/* Header section with some glow */}
         <div className="flex justify-between items-end">
           <div>

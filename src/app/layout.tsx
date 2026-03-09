@@ -28,8 +28,8 @@ export default async function RootLayout({
           <div className="flex flex-col min-h-screen overflow-x-hidden">
             <Navbar />
             <main className="flex-1 relative bg-[#020817]">
-              {/* Removed grid overlay for smoother UI */}
-              <div className="relative z-10 w-full">
+              {/* Global container for consistent side margins across all pages */}
+              <div className="relative z-10 w-full max-w-[1440px] mx-auto px-4 md:px-8 py-6 md:py-10">
                 {children}
               </div>
             </main>
