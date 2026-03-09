@@ -12,8 +12,8 @@ const navItems = [
 
 export function Sidebar() {
     return (
-        <aside className="w-64 bg-slate-950 border-r border-slate-800/60 hidden md:flex flex-col h-screen fixed left-0 top-0 text-slate-300 z-50">
-            <div className="h-16 flex items-center px-6 border-b border-slate-800/60 text-cyan-400 font-bold text-xl tracking-tight">
+        <aside className="w-64 glass-card backdrop-blur-2xl border-r border-white/10 hidden md:flex flex-col h-screen fixed left-0 top-0 text-slate-300 z-50 rounded-none border-y-0 border-l-0">
+            <div className="h-16 flex items-center px-6 border-b border-white/5 text-cyan-400 font-black text-xl tracking-tighter uppercase text-glow">
                 <PlaneTakeoff className="mr-3 h-6 w-6 text-cyan-400" />
                 GSMVIAGEM
             </div>
@@ -32,7 +32,7 @@ export function Sidebar() {
                     </Link>
                 ))}
             </nav>
-            <div className="p-4 border-t border-slate-800/60 bg-slate-950">
+            <div className="p-4 border-t border-white/5 bg-white/5">
                 <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-100 border border-slate-700">
                         OP
