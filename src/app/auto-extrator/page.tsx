@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Cpu,
     Terminal as TerminalIcon,
@@ -18,7 +18,7 @@ import {
     Trash2,
     MoreVertical
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createClient } from '@/utils/supabase/client';
+import { toast } from "sonner";
 
 function DashboardCard({
     title,
@@ -85,20 +87,125 @@ const mockRobots = [
     { id: '3', name: 'LATAM Extractor', airline: 'LATAM', status: 'idle', lastRun: '5 min atrás', sessionsStatus: 'valid' },
 ]
 
-const mockLogs = [
-    { id: 1, time: '10:45:02', level: 'info', message: '[AZUL] Sessão iniciada. Buscando dados da data 2026-03-09' },
-    { id: 2, time: '10:45:15', level: 'success', message: '[AZUL] Capturadas 3 novas emissões.' },
-    { id: 3, time: '08:30:00', level: 'error', message: '[SMILES] Erro de autenticação. Sessão expirou (2FA Requerido).' },
-    { id: 4, time: '08:15:22', level: 'info', message: '[LATAM] Sincronização finalizada sem novidades.' },
-]
-
-const mockAccounts = [
-    { id: 1, cpf: '123.456.789-01', description: 'Conta Principal - João', airline: 'Azul', status: 'Active' },
-    { id: 2, cpf: '987.654.321-09', description: 'Conta Secundária - Maria', airline: 'Azul', status: 'Active' },
-]
-
 export default function AutoExtratorPage() {
+    const supabase = createClient();
     const [isAddAccountOpen, setIsAddAccountOpen] = useState(false);
+    const [accounts, setAccounts] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [newAccount, setNewAccount] = useState({
+        cpf: '',
+        password: '',
+        description: ''
+    });
+
+    // Logs state
+    const [logs, setLogs] = useState<any[]>([
+        { id: 1, time: '10:45:02', level: 'info', message: '[SYSTEM] Hub iniciado. Pronto para comandos.' }
+    ]);
+
+    useEffect(() => {
+        fetchAccounts();
+
+        // Setup initial integration if not exists
+        ensureAzulIntegration();
+    }, []);
+
+    async function ensureAzulIntegration() {
+        await supabase.from('airline_integrations').upsert({ airline: 'Azul' }, { onConflict: 'airline' });
+    }
+
+    async function fetchAccounts() {
+        setIsLoading(true);
+        const { data, error } = await supabase
+            .from('airline_accounts')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching accounts:', error);
+        } else {
+            setAccounts(data || []);
+        }
+        setIsLoading(false);
+    }
+
+    async function handleAddAccount() {
+        if (!newAccount.cpf || !newAccount.password) {
+            toast.error("Preencha CPF e Senha");
+            return;
+        }
+
+        // Get integration id for Azul
+        const { data: intData } = await supabase.from('airline_integrations').select('id').eq('airline', 'Azul').single();
+
+        if (!intData) return;
+
+        const { error } = await supabase.from('airline_accounts').insert({
+            integration_id: intData.id,
+            login_cpf: newAccount.cpf,
+            password: newAccount.password,
+            description: newAccount.description,
+            is_active: true
+        });
+
+        if (error) {
+            toast.error("Erro ao salvar conta: " + error.message);
+        } else {
+            toast.success("Conta adicionada ao Vault");
+            setNewAccount({ cpf: '', password: '', description: '' });
+            setIsAddAccountOpen(false);
+            fetchAccounts();
+            addLog('info', `[VAULT] Nova conta de extração adicionada: ${newAccount.cpf}`);
+        }
+    }
+
+    async function handleDeleteAccount(id: string) {
+        const { error } = await supabase.from('airline_accounts').delete().eq('id', id);
+        if (error) {
+            toast.error("Erro ao remover");
+        } else {
+            toast.success("Conta removida");
+            fetchAccounts();
+        }
+    }
+
+    function addLog(level: string, message: string) {
+        setLogs(prev => [
+            { id: Date.now(), time: new Date().toLocaleTimeString(), level, message },
+            ...prev.slice(0, 19)
+        ]);
+    }
+
+    const runSync = async (airline: string) => {
+        if (accounts.length === 0) {
+            toast.error("Nenhuma conta cadastrada no Vault");
+            return;
+        }
+
+        addLog('info', `[${airline.toUpperCase()}] Iniciando sincronização forçada...`);
+
+        try {
+            const res = await fetch('/api/sync/azul', {
+                method: 'POST',
+                body: JSON.stringify({
+                    cpf: accounts[0].login_cpf,
+                    password: accounts[0].password,
+                    accountId: accounts[0].id
+                })
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                addLog('success', `[${airline.toUpperCase()}] Sincronização concluída: ${data.message}`);
+                toast.success(data.message);
+            } else {
+                addLog('error', `[${airline.toUpperCase()}] Falha: ${data.error}`);
+                toast.error(data.error);
+            }
+        } catch (err) {
+            addLog('error', `[${airline.toUpperCase()}] Erro de conexão com o terminal.`);
+        }
+    }
 
     return (
         <div className="space-y-8">
@@ -134,19 +241,35 @@ export default function AutoExtratorPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-[10px] uppercase font-black tracking-widest text-slate-500">CPF / Matrícula</Label>
-                                    <Input placeholder="000.000.000-00" className="bg-white/5 border-white/10 text-white focus-visible:ring-primary" />
+                                    <Input
+                                        placeholder="000.000.000-00"
+                                        className="bg-white/5 border-white/10 text-white focus-visible:ring-primary"
+                                        value={newAccount.cpf}
+                                        onChange={e => setNewAccount({ ...newAccount, cpf: e.target.value })}
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-[10px] uppercase font-black tracking-widest text-slate-500">Senha de Acesso</Label>
-                                    <Input type="password" placeholder="••••••••" className="bg-white/5 border-white/10 text-white focus-visible:ring-primary" />
+                                    <Input
+                                        type="password"
+                                        placeholder="••••••••"
+                                        className="bg-white/5 border-white/10 text-white focus-visible:ring-primary"
+                                        value={newAccount.password}
+                                        onChange={e => setNewAccount({ ...newAccount, password: e.target.value })}
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-[10px] uppercase font-black tracking-widest text-slate-500">Identificador (Opcional)</Label>
-                                    <Input placeholder="Ex: Conta do Diretor" className="bg-white/5 border-white/10 text-white focus-visible:ring-primary" />
+                                    <Input
+                                        placeholder="Ex: Conta do Diretor"
+                                        className="bg-white/5 border-white/10 text-white focus-visible:ring-primary"
+                                        value={newAccount.description}
+                                        onChange={e => setNewAccount({ ...newAccount, description: e.target.value })}
+                                    />
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button onClick={() => setIsAddAccountOpen(false)} className="w-full bg-primary text-background-dark font-black h-12 rounded-xl">
+                                <Button onClick={handleAddAccount} className="w-full bg-primary text-background-dark font-black h-12 rounded-xl">
                                     AUTHORIZE NODE
                                 </Button>
                             </DialogFooter>
@@ -200,7 +323,11 @@ export default function AutoExtratorPage() {
                                         <KeyRound className="w-3.5 h-3.5 mr-1.5" /> Validate SMS
                                     </Button>
                                 ) : (
-                                    <Button variant="outline" className="flex-1 h-9 text-[10px] font-black uppercase tracking-tighter glass-panel border-white/10 text-slate-400 hover:text-white">
+                                    <Button
+                                        variant="outline"
+                                        className="flex-1 h-9 text-[10px] font-black uppercase tracking-tighter glass-panel border-white/10 text-slate-400 hover:text-white"
+                                        onClick={() => runSync(robot.airline)}
+                                    >
                                         <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Force Sync
                                     </Button>
                                 )}
@@ -219,31 +346,60 @@ export default function AutoExtratorPage() {
                     title="Vault Accounts"
                     icon={<Shield className="w-5 h-5" />}
                     accentColor="accent-blue"
+                    headerExtra={
+                        <Badge variant="outline" className="bg-accent-blue/10 text-accent-blue border-none">
+                            {accounts.length} ACTIVE NODES
+                        </Badge>
+                    }
                 >
-                    <div className="space-y-3 pt-2">
-                        {mockAccounts.map(account => (
-                            <div key={account.id} className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 group hover:border-white/10 transition-all">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-full bg-accent-blue/10 text-accent-blue flex items-center justify-center border border-accent-blue/20">
-                                        <Zap size={18} />
-                                    </div>
-                                    <div>
-                                        <div className="text-sm font-bold text-white tracking-tight">{account.description}</div>
-                                        <div className="text-[10px] text-slate-500 font-black flex items-center gap-2">
-                                            {account.cpf} • {account.airline}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Button variant="ghost" size="icon" className="text-slate-500 hover:text-red-400">
-                                        <Trash2 size={16} />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="text-slate-500 hover:text-white">
-                                        <MoreVertical size={16} />
-                                    </Button>
-                                </div>
+                    <div className="space-y-3 pt-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                        {isLoading ? (
+                            <div className="text-center py-10 text-slate-500 font-black text-xs uppercase tracking-widest animate-pulse">
+                                Accessing Vault...
                             </div>
-                        ))}
+                        ) : accounts.length === 0 ? (
+                            <div className="text-center py-10 text-slate-500 font-black text-xs uppercase tracking-widest bg-white/5 rounded-2xl border border-dashed border-white/10">
+                                No accounts registered.
+                            </div>
+                        ) : (
+                            <AnimatePresence mode="popLayout">
+                                {accounts.map(account => (
+                                    <motion.div
+                                        key={account.id}
+                                        layout
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 group hover:border-white/10 transition-all"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-full bg-accent-blue/10 text-accent-blue flex items-center justify-center border border-accent-blue/20">
+                                                <Zap size={18} />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-bold text-white tracking-tight">{account.description || 'Extraction Node'}</div>
+                                                <div className="text-[10px] text-slate-500 font-black flex items-center gap-2">
+                                                    {account.login_cpf} • ACTIVE
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="text-slate-500 hover:text-red-400"
+                                                onClick={() => handleDeleteAccount(account.id)}
+                                            >
+                                                <Trash2 size={16} />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className="text-slate-500 hover:text-white">
+                                                <MoreVertical size={16} />
+                                            </Button>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                        )}
                     </div>
                 </DashboardCard>
 
@@ -255,7 +411,7 @@ export default function AutoExtratorPage() {
                 >
                     <div className="bg-black/40 rounded-xl p-6 font-mono text-sm leading-relaxed border border-white/5 overflow-hidden">
                         <div className="space-y-3 custom-scrollbar overflow-y-auto max-h-[220px]">
-                            {mockLogs.map(log => (
+                            {logs.map(log => (
                                 <div key={log.id} className="flex gap-4 group">
                                     <span className="text-slate-600 shrink-0 select-none">[{log.time}]</span>
                                     <span className={cn(
@@ -268,9 +424,11 @@ export default function AutoExtratorPage() {
                                     </span>
                                 </div>
                             ))}
-                            <div className="flex items-center gap-2 text-slate-500 italic">
-                                <span className="animate-bounce">...</span> Capturing packet from server node-brazil-1
-                            </div>
+                            {isLoading && (
+                                <div className="flex items-center gap-2 text-slate-500 italic">
+                                    <span className="animate-bounce">...</span> Capturing packet from server node-brazil-1
+                                </div>
+                            )}
                         </div>
                     </div>
                 </DashboardCard>

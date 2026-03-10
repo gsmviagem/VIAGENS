@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Search,
     Filter,
@@ -20,23 +20,47 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import * as XLSX from 'xlsx';
-
-const mockEmissoes = [
-    { id: 1, locator: 'AYX7W2', passenger: 'MARIA SILVA', origin: 'GRU', destination: 'JFK', date: '15/05/2026', miles: '85.000', airline: 'Azul', status: 'synced' },
-    { id: 2, locator: 'B8K2R1', passenger: 'JOAO PEREIRA', origin: 'VCP', destination: 'LIS', date: '20/06/2026', miles: '120.000', airline: 'Azul', status: 'pending_sync' },
-    { id: 3, locator: 'K9L0P3', passenger: 'ANDRE LOPES', origin: 'GIG', destination: 'MCO', date: '12/04/2026', miles: '65.000', airline: 'Azul', status: 'synced' },
-];
+import { createClient } from '@/utils/supabase/client';
 
 export default function EmissoesPage() {
-    const [data, setData] = useState(mockEmissoes);
+    const supabase = createClient();
+    const [data, setData] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        fetchEmissoes();
+    }, []);
+
+    const fetchEmissoes = async () => {
+        setIsLoading(true);
+        const { data: dbData, error } = await supabase
+            .from('extracted_bookings')
+            .select('*')
+            .order('flight_date', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching bookings:', error);
+        } else {
+            setData(dbData || []);
+        }
+        setIsLoading(false);
+    };
 
     const handleExport = () => {
+        if (data.length === 0) return;
         const worksheet = XLSX.utils.json_to_sheet(data);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Emissoes");
-        XLSX.writeFile(workbook, "GSMVIAGEM_HUB_Report.xlsx");
+        XLSX.writeFile(workbook, `GSMVIAGEM_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
+
+    const filteredData = data.filter(item =>
+        item.locator?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.passenger_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.origin?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.destination?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <div className="space-y-8 pb-20">
@@ -52,12 +76,16 @@ export default function EmissoesPage() {
                 <div className="flex gap-3">
                     <Button
                         onClick={handleExport}
-                        className="glass-panel border-white/10 text-slate-300 hover:bg-white/5 uppercase text-[10px] font-black tracking-widest px-6"
+                        disabled={data.length === 0}
+                        className="glass-panel border-white/10 text-slate-300 hover:bg-white/5 uppercase text-[10px] font-black tracking-widest px-6 disabled:opacity-50"
                     >
                         <FileDown className="mr-2 h-4 w-4 text-primary" /> Export Excel
                     </Button>
-                    <Button className="bg-primary text-background-dark font-bold hover:brightness-110">
-                        <RefreshCw className="mr-2 h-4 w-4" /> Sincronizar Tudo
+                    <Button
+                        onClick={fetchEmissoes}
+                        className="bg-primary text-background-dark font-bold hover:brightness-110"
+                    >
+                        <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} /> Sincronizar Tudo
                     </Button>
                 </div>
             </motion.div>
@@ -94,7 +122,19 @@ export default function EmissoesPage() {
                         </thead>
                         <tbody>
                             <AnimatePresence mode="popLayout">
-                                {data.map((item, idx) => (
+                                {isLoading ? (
+                                    <tr>
+                                        <td colSpan={6} className="p-20 text-center text-slate-500 font-black uppercase tracking-widest animate-pulse">
+                                            Retrieving operational data...
+                                        </td>
+                                    </tr>
+                                ) : filteredData.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="p-20 text-center text-slate-500 font-black uppercase tracking-widest">
+                                            No records found in the ledger.
+                                        </td>
+                                    </tr>
+                                ) : filteredData.map((item, idx) => (
                                     <motion.tr
                                         key={item.id}
                                         initial={{ opacity: 0 }}
@@ -106,11 +146,11 @@ export default function EmissoesPage() {
                                         <td className="p-6 border-b border-white/5">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-2 h-8 bg-primary/20 rounded-full group-hover:bg-primary transition-colors"></div>
-                                                <span className="text-xl font-black text-white tracking-widest">{item.locator}</span>
+                                                <span className="text-xl font-black text-white tracking-widest uppercase">{item.locator}</span>
                                             </div>
                                         </td>
                                         <td className="p-6 border-b border-white/5 text-slate-300 font-bold tracking-tight uppercase">
-                                            {item.passenger}
+                                            {item.passenger_name}
                                         </td>
                                         <td className="p-6 border-b border-white/5">
                                             <div className="flex flex-col gap-1">
@@ -118,13 +158,15 @@ export default function EmissoesPage() {
                                                     {item.origin} <Plane size={14} className="text-primary rotate-45" /> {item.destination}
                                                 </div>
                                                 <div className="text-[10px] text-slate-500 font-bold uppercase flex items-center gap-2">
-                                                    <Calendar size={10} /> {item.date} • {item.airline}
+                                                    <Calendar size={10} /> {item.flight_date} • {item.airline}
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="p-6 border-b border-white/5 text-right">
-                                            <div className="text-lg font-black text-primary drop-shadow-[0_0_4px_rgba(0,255,200,0.3)]">{item.miles}</div>
-                                            <div className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Azul Points</div>
+                                            <div className="text-lg font-black text-primary drop-shadow-[0_0_4px_rgba(0,255,200,0.3)]">
+                                                {item.miles_used?.toLocaleString()}
+                                            </div>
+                                            <div className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{item.airline} Points</div>
                                         </td>
                                         <td className="p-6 border-b border-white/5 text-center">
                                             <Badge variant="outline" className={cn(

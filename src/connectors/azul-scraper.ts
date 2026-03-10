@@ -23,8 +23,12 @@ export class AzulScraper {
 
     async init() {
         this.browser = await chromium.launch({
-            headless: true, // Set to false for debugging
-            args: ['--disable-blink-features=AutomationControlled']
+            headless: true,
+            args: [
+                '--disable-blink-features=AutomationControlled',
+                '--no-sandbox',
+                '--disable-setuid-sandbox'
+            ]
         });
         this.context = await this.browser.newContext({
             userAgent: USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)],
@@ -37,47 +41,58 @@ export class AzulScraper {
         const page = await this.context!.newPage();
 
         try {
-            console.log(`[AZUL] Starting extraction for CPF: ${options.cpf}`);
+            console.log(`[AZUL] Executing real extraction for CPF: ${options.cpf}`);
 
             // 1. Navigate to International portal
-            await page.goto('https://azulpelomundo.voeazul.com.br/pt/home', { waitUntil: 'networkidle' });
+            await page.goto('https://azulpelomundo.voeazul.com.br/pt/home', { waitUntil: 'networkidle', timeout: 60000 });
 
-            // 2. Click on "Minhas Viagens" (Consultar PNR)
-            await page.click('button#consultar-pnr');
-            await page.waitForTimeout(1000);
+            // 2. Click on "Minhas Viagens"
+            const consultarBtn = await page.waitForSelector('button#consultar-pnr', { timeout: 15000 });
+            await consultarBtn.click();
+            await page.waitForTimeout(2000);
 
             // 3. Login Flow
-            await page.fill('input[placeholder*="CPF"]', options.cpf);
-            await page.fill('input[placeholder*="Senha"]', options.password);
+            // Note: Selectors might vary based on dynamic id generation (observed 'undefined_loginField' in initial exploration)
+            await page.fill('input[placeholder*="CPF"], input#undefined_loginField', options.cpf);
+            await page.fill('input[placeholder*="Senha"], input#undefined_passwordField', options.password);
 
-            // Human-like delay
-            await page.waitForTimeout(500 + Math.random() * 1000);
+            await page.waitForTimeout(1000 + Math.random() * 1000);
 
-            await page.click('div.Login__button, button:has-text("Entrar")');
+            // Click Entrar - Using text selector as fallback
+            await page.click('button:has-text("Entrar"), .Login__button');
 
-            // 4. Wait for dashboard/redirect
-            await page.waitForNavigation({ waitUntil: 'networkidle' });
+            // 4. Wait for dashboard / "Meus Voos"
+            // We expect to find trip cards or a specific post-login element
+            await page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 });
 
             // 5. Scrape list of reservations
-            const reservations = await page.$$eval('.trip-card', (cards) => {
+            // Based on target site structure, we look for elements with trip info
+            const reservations = await page.$$eval('.trip-card, .reservation-item', (cards) => {
                 return cards.map(card => {
-                    const locator = card.querySelector('.locator-code')?.textContent?.trim() || '';
+                    const locator = card.querySelector('.locator-code, .pnr-code')?.textContent?.trim() || '';
                     return { locator };
                 });
             });
 
-            console.log(`[AZUL] Found ${reservations.length} reservations.`);
-
-            for (const res of reservations) {
-                // 6. Click Details
-                // Implementation: Navigate to details or click the specific card's detail button
-                await this.extractReservationDetails(page, res.locator, options.accountId);
+            if (reservations.length === 0) {
+                console.log('[AZUL] No reservations found on dashboard.');
+                return { success: true, count: 0, message: 'Nenhuma viagem encontrada para esta conta.' };
             }
 
-            return { success: true, count: reservations.length };
+            console.log(`[AZUL] Found ${reservations.length} reservations. Starting deep parsing...`);
+
+            let capturedCount = 0;
+            for (const res of reservations) {
+                if (!res.locator) continue;
+
+                const detailSuccess = await this.extractAndSaveReservationDetails(page, res.locator, options.accountId);
+                if (detailSuccess) capturedCount++;
+            }
+
+            return { success: true, count: capturedCount, message: `Capturadas ${capturedCount} emissões com sucesso.` };
 
         } catch (error: any) {
-            console.error('[AZUL] Extraction error:', error.message);
+            console.error('[AZUL] Real extraction failed:', error.message);
             return { success: false, error: error.message };
         } finally {
             await page.close();
@@ -85,29 +100,55 @@ export class AzulScraper {
         }
     }
 
-    private async extractReservationDetails(page: Page, locator: string, accountId?: string) {
-        // Logic to click 'Detalhes' and parse the full page content
-        // This is a placeholder for the detailed parsing logic once logged in
-        console.log(`[AZUL] Extracting details for locator: ${locator}`);
+    private async extractAndSaveReservationDetails(page: Page, locator: string, accountId?: string) {
+        try {
+            console.log(`[AZUL] Parsing details for: ${locator}`);
 
-        // Mocking found data for now as we don't have real creds to test
-        const mockData = {
-            airline: 'Azul',
-            account_id: accountId,
-            locator: locator,
-            passenger_name: 'JOHN DOE', // Full name from screen
-            origin: 'GRU',
-            destination: 'MCO',
-            flight_date: new Date().toISOString().split('T')[0],
-            miles_used: 125000,
-            status: 'pending_sync'
-        };
+            // Logic to click 'Details' for specifically this locator
+            // This usually involves finding the card with this locator and clicking its button
+            await page.click(`.trip-card:has-text("${locator}") button:has-text("Detalhes")`);
+            await page.waitForTimeout(3000);
 
-        // Save to Supabase
-        const { error } = await this.supabase
-            .from('extracted_bookings')
-            .upsert(mockData, { onConflict: 'airline,locator' });
+            // Parse the details page
+            const flightData = await page.evaluate((loc) => {
+                const passenger = document.querySelector('.passenger-name')?.textContent?.trim() || 'N/A';
+                const origin = document.querySelector('.origin-city-code')?.textContent?.trim() || 'N/A';
+                const destination = document.querySelector('.destination-city-code')?.textContent?.trim() || 'N/A';
+                const date = document.querySelector('.flight-date')?.textContent?.trim() || '';
+                const milesRaw = document.querySelector('.points-redeemed, .total-points')?.textContent || '0';
 
-        if (error) console.error(`[AZUL] Error saving ${locator}:`, error.message);
+                return {
+                    passenger_name: passenger,
+                    origin: origin,
+                    destination: destination,
+                    flight_date: date,
+                    miles_used: parseInt(milesRaw.replace(/\D/g, '')) || 0,
+                    locator: loc
+                };
+            }, locator);
+
+            // Persist to Supabase
+            const { error } = await this.supabase
+                .from('extracted_bookings')
+                .upsert({
+                    ...flightData,
+                    airline: 'Azul',
+                    account_id: accountId,
+                    status: 'synced'
+                }, { onConflict: 'airline,locator' });
+
+            if (error) {
+                console.error(`[AZUL] DB Error for ${locator}:`, error.message);
+                return false;
+            }
+
+            // Go back to list
+            await page.goBack({ waitUntil: 'networkidle' });
+            return true;
+
+        } catch (err: any) {
+            console.error(`[AZUL] Error parsing locator ${locator}:`, err.message);
+            return false;
+        }
     }
 }
