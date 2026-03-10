@@ -24,6 +24,19 @@ create table if not exists public.airline_integrations (
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- 2.1 Airline Accounts (Multi-login support)
+create table if not exists public.airline_accounts (
+  id uuid default uuid_generate_v4() primary key,
+  integration_id uuid references public.airline_integrations(id) on delete cascade not null,
+  login_cpf text not null,
+  password text not null,
+  description text,
+  is_active boolean default true,
+  last_used timestamp with time zone,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique (integration_id, login_cpf)
+);
+
 -- 3. Airline Sessions (For long-lived cookies/tokens like Smiles SMS 2FA)
 create table if not exists public.airline_sessions (
   id uuid default uuid_generate_v4() primary key,
@@ -55,6 +68,7 @@ create type public.booking_status as enum ('pending_sync', 'synced', 'error');
 create table if not exists public.extracted_bookings (
   id uuid default uuid_generate_v4() primary key,
   airline text not null,
+  account_id uuid references public.airline_accounts(id) on delete set null,
   locator varchar(10) not null,
   passenger_name text not null,
   origin varchar(3) not null,
