@@ -3,81 +3,108 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-    LayoutDashboard, Bot, Search, Ticket,
-    Database, Settings, PlaneTakeoff,
-    Bell, Activity, LogOut, Menu
+    LayoutGrid,
+    Cpu,
+    CreditCard,
+    Settings,
+    Search,
+    Bell,
+    Rocket,
+    Search as SearchIcon,
+    LogOut,
+    Menu
 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { logout } from '@/app/login/actions';
-import { cn } from '@/lib/utils';
 
 const navItems = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/auto-extrator', label: 'Auto-Extrator', icon: Bot },
-    { href: '/busca', label: 'Busca', icon: Search },
-    { href: '/emissoes', label: 'Emissões', icon: Ticket },
-    { href: '/planilha', label: 'Sync', icon: Database },
-    { href: '/configuracoes', label: 'Config', icon: Settings },
+    { href: '/', label: 'Dashboard', icon: LayoutGrid },
+    { href: '/auto-extrator', label: 'Automations', icon: Cpu },
+    { href: '/emissoes', label: 'Financials', icon: CreditCard },
+    { href: '/configuracoes', label: 'Settings', icon: Settings },
 ];
 
 export function Navbar() {
     const pathname = usePathname();
 
     return (
-        <header className="h-16 border-b border-white/5 bg-slate-950/20 backdrop-blur-xl sticky top-0 z-50 flex items-center justify-between px-6">
-            <div className="flex items-center gap-8">
-                <Link href="/" className="flex items-center text-cyan-400 font-black text-xl tracking-tighter uppercase text-glow">
-                    <PlaneTakeoff className="mr-2 h-6 w-6 text-cyan-400" />
-                    GSMVIAGEM
-                </Link>
+        <header className="glass-panel sticky top-0 z-50 px-6 py-3 flex items-center justify-between border-b border-white/5 backdrop-blur-xl">
+            <div className="flex items-center gap-10">
+                <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-3"
+                >
+                    <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/30">
+                        <Rocket className="text-primary w-6 h-6" />
+                    </div>
+                    <Link href="/" className="text-xl font-extrabold tracking-tighter bg-gradient-to-r from-white to-primary bg-clip-text text-transparent">
+                        GSMVIAGEM
+                    </Link>
+                </motion.div>
 
-                <nav className="hidden lg:flex items-center gap-1">
+                <nav className="hidden lg:flex items-center gap-6">
                     {navItems.map((item) => (
                         <Link
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all group",
+                                "text-sm font-medium flex items-center gap-2 pb-1 border-b-2 transition-all",
                                 pathname === item.href
-                                    ? "text-cyan-400 bg-cyan-950/20 shadow-[0_0_15px_-3px_rgba(34,211,238,0.2)]"
-                                    : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                                    ? 'text-primary border-primary'
+                                    : 'text-slate-400 border-transparent hover:text-white'
                             )}
                         >
-                            <item.icon className={cn(
-                                "h-4 w-4 mr-2 transition-all",
-                                pathname === item.href ? "text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" : "text-slate-500 group-hover:text-slate-300"
-                            )} />
-                            {item.label}
+                            <item.icon size={16} /> {item.label}
                         </Link>
                     ))}
                 </nav>
             </div>
 
             <div className="flex items-center gap-4">
-                <div className="hidden sm:flex items-center text-[10px] font-mono text-slate-400 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-                    <Activity className="h-3 w-3 mr-2 text-green-400" />
-                    STATUS: <span className="text-green-400 ml-1">OPERACIONAL</span>
+                <div className="hidden lg:flex items-center bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 focus-within:border-primary/50 transition-all">
+                    <SearchIcon className="text-slate-400 w-4 h-4" />
+                    <input
+                        className="bg-transparent border-none focus:outline-none text-sm w-48 text-slate-200 ml-2"
+                        placeholder="Quick find commands..."
+                        type="text"
+                    />
+                    <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-slate-400 ml-2">⌘K</span>
                 </div>
 
-                <Button variant="ghost" size="icon" className="text-slate-400 hover:text-cyan-400 hover:bg-cyan-950/20 relative">
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute top-2 right-2 flex h-2 w-2">
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,0.5)]"></span>
-                    </span>
-                </Button>
+                <div className="flex items-center gap-2">
+                    <button className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors relative">
+                        <Bell className="text-slate-300 w-5 h-5" />
+                        <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full ring-2 ring-background-dark"></span>
+                    </button>
 
-                <div className="h-6 w-px bg-white/10 hidden sm:block"></div>
+                    <div className="h-8 w-[1px] bg-white/10 mx-1 hidden sm:block"></div>
 
-                <form action={logout}>
-                    <Button variant="ghost" size="sm" className="text-slate-500 hover:text-red-400 hover:bg-red-950/20 font-bold text-[10px] uppercase tracking-wider">
-                        <LogOut className="h-4 w-4 mr-2" />
-                        Sair
+                    <div className="flex items-center gap-3 pl-2 group cursor-pointer">
+                        <div className="text-right hidden sm:block">
+                            <p className="text-xs font-bold text-white">Alex Volkov</p>
+                            <p className="text-[10px] text-primary uppercase font-bold tracking-tighter">System Admin</p>
+                        </div>
+                        <div className="w-10 h-10 rounded-full border-2 border-primary/30 p-0.5 overflow-hidden ring-offset-2 ring-offset-background-dark group-hover:ring-2 ring-primary/50 transition-all">
+                            <img
+                                alt="User Avatar"
+                                className="w-full h-full rounded-full object-cover"
+                                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                            />
+                        </div>
+                        <form action={logout}>
+                            <Button variant="ghost" size="icon" className="text-slate-500 hover:text-red-400 ml-1">
+                                <LogOut className="h-4 w-4" />
+                            </Button>
+                        </form>
+                    </div>
+
+                    <Button variant="ghost" size="icon" className="lg:hidden text-slate-400">
+                        <Menu className="h-6 w-6" />
                     </Button>
-                </form>
-
-                <Button variant="ghost" size="icon" className="lg:hidden text-slate-400">
-                    <Menu className="h-6 w-6" />
-                </Button>
+                </div>
             </div>
         </header>
     );
