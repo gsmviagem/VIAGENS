@@ -1,10 +1,26 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Download, Filter, MoreHorizontal } from "lucide-react"
-import { createClient } from "@/utils/supabase/server"
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import {
+    Download,
+    Search as SearchIcon,
+    Filter,
+    MoreHorizontal,
+    CreditCard,
+    ArrowRightLeft,
+    Calendar,
+    User,
+    MapPin,
+    TrendingUp,
+    FileText
+} from 'lucide-react';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { createClient } from "@/utils/supabase/client";
 
 // Formats full date to abbreviated format DD/MM/YYYY
 function formatDate(dateStr: string) {
@@ -12,101 +28,157 @@ function formatDate(dateStr: string) {
     return dt.toLocaleDateString('pt-BR')
 }
 
-export default async function EmissoesPage() {
-    const supabase = await createClient()
+export default function EmissoesPage() {
+    const [emissions, setEmissions] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const supabase = createClient();
 
-    const { data: emissions } = await supabase
-        .from('extracted_bookings')
-        .select('*')
-        .order('flight_date', { ascending: false })
+    useEffect(() => {
+        async function fetchData() {
+            const { data } = await supabase
+                .from('extracted_bookings')
+                .select('*')
+                .order('flight_date', { ascending: false });
+
+            setEmissions(data || []);
+            setLoading(false);
+        }
+        fetchData();
+    }, []);
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-8">
+            <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex flex-col md:flex-row md:items-end justify-between gap-6"
+            >
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-white">Gerenciamento de Emissões</h1>
-                    <p className="text-slate-400 mt-1">Consulte o painel de todas as emissões extraídas no Supabase.</p>
+                    <h1 className="text-4xl font-black text-white tracking-tight mb-2">Financial <span className="text-primary font-normal">Ledger</span></h1>
+                    <p className="text-slate-400 max-w-xl">Consulte todas as emissões extraídas e integradas ao ecossistema GSMVIAGEM.</p>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" className="border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-slate-300">
-                        <Download className="mr-2 h-4 w-4" /> Exportar CSV
+                <div className="flex gap-3">
+                    <Button variant="outline" className="glass-panel border-white/10 text-slate-300 hover:bg-white/5">
+                        <Download className="mr-2 h-4 w-4" /> Export CSV
+                    </Button>
+                    <Button className="bg-primary text-background-dark font-bold hover:brightness-110">
+                        <ArrowRightLeft className="mr-2 h-4 w-4" /> Manual Sync
                     </Button>
                 </div>
-            </div>
+            </motion.div>
 
-            <Card className="bg-slate-900/80 border-slate-800 shadow-lg">
-                <CardContent className="p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                            <Input placeholder="Buscar por localizador..." className="pl-9 bg-slate-950 border-slate-800 focus-visible:ring-cyan-500 text-slate-200 w-full" />
-                        </div>
-                        <Button variant="outline" className="border-slate-700 bg-slate-950 text-slate-300 shrink-0">
-                            <Filter className="mr-2 h-4 w-4" /> Filtros
-                        </Button>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-panel rounded-2xl p-6 border border-white/5"
+            >
+                <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
+                    <div className="relative flex-1 group">
+                        <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-primary transition-colors" />
+                        <Input
+                            placeholder="Search by locator, passenger or airline..."
+                            className="pl-11 h-12 bg-white/5 border-white/10 focus-visible:ring-primary text-slate-200 w-full rounded-xl transition-all"
+                        />
                     </div>
+                    <Button variant="outline" className="h-12 px-6 glass-panel border-white/10 text-slate-300 hover:bg-white/5 rounded-xl">
+                        <Filter className="mr-2 h-4 w-4" /> Filters
+                    </Button>
+                </div>
 
-                    <div className="rounded-md border border-slate-800/60 overflow-hidden">
-                        <Table>
-                            <TableHeader className="bg-slate-950/80">
-                                <TableRow className="border-slate-800/60 hover:bg-transparent">
-                                    <TableHead className="text-slate-300">Data Voo / Origem</TableHead>
-                                    <TableHead className="text-slate-300">Localizador</TableHead>
-                                    <TableHead className="text-slate-300">Passageiro</TableHead>
-                                    <TableHead className="text-slate-300">Trecho</TableHead>
-                                    <TableHead className="text-slate-300 text-right">Valores</TableHead>
-                                    <TableHead className="text-slate-300 text-center">Status DB</TableHead>
-                                    <TableHead className="text-right text-slate-300"></TableHead>
+                <div className="rounded-xl border border-white/5 overflow-hidden bg-black/20">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="border-white/5 hover:bg-transparent bg-white/5">
+                                <TableHead className="text-slate-400 font-bold uppercase text-[10px] tracking-widest pl-6 py-4">Status / Carrier</TableHead>
+                                <TableHead className="text-slate-400 font-bold uppercase text-[10px] tracking-widest py-4">Locator</TableHead>
+                                <TableHead className="text-slate-400 font-bold uppercase text-[10px] tracking-widest py-4">Passenger</TableHead>
+                                <TableHead className="text-slate-400 font-bold uppercase text-[10px] tracking-widest py-4">Route / Date</TableHead>
+                                <TableHead className="text-slate-400 font-bold uppercase text-[10px] tracking-widest py-4 text-right">Points / Cash</TableHead>
+                                <TableHead className="text-slate-400 font-bold uppercase text-[10px] tracking-widest py-4 text-center">Sync</TableHead>
+                                <TableHead className="text-right pr-6"></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center py-20 text-slate-500 italic">Loading encrypted ledger data...</TableCell>
                                 </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {emissions && emissions.length > 0 ? (
-                                    emissions.map((e) => (
-                                        <TableRow key={e.id} className="border-slate-800/60 hover:bg-slate-800/30 transition-colors">
-                                            <TableCell>
-                                                <div className="text-sm font-medium text-slate-300">{formatDate(e.flight_date)}</div>
-                                                <div className="text-xs text-slate-500 mt-0.5 capitalize">{e.airline}</div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="font-mono text-sm font-semibold tracking-wider text-cyan-400 bg-cyan-950/30 px-2 py-1 rounded inline-block border border-cyan-900/50">{e.locator}</div>
-                                            </TableCell>
-                                            <TableCell className="text-slate-200 font-medium">{e.passenger_name}</TableCell>
-                                            <TableCell className="text-slate-400">
-                                                <div className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded bg-slate-950/80 border border-slate-800 text-xs font-mono">
-                                                    {e.origin} <span className="text-cyan-500/50">→</span> {e.destination}
+                            ) : emissions.length > 0 ? (
+                                emissions.map((e, idx) => (
+                                    <motion.tr
+                                        key={e.id}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: idx * 0.05 }}
+                                        className="border-white/5 hover:bg-white/[0.02] transition-colors group"
+                                    >
+                                        <TableCell className="pl-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className={cn(
+                                                    "w-2 h-8 rounded-full",
+                                                    e.airline === 'azul' ? 'bg-primary' : e.airline === 'latam' ? 'bg-red-500' : 'bg-orange-500'
+                                                )}></div>
+                                                <div>
+                                                    <div className="text-sm font-bold text-white uppercase">{e.airline}</div>
+                                                    <div className="text-[10px] text-slate-500 font-medium font-mono uppercase">Node TR-{idx + 100}</div>
                                                 </div>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="text-sm font-mono text-slate-200">{Number(e.miles_used || 0).toLocaleString()} pts</div>
-                                                {(e.cash_paid || e.taxes) && (
-                                                    <div className="text-[10px] text-slate-500 mt-1">R$ {Number(e.cash_paid || 0).toFixed(2)} + tx</div>
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                                <Badge variant="outline"
-                                                    className={e.status === 'synced' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}>
-                                                    {e.status === 'synced' ? 'Integrado' : e.status === 'pending_sync' ? 'Aguardando' : 'Erro'}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white hover:bg-slate-800">
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-6 text-slate-500">
-                                            Nenhuma emissão extraída ainda no banco de dados.
+                                            </div>
                                         </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </CardContent>
-            </Card>
+                                        <TableCell>
+                                            <code className="text-sm font-black text-primary font-mono bg-primary/10 px-2 py-1 rounded border border-primary/20">{e.locator}</code>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="text-sm font-bold text-slate-200">{e.passenger_name}</div>
+                                            <div className="text-[10px] text-slate-500 uppercase flex items-center gap-1 group-hover:text-primary transition-colors">
+                                                <User size={10} /> Priority Access
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2 text-sm font-medium text-slate-300">
+                                                <MapPin size={12} className="text-slate-500" />
+                                                <span>{e.origin}</span>
+                                                <ArrowRightLeft size={10} className="text-primary opacity-50" />
+                                                <span>{e.destination}</span>
+                                            </div>
+                                            <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-1">
+                                                <Calendar size={10} /> {formatDate(e.flight_date)}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="text-sm font-black text-white">{Number(e.miles_used || 0).toLocaleString()} <span className="text-[10px] text-slate-500">PTS</span></div>
+                                            {(e.cash_paid || e.taxes) && (
+                                                <div className="text-[10px] text-slate-500 font-bold mt-1">R$ {Number(e.cash_paid || 0).toFixed(2)} + TX</div>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <Badge className={cn(
+                                                "rounded-full px-3 py-0.5 border-none text-[10px] font-black uppercase tracking-tighter",
+                                                e.status === 'synced' ? 'bg-green-500/10 text-green-400' : 'bg-primary/10 text-primary'
+                                            )}>
+                                                {e.status === 'synced' ? 'Vaulted' : 'Pending'}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right pr-6">
+                                            <Button variant="ghost" size="icon" className="text-slate-500 hover:text-white hover:bg-white/5 rounded-lg">
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </TableCell>
+                                    </motion.tr>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center py-20">
+                                        <div className="flex flex-col items-center gap-4">
+                                            <FileText size={48} className="text-slate-800" />
+                                            <p className="text-slate-500 italic">End of ledger reached. No records found.</p>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            </motion.div>
         </div>
     )
 }

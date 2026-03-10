@@ -1,93 +1,123 @@
-import { login, signup } from './actions'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { PlaneTakeoff, ShieldCheck, AlertCircle } from 'lucide-react'
-import { SubmitButton } from './submit-button'
+'use client';
 
-type Props = {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-}
+import { useState } from 'react';
+import { login, signup } from './actions';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { motion } from 'framer-motion';
+import {
+    Rocket,
+    ShieldCheck,
+    Lock,
+    Mail,
+    ArrowRight,
+    Zap,
+    Cpu
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-export default async function LoginPage({ searchParams }: Props) {
-    const resolvedSearchParams = await searchParams;
-    const errorMsg = resolvedSearchParams?.error as string;
-    const successMsg = resolvedSearchParams?.message as string;
+export default function LoginPage() {
+    const [isLoading, setIsLoading] = useState(false);
 
     return (
-        <div className="min-h-screen bg-[#020817] flex items-center justify-center p-4 relative overflow-hidden">
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20 pointer-events-none"></div>
+        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background-dark">
+            {/* Background Decorative Elements */}
+            <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/20 blur-[150px] rounded-full"></div>
+            <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-blue/10 blur-[120px] rounded-full"></div>
 
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-900/20 rounded-full blur-[100px] pointer-events-none"></div>
+            {/* Grid Pattern Overlay */}
+            <div className="absolute inset-0 opacity-10 pointer-events-none"
+                style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(0,255,200,0.15) 1px, transparent 0)', backgroundSize: '40px 40px' }}>
+            </div>
 
-            <Card className="w-full max-w-md bg-slate-900/80 border-slate-800 shadow-2xl backdrop-blur-xl relative z-10">
-                <CardHeader className="space-y-3 pb-6 border-b border-slate-800/60 mb-6 px-8 tracking-tight">
-                    <div className="flex justify-center mb-2">
-                        <div className="w-16 h-16 rounded-full bg-slate-950 flex items-center justify-center border border-slate-800 shadow-inner">
-                            <PlaneTakeoff className="h-8 w-8 text-cyan-400" />
-                        </div>
+            <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative z-10 w-full max-w-md"
+            >
+                {/* Logo Section */}
+                <div className="flex flex-col items-center mb-10 text-center">
+                    <motion.div
+                        initial={{ scale: 0.8, rotate: -10 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center border border-primary/30 shadow-[0_0_30px_rgba(0,255,200,0.2)] mb-6 group hover:rotate-6 transition-transform cursor-default"
+                    >
+                        <Rocket className="text-primary w-10 h-10 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    </motion.div>
+                    <h1 className="text-4xl font-black text-white tracking-tighter mb-2">
+                        GSMVIAGEM <span className="text-primary drop-shadow-[0_0_8px_rgba(0,255,200,0.5)]">HUB</span>
+                    </h1>
+                    <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em]">Operational Access Protocol</p>
+                </div>
+
+                {/* Login Card */}
+                <div className="glass-panel-heavy p-8 rounded-[40px] border border-white/10 shadow-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Cpu size={120} className="text-primary rotate-12" />
                     </div>
-                    <CardTitle className="text-2xl text-center text-white font-bold">GSMVIAGEM HUB</CardTitle>
-                    <CardDescription className="text-center text-slate-400">
-                        Acesso Restrito · Command Center Operacional
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="px-8 pb-8">
-                    {errorMsg && (
-                        <div className="mb-6 p-4 bg-red-500/10 border border-slate-800 rounded-lg flex items-start gap-3">
-                            <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-                            <div className="text-sm">
-                                <p className="font-bold text-red-500 mb-1 leading-none">Erro Operacional</p>
-                                <p className="text-red-200/80 leading-relaxed">{errorMsg}</p>
-                            </div>
-                        </div>
-                    )}
 
-                    {successMsg && (
-                        <div className="mb-6 p-4 bg-cyan-500/10 border border-slate-800 rounded-lg flex items-start gap-3">
-                            <ShieldCheck className="h-5 w-5 text-cyan-400 shrink-0 mt-0.5" />
-                            <div className="text-sm">
-                                <p className="font-bold text-cyan-400 mb-1 leading-none">Ação Concluída</p>
-                                <p className="text-cyan-100/80 leading-relaxed">{successMsg}</p>
+                    <form className="space-y-6 relative z-10">
+                        <div className="space-y-2 group">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-primary transition-colors ml-1">Authentication ID</Label>
+                            <div className="relative">
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-primary transition-colors" />
+                                <Input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    required
+                                    placeholder="name@gsmviagem.com"
+                                    className="pl-12 h-14 bg-white/5 border-white/10 text-white rounded-2xl focus-visible:ring-primary text-lg font-bold transition-all placeholder:text-slate-600"
+                                />
                             </div>
-                        </div>
-                    )}
-                    <form className="space-y-5">
-                        <div className="space-y-2">
-                            <Label htmlFor="email" className="text-slate-300">Credencial (E-mail)</Label>
-                            <Input
-                                id="email"
-                                name="email"
-                                type="email"
-                                placeholder="operador@gsmviagem.com.br"
-                                required
-                                className="bg-slate-950 border-slate-800 text-white focus-visible:ring-cyan-500 shadow-inner"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="password" className="text-slate-300">Senha de Acesso</Label>
-                            </div>
-                            <Input
-                                id="password"
-                                name="password"
-                                type="password"
-                                required
-                                className="bg-slate-950 border-slate-800 text-white focus-visible:ring-cyan-500 shadow-inner"
-                            />
                         </div>
 
-                        <div className="flex flex-col gap-3 pt-4">
-                            <SubmitButton formAction={login} className="w-full bg-cyan-600 hover:bg-cyan-700 text-white shadow-lg shadow-cyan-900/20 font-semibold py-5">
-                                <ShieldCheck className="mr-2 h-5 w-5" /> Autenticar
-                            </SubmitButton>
-                            <SubmitButton formAction={signup} variant="outline" className="w-full border-slate-700 bg-transparent hover:bg-slate-800 text-slate-400">
-                                Solicitar Acesso (Signup)
-                            </SubmitButton>
+                        <div className="space-y-2 group">
+                            <div className="flex items-center justify-between ml-1">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-primary transition-colors">Security Key</Label>
+                                <a href="#" className="text-[10px] font-black text-primary/50 hover:text-primary transition-colors uppercase tracking-widest">Lost Key?</a>
+                            </div>
+                            <div className="relative">
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-primary transition-colors" />
+                                <Input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    required
+                                    placeholder="••••••••"
+                                    className="pl-12 h-14 bg-white/5 border-white/10 text-white rounded-2xl focus-visible:ring-primary text-lg font-bold transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="pt-4 flex flex-col gap-4">
+                            <Button
+                                formAction={login}
+                                className="h-14 bg-primary text-background-dark font-black text-lg rounded-2xl shadow-[0_0_20px_rgba(0,255,200,0.3)] hover:brightness-110 active:scale-95 transition-all flex items-center gap-3"
+                            >
+                                INITIALIZE SESSION <ArrowRight size={20} />
+                            </Button>
+                            <Button
+                                formAction={signup}
+                                variant="ghost"
+                                className="h-14 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white border border-transparent hover:border-white/10 rounded-2xl"
+                            >
+                                Request Authorization Code
+                            </Button>
                         </div>
                     </form>
-                </CardContent>
-            </Card>
+
+                    <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-center gap-3">
+                        <ShieldCheck className="text-green-500/50 w-4 h-4" />
+                        <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">AES-256 Encrypted Tunnel</span>
+                    </div>
+                </div>
+
+                <p className="mt-8 text-center text-slate-600 text-[10px] font-bold uppercase tracking-widest">
+                    © 2026 GSMVIAGEM Systems Corp.
+                </p>
+            </motion.div>
         </div>
-    )
+    );
 }

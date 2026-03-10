@@ -30,7 +30,7 @@ export function Navbar() {
     const pathname = usePathname();
 
     return (
-        <header className="glass-panel sticky top-0 z-50 px-6 py-3 flex items-center justify-between border-b border-white/5 backdrop-blur-xl">
+        <header className="fixed top-0 left-0 right-0 z-[100] px-6 py-3 flex items-center justify-between border-b border-white/5 backdrop-blur-xl bg-background-dark/80">
             <div className="flex items-center gap-10">
                 <motion.div
                     initial={{ opacity: 0, x: -20 }}

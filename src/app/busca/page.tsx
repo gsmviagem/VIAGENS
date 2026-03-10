@@ -1,128 +1,172 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Search, Plane, Clock, PlaneTakeoff, PlaneLanding, Settings2 } from "lucide-react"
+'use client';
+
+import React, { useState } from 'react';
+import {
+    Search as SearchIcon,
+    MapPin,
+    Calendar,
+    Users,
+    ArrowRight,
+    PlaneTakeoff,
+    PlaneLanding,
+    Clock,
+    Zap,
+    Filter,
+    ArrowRightLeft,
+    Briefcase
+} from 'lucide-react';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const mockResults = [
-    { id: 1, airline: 'Azul', flight: 'AD 4032', departure: '08:00', arrival: '09:20', duration: '1h 20m', miles: 15400, cash: 450.00, taxes: 42.50, available: 9 },
-    { id: 2, airline: 'LATAM', flight: 'LA 3021', departure: '08:30', arrival: '09:45', duration: '1h 15m', miles: 12500, cash: 380.00, taxes: 45.00, available: 4 },
-    { id: 3, airline: 'Smiles', flight: 'G3 1045', departure: '09:15', arrival: '10:35', duration: '1h 20m', miles: 18000, cash: 520.00, taxes: 38.00, available: 2 },
+    { id: 1, airline: 'Azul', price: '45.000', currency: 'PTS', departure: 'GRU', arrival: 'CNF', date: '20/03', duration: '1h 15m', type: 'Direto' },
+    { id: 2, airline: 'LATAM', price: 'R$ 890', currency: 'BRL', departure: 'CGH', arrival: 'SDU', date: '21/03', duration: '1h 05m', type: 'Direto' },
+    { id: 3, airline: 'Smiles', price: '28.500', currency: 'PTS', departure: 'GIG', arrival: 'BSB', date: '20/03', duration: '1h 50m', type: 'Parada em VCP' },
 ]
 
 export default function BuscaPage() {
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-10">
+            <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex flex-col md:flex-row md:items-end justify-between gap-6"
+            >
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-white">Pesquisa de Passagens</h1>
-                    <p className="text-slate-400 mt-1">Busca centralizada de voos em tempo real em todos os integradores.</p>
+                    <h1 className="text-4xl font-black text-white tracking-tight mb-2">Vector <span className="text-primary font-normal">Search</span></h1>
+                    <p className="text-slate-400 max-w-xl">Cruze dados de múltiplas companhias para encontrar a rota mais eficiente em milhas ou dinheiro.</p>
                 </div>
-            </div>
+                <div className="flex gap-3">
+                    <Badge className="bg-primary/10 text-primary border-primary/20 py-2 px-4 rounded-xl flex items-center gap-2 font-bold select-none cursor-default">
+                        <Users size={14} /> 12 Active Nodes
+                    </Badge>
+                </div>
+            </motion.div>
 
-            <Card className="bg-slate-900/80 border-slate-800 shadow-lg">
-                <CardContent className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="space-y-2">
-                            <Label className="text-slate-300">Origem</Label>
-                            <div className="relative">
-                                <PlaneTakeoff className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                                <Input placeholder="VCP" className="pl-9 bg-slate-950 border-slate-800 focus-visible:ring-cyan-500 text-slate-200" />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-slate-300">Destino</Label>
-                            <div className="relative">
-                                <PlaneLanding className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                                <Input placeholder="CNF" className="pl-9 bg-slate-950 border-slate-800 focus-visible:ring-cyan-500 text-slate-200" />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-slate-300">Data de Ida</Label>
-                            <Input type="date" className="bg-slate-950 border-slate-800 focus-visible:ring-cyan-500 text-slate-200" defaultValue="2026-03-15" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-slate-300">Companhia</Label>
-                            <Select defaultValue="todas">
-                                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 focus:ring-cyan-500">
-                                    <SelectValue placeholder="Selecione" />
-                                </SelectTrigger>
-                                <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
-                                    <SelectItem value="todas">Todas</SelectItem>
-                                    <SelectItem value="azul">Azul</SelectItem>
-                                    <SelectItem value="smiles">Smiles (Gol)</SelectItem>
-                                    <SelectItem value="latam">LATAM</SelectItem>
-                                </SelectContent>
-                            </Select>
+            {/* Glass Search Form */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-panel p-8 rounded-[32px] border border-white/10 shadow-[0_0_50px_-12px_rgba(0,255,200,0.1)]"
+            >
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="space-y-2 group">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-primary transition-colors ml-1">Departure</label>
+                        <div className="relative">
+                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                            <Input placeholder="Origin City/IATA" className="pl-11 h-14 bg-white/5 border-white/10 text-white rounded-2xl focus-visible:ring-primary text-lg font-bold" />
                         </div>
                     </div>
-                    <div className="flex items-center justify-between mt-6 pt-6 border-t border-slate-800">
-                        <Button variant="ghost" className="text-slate-400 hover:text-cyan-400">
-                            <Settings2 className="w-4 h-4 mr-2" /> Busca Avançada
-                        </Button>
-                        <Button className="bg-cyan-600 hover:bg-cyan-700 text-white min-w-[200px]">
-                            <Search className="mr-2 h-4 w-4" /> Pesquisar Voos
+
+                    <div className="relative md:flex items-center justify-center pt-8">
+                        <Button variant="ghost" className="w-12 h-12 rounded-full border border-white/10 glass-panel text-primary hover:bg-primary hover:text-background-dark transition-all absolute z-10">
+                            <ArrowRightLeft size={18} />
                         </Button>
                     </div>
-                </CardContent>
-            </Card>
 
-            <div className="space-y-4 pt-4">
-                <h3 className="text-lg font-medium text-slate-200">Resultados Encontrados (3)</h3>
-                {mockResults.map(result => (
-                    <Card key={result.id} className="bg-slate-900/40 border-slate-800/60 hover:border-cyan-900/50 hover:bg-slate-900/60 transition-colors">
-                        <CardContent className="p-4 sm:p-6 flex flex-col lg:flex-row items-center justify-between gap-6">
+                    <div className="space-y-2 group">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-primary transition-colors ml-1">Arrival</label>
+                        <div className="relative">
+                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                            <Input placeholder="Destination City/IATA" className="pl-11 h-14 bg-white/5 border-white/10 text-white rounded-2xl focus-visible:ring-primary text-lg font-bold" />
+                        </div>
+                    </div>
 
-                            {/* Flight Info */}
-                            <div className="flex items-center gap-6 flex-1 w-full">
-                                <div className="w-16 h-16 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-center shrink-0">
-                                    <span className={`font-bold text-xl ${result.airline === 'Azul' ? 'text-blue-500' : result.airline === 'LATAM' ? 'text-red-500' : 'text-orange-500'}`}>{result.airline.substring(0, 2).toUpperCase()}</span>
+                    <div className="space-y-2 group">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-primary transition-colors ml-1">Date</label>
+                        <div className="relative">
+                            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                            <Input type="date" className="pl-11 h-14 bg-white/5 border-white/10 text-white rounded-2xl focus-visible:ring-primary text-lg font-bold" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-6 pt-6 border-t border-white/5">
+                    <div className="flex gap-4">
+                        <Badge variant="outline" className="border-white/10 text-slate-400 py-1.5 px-4 rounded-lg flex items-center gap-2">
+                            <Users size={14} /> 1 Adult
+                        </Badge>
+                        <Badge variant="outline" className="border-white/10 text-slate-400 py-1.5 px-4 rounded-lg flex items-center gap-2">
+                            <Briefcase size={14} /> Economy
+                        </Badge>
+                    </div>
+                    <Button className="w-full sm:w-auto px-12 h-14 bg-primary text-background-dark font-black text-lg rounded-2xl shadow-[0_0_20px_rgba(0,255,200,0.3)] hover:brightness-110 flex items-center gap-3">
+                        <SearchIcon size={20} /> INITIATE SCAN
+                    </Button>
+                </div>
+            </motion.div>
+
+            {/* Results Grid */}
+            <div className="space-y-6">
+                <div className="flex items-center justify-between px-2">
+                    <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                        Live Data Feed <span className="w-2 h-2 bg-primary rounded-full animate-pulse shadow-[0_0_8px_rgba(0,255,200,1)]"></span>
+                    </h2>
+                    <Button variant="ghost" className="text-slate-500 hover:text-white flex items-center gap-2">
+                        <Filter size={16} /> Advanced Filters
+                    </Button>
+                </div>
+
+                <div className="grid gap-4">
+                    {mockResults.map((flight, idx) => (
+                        <motion.div
+                            key={flight.id}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.1 }}
+                            className="glass-panel p-6 rounded-2xl border border-white/5 flex flex-col md:flex-row md:items-center gap-8 group hover:border-primary/20 transition-all hover:bg-white/[0.02]"
+                        >
+                            <div className="flex items-center gap-4 min-w-[150px]">
+                                <div className={cn(
+                                    "w-12 h-12 rounded-xl border flex items-center justify-center",
+                                    flight.airline === 'Azul' ? 'border-primary/20 bg-primary/10 text-primary' :
+                                        flight.airline === 'LATAM' ? 'border-red-500/20 bg-red-500/10 text-red-400' :
+                                            'border-orange-500/20 bg-orange-500/10 text-orange-400'
+                                )}>
+                                    <PlaneTakeoff size={20} />
                                 </div>
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <Badge variant="outline" className="border-slate-700 text-slate-400 bg-slate-950/50">{result.airline}</Badge>
-                                        <span className="text-sm text-slate-500 font-mono">{result.flight}</span>
-                                    </div>
-                                    <div className="flex items-center gap-4 text-slate-200 mt-2">
-                                        <div className="text-center">
-                                            <div className="text-2xl font-bold tracking-tight">{result.departure}</div>
-                                            <div className="text-xs text-slate-500 uppercase tracking-wider mt-1">VCP</div>
-                                        </div>
-                                        <div className="flex-1 flex flex-col items-center">
-                                            <span className="text-[10px] text-slate-500 mb-1">{result.duration}</span>
-                                            <div className="w-full h-px bg-slate-800 relative flex items-center justify-center">
-                                                <Plane className="w-4 h-4 text-cyan-500/50 absolute" />
-                                            </div>
-                                            <span className="text-[10px] text-green-500 mt-1">Direto</span>
-                                        </div>
-                                        <div className="text-center">
-                                            <div className="text-2xl font-bold tracking-tight">{result.arrival}</div>
-                                            <div className="text-xs text-slate-500 uppercase tracking-wider mt-1">CNF</div>
-                                        </div>
-                                    </div>
+                                <div>
+                                    <div className="font-black text-white">{flight.airline}</div>
+                                    <div className="text-[10px] text-slate-500 uppercase font-black">Direct Access</div>
                                 </div>
                             </div>
 
-                            {/* Pricing */}
-                            <div className="flex flex-col sm:flex-row items-center gap-6 border-t lg:border-t-0 lg:border-l border-slate-800 pt-4 lg:pt-0 lg:pl-8 min-w-[280px]">
-                                <div className="space-y-1 text-center sm:text-left">
-                                    <div className="text-sm text-slate-400">Em Milhas</div>
-                                    <div className="text-3xl font-bold text-cyan-400 font-mono tracking-tight">{result.miles.toLocaleString()} <span className="text-sm text-slate-500 font-sans font-normal">pts</span></div>
-                                    <div className="text-xs text-slate-500">+ R$ {result.taxes.toFixed(2)} taxas</div>
+                            <div className="flex-1 flex items-center justify-between md:justify-around px-4">
+                                <div className="text-center">
+                                    <div className="text-2xl font-black text-white">{flight.departure}</div>
+                                    <div className="text-[10px] text-slate-500 font-bold uppercase">{flight.date}</div>
                                 </div>
-                                <div className="w-full sm:w-auto mt-2 sm:mt-0 space-y-2">
-                                    <Button className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold shadow-lg shadow-cyan-900/20">
-                                        Selecionar
-                                    </Button>
-                                    <p className="text-center text-[10px] text-amber-500 font-medium">Apenas {result.available} assentos</p>
+                                <div className="flex flex-col items-center gap-1 flex-1 max-w-[120px] px-4">
+                                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter opacity-70 italic">{flight.duration}</div>
+                                    <div className="h-[2px] w-full bg-slate-800 relative rounded-full">
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/50 to-transparent animate-pulse"></div>
+                                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-background-dark border border-primary rounded-full flex items-center justify-center">
+                                            <div className="w-1 h-1 bg-primary rounded-full"></div>
+                                        </div>
+                                    </div>
+                                    <div className="text-[10px] text-primary font-bold uppercase tracking-widest">{flight.type}</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-2xl font-black text-white">{flight.arrival}</div>
+                                    <div className="text-[10px] text-slate-500 font-bold uppercase">{flight.date}</div>
                                 </div>
                             </div>
 
-                        </CardContent>
-                    </Card>
-                ))}
+                            <div className="flex items-center justify-between md:flex-col md:items-end gap-2 pr-2">
+                                <div className="text-right">
+                                    <div className="text-2xl font-black text-primary drop-shadow-[0_0_4px_rgba(0,255,200,0.3)]">{flight.price}</div>
+                                    <div className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{flight.currency}</div>
+                                </div>
+                                <Button className="bg-white/5 border border-white/10 text-white rounded-xl h-10 px-6 group-hover:bg-primary group-hover:text-background-dark transition-all font-black text-xs">
+                                    SELECT <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
             </div>
         </div>
     )
