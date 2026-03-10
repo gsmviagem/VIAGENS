@@ -23,22 +23,22 @@ export interface ProcessedData {
 export function parseFlightMessage(message: string): ProcessedData {
     const msg = message.toLowerCase();
 
-    // Default values
+    // Default values (leave blank if not identified, except for randomized/fixed logic ones)
     const data: ProcessedData = {
-        origin: 'GRU',
-        destination: 'JFK',
-        date: new Date().toLocaleDateString('pt-BR'),
-        classType: 'ECONOMICA',
-        partner: 'Virgin',
+        origin: '',
+        destination: '',
+        date: '',
+        classType: '',
+        partner: '',
         adults: 1,
         children: 0,
         infants: 0,
-        flightTime: '20:00',
+        flightTime: '',
         passenger: {
-            firstName: 'Jacob',
-            lastName: 'Halberstam',
+            firstName: '',
+            lastName: '',
             gender: 'Masculino',
-            birthDate: '25/03/1985',
+            birthDate: '',
             passportNumber: generateRandomPassport(),
             nationality: 'Estados Unidos',
             passportExpiry: generateRandomExpiry(),
