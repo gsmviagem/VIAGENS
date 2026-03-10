@@ -107,17 +107,17 @@ function LoginContent() {
                         </div>
 
                         <div className="pt-4 flex flex-col gap-4">
-                            <SubmitButton>
+                            <SubmitButton className="h-14 bg-primary text-background-dark font-black text-lg rounded-2xl shadow-[0_0_20px_rgba(0,255,200,0.3)] hover:brightness-110">
                                 INITIALIZE SESSION <ArrowRight size={20} className="ml-2" />
                             </SubmitButton>
 
-                            <Button
+                            <SubmitButton
                                 formAction={signup}
                                 variant="ghost"
                                 className="h-14 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white border border-transparent hover:border-white/10 rounded-2xl"
                             >
                                 Request Authorization Code
-                            </Button>
+                            </SubmitButton>
                         </div>
                     </form>
 
