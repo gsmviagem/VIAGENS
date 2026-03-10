@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { login, signup } from './actions';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,10 +16,22 @@ import {
     Zap,
     Cpu
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { SubmitButton } from './submit-button';
 
-export default function LoginPage() {
-    const [isLoading, setIsLoading] = useState(false);
+function LoginContent() {
+    const searchParams = useSearchParams();
+    const error = searchParams.get('error');
+    const message = searchParams.get('message');
+
+    useEffect(() => {
+        if (error) {
+            toast.error(error);
+        }
+        if (message) {
+            toast.success(message);
+        }
+    }, [error, message]);
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background-dark">
@@ -57,7 +70,7 @@ export default function LoginPage() {
                         <Cpu size={120} className="text-primary rotate-12" />
                     </div>
 
-                    <form className="space-y-6 relative z-10">
+                    <form action={login} className="space-y-6 relative z-10">
                         <div className="space-y-2 group">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-primary transition-colors ml-1">Authentication ID</Label>
                             <div className="relative">
@@ -67,6 +80,7 @@ export default function LoginPage() {
                                     name="email"
                                     type="email"
                                     required
+                                    defaultValue="admin@gsmviagem.com"
                                     placeholder="name@gsmviagem.com"
                                     className="pl-12 h-14 bg-white/5 border-white/10 text-white rounded-2xl focus-visible:ring-primary text-lg font-bold transition-all placeholder:text-slate-600"
                                 />
@@ -85,6 +99,7 @@ export default function LoginPage() {
                                     name="password"
                                     type="password"
                                     required
+                                    defaultValue="admin123"
                                     placeholder="••••••••"
                                     className="pl-12 h-14 bg-white/5 border-white/10 text-white rounded-2xl focus-visible:ring-primary text-lg font-bold transition-all"
                                 />
@@ -92,12 +107,10 @@ export default function LoginPage() {
                         </div>
 
                         <div className="pt-4 flex flex-col gap-4">
-                            <Button
-                                formAction={login}
-                                className="h-14 bg-primary text-background-dark font-black text-lg rounded-2xl shadow-[0_0_20px_rgba(0,255,200,0.3)] hover:brightness-110 active:scale-95 transition-all flex items-center gap-3"
-                            >
-                                INITIALIZE SESSION <ArrowRight size={20} />
-                            </Button>
+                            <SubmitButton>
+                                INITIALIZE SESSION <ArrowRight size={20} className="ml-2" />
+                            </SubmitButton>
+
                             <Button
                                 formAction={signup}
                                 variant="ghost"
@@ -119,5 +132,13 @@ export default function LoginPage() {
                 </p>
             </motion.div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-background-dark flex items-center justify-center text-primary font-black uppercase tracking-widest">Initialising Secure Tunnel...</div>}>
+            <LoginContent />
+        </Suspense>
     );
 }
