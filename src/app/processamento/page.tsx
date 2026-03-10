@@ -50,7 +50,7 @@ export default function ProcessamentoPage() {
 ⇾ Bebês: ${data.infants}
 ⇾ Voo: ${data.flightTime}
 
-"DADOS DO PASSAGEIRO
+DADOS DO PASSAGEIRO
 ➔ Primeiro nome: ${data.passenger.firstName}
 ➔ Último nome: ${data.passenger.lastName}
 ➔ Gênero: ${data.passenger.gender}
@@ -58,7 +58,7 @@ export default function ProcessamentoPage() {
 ➔ Número do passaporte: ${data.passenger.passportNumber}
 ➔ Nacionalidade: ${data.passenger.nationality}
 ➔ Data de validade do passaporte: ${data.passenger.passportExpiry}
-➔ País de emissão do passaporte: ${data.passenger.passportIssuanceCountry}"`;
+➔ País de emissão do passaporte: ${data.passenger.passportIssuanceCountry}`;
     };
 
     const handleCopy = () => {
