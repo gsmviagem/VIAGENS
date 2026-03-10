@@ -11,6 +11,7 @@ import {
     Bell,
     Rocket,
     Search as SearchIcon,
+    Terminal as TerminalIcon,
     LogOut,
     Menu
 } from 'lucide-react';
@@ -23,6 +24,7 @@ const navItems = [
     { href: '/', label: 'Dashboard', icon: LayoutGrid },
     { href: '/auto-extrator', label: 'Automations', icon: Cpu },
     { href: '/emissoes', label: 'Financials', icon: CreditCard },
+    { href: '/processamento', label: 'Processor', icon: TerminalIcon },
     { href: '/configuracoes', label: 'Settings', icon: Settings },
 ];
 
