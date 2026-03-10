@@ -42,8 +42,8 @@ export default function AutoExtratorPage() {
                             <div className="flex items-center justify-between">
                                 <CardTitle className="text-lg text-slate-200 group-hover:text-cyan-400 transition-colors">{robot.name}</CardTitle>
                                 <Badge variant="outline" className={`${robot.status === 'running' ? 'border-green-500/50 text-green-400 bg-green-500/10' :
-                                        robot.status === 'paused' ? 'border-amber-500/50 text-amber-400 bg-amber-500/10' :
-                                            'border-slate-500/50 text-slate-400 bg-slate-500/10'
+                                    robot.status === 'paused' ? 'border-amber-500/50 text-amber-400 bg-amber-500/10' :
+                                        'border-slate-500/50 text-slate-400 bg-slate-500/10'
                                     }`}>
                                     {robot.status === 'running' ? 'Executando' : robot.status === 'paused' ? 'Pausado' : 'Ocioso'}
                                 </Badge>
@@ -96,14 +96,14 @@ export default function AutoExtratorPage() {
                             <div key={log.id} className="flex flex-col sm:flex-row sm:items-start gap-3 hover:bg-white/[0.02] p-1 -mx-1 rounded transition-colors">
                                 <span className="text-slate-600 shrink-0 select-none">[{log.time}]</span>
                                 <span className={`${log.level === 'error' ? 'text-red-400/90' :
-                                        log.level === 'success' ? 'text-green-400/90' :
-                                            'text-cyan-400/80'
+                                    log.level === 'success' ? 'text-green-400/90' :
+                                        'text-cyan-400/80'
                                     }`}>
                                     {log.message}
                                 </span>
                             </div>
                         ))}
-                        <div className="text-slate-600 animate-pulse mt-4 flex items-center">
+                        <div className="text-slate-600 mt-4 flex items-center">
                             <span className="mr-2">{'>'}</span> Acessando portal LATAM (aguardando proxy)...
                         </div>
                     </div>
