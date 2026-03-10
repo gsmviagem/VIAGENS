@@ -34,7 +34,7 @@ export default async function LoginPage({ searchParams }: Props) {
                 </CardHeader>
                 <CardContent className="px-8 pb-8">
                     {errorMsg && (
-                        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                        <div className="mb-6 p-4 bg-red-500/10 border border-slate-800 rounded-lg flex items-start gap-3">
                             <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
                             <div className="text-sm">
                                 <p className="font-bold text-red-500 mb-1 leading-none">Erro Operacional</p>
@@ -44,7 +44,7 @@ export default async function LoginPage({ searchParams }: Props) {
                     )}
 
                     {successMsg && (
-                        <div className="mb-6 p-4 bg-cyan-500/10 border border-cyan-500/20 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                        <div className="mb-6 p-4 bg-cyan-500/10 border border-slate-800 rounded-lg flex items-start gap-3">
                             <ShieldCheck className="h-5 w-5 text-cyan-400 shrink-0 mt-0.5" />
                             <div className="text-sm">
                                 <p className="font-bold text-cyan-400 mb-1 leading-none">Ação Concluída</p>
