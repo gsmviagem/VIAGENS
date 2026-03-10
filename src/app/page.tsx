@@ -57,18 +57,18 @@ export default async function DashboardPage() {
 
       <div className="relative z-10 space-y-8 pt-2">
         {/* Header section with some glow */}
-        <div className="flex justify-between items-end animate-in fade-in slide-in-from-top-4 duration-1000">
+        <div className="flex justify-between items-end">
           <div>
             <h1 className="text-4xl font-black tracking-tighter text-white uppercase text-glow">
               Command Center
             </h1>
             <p className="text-cyan-400 font-mono text-xs tracking-widest mt-1 opacity-80">
-              OPERATIONAL STATUS: <span className="text-green-400 animate-pulse">OPTIMIZED</span> | CORE_V3.1
+              OPERATIONAL STATUS: <span className="text-green-400">OPTIMIZED</span> | CORE_V3.1
             </p>
           </div>
           <div className="flex gap-4">
             <div className="glass px-4 py-2 rounded-full flex items-center gap-2 border-cyan-500/30">
-              <RefreshCcw className="h-3 w-3 text-cyan-400 animate-spin-slow" />
+              <RefreshCcw className="h-3 w-3 text-cyan-400" />
               <span className="text-[10px] font-mono text-cyan-100/70">AUTO-REFRESH ENABLED</span>
             </div>
           </div>
@@ -78,7 +78,7 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
           {/* LEFT: Air Automations (3 cols) */}
-          <div className="lg:col-span-3 space-y-4 animate-in fade-in slide-in-from-left-8 duration-700 stagger-1">
+          <div className="lg:col-span-3 space-y-4">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <Zap className="h-4 w-4 text-yellow-400" /> Air Automations
@@ -87,20 +87,19 @@ export default async function DashboardPage() {
             </div>
 
             {/* Automation toggle cards */}
-            {['AZUL', 'SMILES', 'LATAM'].map((airline, idx) => {
+            {['AZUL', 'SMILES', 'LATAM'].map((airline) => {
               const integration = integrations?.find(i => i.airline.toUpperCase() === airline);
               const isActive = integration?.status === 'active';
 
               const colorMap: any = {
-                'AZUL': 'bg-blue-500/20 border-blue-500/30 text-blue-400',
-                'SMILES': 'bg-orange-500/20 border-orange-500/30 text-orange-400',
-                'LATAM': 'bg-red-500/20 border-red-500/30 text-red-500'
+                'AZUL': 'bg-blue-500/20 text-blue-400',
+                'SMILES': 'bg-orange-500/20 text-orange-400',
+                'LATAM': 'bg-red-500/20 text-red-500'
               };
 
               return (
-                <div key={airline} className={`animate-in fade-in slide-in-from-left-4 duration-500`} style={{ animationDelay: `${(idx + 1) * 150}ms` }}>
-                  <Card className="glass-card hover:translate-x-1 transition-all hover:shadow-[0_0_20px_-5px_oklch(0.7_0.15_200_/_30%)] border-l-4 overflow-hidden"
-                    style={{ borderLeftColor: airline === 'AZUL' ? '#3b82f6' : airline === 'SMILES' ? '#f97316' : '#ef4444' }}>
+                <div key={airline}>
+                  <Card className="glass-card overflow-hidden">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -189,7 +188,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* RIGHT: Status & KPIs (3 cols) */}
-          <div className="lg:col-span-3 space-y-6 animate-in fade-in slide-in-from-right-8 duration-700 stagger-3">
+          <div className="lg:col-span-3 space-y-6">
 
             {/* Sync Card */}
             <div className="space-y-3">
@@ -224,17 +223,17 @@ export default async function DashboardPage() {
               <h2 className="text-lg font-bold text-white flex items-center gap-2 mb-2 px-2">
                 <TrendingUp className="h-4 w-4 text-cyan-400" /> Financial KPIs
               </h2>
-              <Card className="glass-card hover:shadow-[0_0_20px_-5px_oklch(0.7_0.15_200_/_30%)] transition-all group">
+              <Card className="glass-card">
                 <CardContent className="p-5 space-y-6">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="group-hover:translate-y-[-2px] transition-transform">
+                    <div>
                       <div className="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">Avg Profit per Ticket</div>
                       <div className="text-lg font-black text-white">$112.50</div>
                       <div className="text-[9px] text-green-400 flex items-center">
                         <TrendingUp className="h-2 w-2 mr-1" /> 8.3%
                       </div>
                     </div>
-                    <div className="group-hover:translate-y-[-2px] transition-transform">
+                    <div>
                       <div className="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">Total Points Logged (MM)</div>
                       <div className="text-lg font-black text-white">{(totalMiles / 1000000).toFixed(1)}M pts</div>
                       <div className="text-[9px] text-red-400 flex items-center">
@@ -244,11 +243,11 @@ export default async function DashboardPage() {
                   </div>
 
                   <div className="pt-4 border-t border-white/5 grid grid-cols-2 gap-4">
-                    <div className="group-hover:translate-x-[2px] transition-transform">
+                    <div>
                       <div className="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">Revenue Today</div>
                       <div className="text-lg font-black text-white">$18,450.00</div>
                     </div>
-                    <div className="group-hover:translate-x-[2px] transition-transform">
+                    <div>
                       <div className="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">Tickets Issued</div>
                       <div className="text-lg font-black text-white">{totalEmissions || 0}</div>
                     </div>
