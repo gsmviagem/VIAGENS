@@ -11,13 +11,15 @@ import {
     User,
     Plane,
     Globe,
-    CreditCard
+    CreditCard,
+    Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { parseFlightMessage, ProcessedData } from '@/utils/message-parser';
+import { Badge } from '@/components/ui/badge';
 
 export default function ProcessamentoPage() {
     const [input, setInput] = useState('');
@@ -40,7 +42,7 @@ export default function ProcessamentoPage() {
     };
 
     const formatOutput = (data: ProcessedData) => {
-        return `Gostaria de emitir em tabela fixa:
+        const baseInfo = `Gostaria de emitir em tabela fixa:
 ⇾ Origem e Destino: ${data.origin} - ${data.destination}
 ⇾ Data de ida: ${data.date}
 ⇾ Classe: ${data.classType}
@@ -48,17 +50,20 @@ export default function ProcessamentoPage() {
 ⇾ Adultos: ${data.adults}
 ⇾ Crianças: ${data.children}
 ⇾ Bebês: ${data.infants}
-⇾ Voo: ${data.flightTime}
+⇾ Voo: ${data.flightTime}`;
 
+        const passengerBlocks = data.passengers.map(p => `
 DADOS DO PASSAGEIRO
-➔ Primeiro nome: ${data.passenger.firstName}
-➔ Último nome: ${data.passenger.lastName}
-➔ Gênero: ${data.passenger.gender}
-➔ Data de nascimento: ${data.passenger.birthDate}
-➔ Número do passaporte: ${data.passenger.passportNumber}
-➔ Nacionalidade: ${data.passenger.nationality}
-➔ Data de validade do passaporte: ${data.passenger.passportExpiry}
-➔ País de emissão do passaporte: ${data.passenger.passportIssuanceCountry}`;
+➔ Primeiro nome: ${p.firstName}
+➔ Último nome: ${p.lastName}
+➔ Gênero: ${p.gender}
+➔ Data de nascimento: ${p.birthDate}
+➔ Número do passaporte: ${p.passportNumber}
+➔ Nacionalidade: ${p.nationality}
+➔ Data de validade do passaporte: ${p.passportExpiry}
+➔ País de emissão do passaporte: ${p.passportIssuanceCountry}`).join('\n');
+
+        return `${baseInfo}\n${passengerBlocks}`;
     };
 
     const handleCopy = () => {
@@ -149,20 +154,38 @@ DADOS DO PASSAGEIRO
                     </div>
 
                     {result && (
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center gap-3">
-                                <User size={16} className="text-primary" />
-                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">
-                                    <span className="block text-white">PASSENGER</span>
-                                    {result.passenger.firstName} {result.passenger.lastName}
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center gap-3">
+                                    <Users size={16} className="text-primary" />
+                                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">
+                                        <span className="block text-white">TOTAL PASSENGERS</span>
+                                        {result.passengers.length} ({result.adults}A, {result.children}C, {result.infants}I)
+                                    </div>
+                                </div>
+                                <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center gap-3">
+                                    <Plane size={16} className="text-accent-blue" />
+                                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">
+                                        <span className="block text-white">ROUTE</span>
+                                        {result.origin || 'N/A'} → {result.destination || 'N/A'}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center gap-3">
-                                <Plane size={16} className="text-accent-blue" />
-                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">
-                                    <span className="block text-white">ROUTE</span>
-                                    {result.origin} → {result.destination}
-                                </div>
+
+                            <div className="grid grid-cols-1 gap-2 max-h-[150px] overflow-y-auto px-1 custom-scrollbar">
+                                {result.passengers.map((p, i) => (
+                                    <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] text-primary font-black">
+                                                {i + 1}
+                                            </div>
+                                            <div className="text-[10px] font-bold text-white uppercase">{p.firstName} {p.lastName}</div>
+                                        </div>
+                                        <Badge variant="outline" className="text-[8px] font-black uppercase border-primary/20 text-primary">
+                                            {p.gender}
+                                        </Badge>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}
