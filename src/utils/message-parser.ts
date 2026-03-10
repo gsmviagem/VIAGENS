@@ -106,7 +106,7 @@ export function parseFlightMessage(message: string): ProcessedData {
     // 6. Multi-Passenger & Age Categorization
     // Regex to find: Name LastName Month Day Year
     // Using global flag to find multiple
-    const passengerRegex = /([a-z]+)\s+([a-z]+)\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(\d{1,2})\s+(\d{2}|19\d{2}|20\d{2})/gi;
+    const passengerRegex = /([a-z]+)\s+([a-z]+)\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(\d{1,2})\s+(19\d{2}|20\d{2}|\d{2})/gi;
     let match;
 
     while ((match = passengerRegex.exec(msg)) !== null) {
