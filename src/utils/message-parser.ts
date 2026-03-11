@@ -92,8 +92,9 @@ export function parseFlightMessage(message: string): ProcessedData {
         }
     }
 
-    // 3. Time
+    // 3. Time & Flight Number
     const timeMatch = msg.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
+    let extractedTime = '';
     if (timeMatch) {
         let hour = parseInt(timeMatch[1]);
         const minutes = timeMatch[2] || '00';
@@ -102,7 +103,15 @@ export function parseFlightMessage(message: string): ProcessedData {
         if (period === 'pm' && hour < 12) hour += 12;
         if (period === 'am' && hour === 12) hour = 0;
 
-        data.flightTime = `${hour.toString().padStart(2, '0')}:${minutes}`;
+        extractedTime = `${hour.toString().padStart(2, '0')}:${minutes}`;
+    }
+
+    const flightNoMatch = msg.match(/([a-z]{2})\s*(\d{1,4})/i);
+    if (flightNoMatch) {
+        const fNo = `${flightNoMatch[1].toUpperCase()} ${flightNoMatch[2]}`;
+        data.flightTime = extractedTime ? `${extractedTime} (${fNo})` : fNo;
+    } else {
+        data.flightTime = extractedTime;
     }
 
     // 4. Class & Partner
@@ -110,11 +119,34 @@ export function parseFlightMessage(message: string): ProcessedData {
     if (msg.includes('business') || msg.includes('executiva')) data.classType = 'EXECUTIVA';
     if (msg.includes('first') || msg.includes('primeira')) data.classType = 'PRIMEIRA';
 
-    const partners = ['delta', 'virgin', 'latam', 'azul', 'smiles', 'tap', 'iberia', 'qatar', 'emirates'];
-    for (const p of partners) {
-        if (msg.includes(p)) {
-            data.partner = p.charAt(0).toUpperCase() + p.slice(1);
+    const partnerMap: { [key: string]: string } = {
+        vs: 'Virgin',
+        dl: 'Delta',
+        la: 'LATAM',
+        ad: 'Azul',
+        af: 'Air France',
+        kl: 'KLM',
+        ib: 'Iberia',
+        tp: 'TAP'
+    };
+
+    // Try IATA codes first (standalone words)
+    const words = msg.split(/\s+/);
+    for (const word of words) {
+        if (partnerMap[word]) {
+            data.partner = partnerMap[word];
             break;
+        }
+    }
+
+    // Fallback to full names
+    if (!data.partner) {
+        const fullPartners = ['delta', 'virgin', 'latam', 'azul', 'smiles', 'tap', 'iberia', 'qatar', 'emirates'];
+        for (const p of fullPartners) {
+            if (msg.includes(p)) {
+                data.partner = p.charAt(0).toUpperCase() + p.slice(1);
+                break;
+            }
         }
     }
 
