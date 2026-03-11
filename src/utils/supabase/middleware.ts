@@ -31,22 +31,6 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    // Protector logic
-    const isLoginPage = request.nextUrl.pathname.startsWith('/login')
-
-    if (!user && !isLoginPage) {
-        // If user is not logged in and not on login page, redirect to login
-        const url = request.nextUrl.clone()
-        url.pathname = '/login'
-        return NextResponse.redirect(url)
-    }
-
-    if (user && isLoginPage) {
-        // If user is logged in and tries to access login page, redirect to dashboard
-        const url = request.nextUrl.clone()
-        url.pathname = '/'
-        return NextResponse.redirect(url)
-    }
-
+    // Simplified middleware to allow open access while maintaining session updates
     return supabaseResponse
 }

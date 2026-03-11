@@ -34,15 +34,7 @@ function LoginContent() {
     }, [error, message]);
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background-dark">
-            {/* Background Decorative Elements */}
-            <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/20 blur-[150px] rounded-full"></div>
-            <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-blue/10 blur-[120px] rounded-full"></div>
-
-            {/* Grid Pattern Overlay */}
-            <div className="absolute inset-0 opacity-10 pointer-events-none"
-                style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(0,255,200,0.15) 1px, transparent 0)', backgroundSize: '40px 40px' }}>
-            </div>
+        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-transparent">
 
             <motion.div
                 initial={{ opacity: 0, y: 40 }}
