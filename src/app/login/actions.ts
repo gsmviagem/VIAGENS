@@ -5,47 +5,13 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 
 export async function login(formData: FormData) {
-    const supabase = await createClient()
-
-    // type-casting here for convenience
-    const data = {
-        email: formData.get('email') as string,
-        password: formData.get('password') as string,
-    }
-
-    const { error } = await supabase.auth.signInWithPassword(data)
-
-    if (error) {
-        return redirect(`/login?error=${encodeURIComponent(error.message)}`)
-    }
-
+    // Artificial bypass: just redirect to dashboard
     revalidatePath('/', 'layout')
     redirect('/')
 }
 
 export async function signup(formData: FormData) {
-    const supabase = await createClient()
-
-    const data = {
-        email: formData.get('email') as string,
-        password: formData.get('password') as string,
-        options: {
-            data: {
-                role: 'operator'
-            }
-        }
-    }
-
-    const { data: authData, error } = await supabase.auth.signUp(data)
-
-    if (error) {
-        return redirect(`/login?error=${encodeURIComponent(error.message)}`)
-    }
-
-    if (authData.user && !authData.session) {
-        return redirect('/login?message=Conta criada! Verifique seu e-mail para confirmar o acesso.')
-    }
-
+    // Artificial bypass: just redirect to dashboard
     revalidatePath('/', 'layout')
     redirect('/')
 }
