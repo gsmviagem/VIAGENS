@@ -64,13 +64,25 @@ export function parseFlightMessage(message: string): ProcessedData {
 
     // 2. Date
     const months: { [key: string]: string } = {
-        jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
-        jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
+        jan: '01', january: '01',
+        feb: '02', february: '02',
+        mar: '03', march: '03',
+        apr: '04', april: '04',
+        may: '05',
+        jun: '06', june: '06',
+        jul: '07', july: '07',
+        aug: '08', august: '08',
+        sep: '09', september: '09',
+        oct: '10', october: '10',
+        nov: '11', november: '11',
+        dec: '12', december: '12'
     };
 
-    const dateMatch = msg.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s*(\d{1,2})/);
+    const monthKeys = Object.keys(months).join('|');
+    const dateMatch = msg.match(new RegExp(`(${monthKeys})\\s*(\\d{1,2})`, 'i'));
+
     if (dateMatch) {
-        const month = months[dateMatch[1]];
+        const month = months[dateMatch[1].toLowerCase()];
         const day = dateMatch[2].padStart(2, '0');
         data.date = `${day}/${month}/2026`;
     } else {
@@ -81,13 +93,16 @@ export function parseFlightMessage(message: string): ProcessedData {
     }
 
     // 3. Time
-    const timeMatch = msg.match(/(\d{1,2})\s*(am|pm)/);
+    const timeMatch = msg.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
     if (timeMatch) {
         let hour = parseInt(timeMatch[1]);
-        const period = timeMatch[2];
+        const minutes = timeMatch[2] || '00';
+        const period = timeMatch[3].toLowerCase();
+
         if (period === 'pm' && hour < 12) hour += 12;
         if (period === 'am' && hour === 12) hour = 0;
-        data.flightTime = `${hour.toString().padStart(2, '0')}:00`;
+
+        data.flightTime = `${hour.toString().padStart(2, '0')}:${minutes}`;
     }
 
     // 4. Class & Partner
@@ -104,33 +119,44 @@ export function parseFlightMessage(message: string): ProcessedData {
     }
 
     // 6. Multi-Passenger & Age Categorization
-    // Regex to find: Name LastName Month Day Year
-    // Using global flag to find multiple
-    const passengerRegex = /([a-z]+)\s+([a-z]+)\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(\d{1,2})\s+(19\d{2}|20\d{2}|\d{2})/gi;
+    // We try two patterns:
+    // A: Name LastName Month Day Year
+    // B: Name LastName MM/DD/YYYY
+    const paxA = /([a-z]+)\s+([a-z]+)\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(\d{1,2})\s+(19\d{2}|20\d{2}|\d{2})/gi;
+    const paxB = /([a-z]+)\s+([a-z]+)\s+(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/gi;
+
     let match;
 
-    while ((match = passengerRegex.exec(msg)) !== null) {
-        const firstName = match[1].charAt(0).toUpperCase() + match[1].slice(1);
-        const lastName = match[2].charAt(0).toUpperCase() + match[2].slice(1);
-        const bMonth = months[match[3].toLowerCase().substring(0, 3)];
-        const bDay = match[4].padStart(2, '0');
-        let rawYear = match[5];
-        let fullYear = parseInt(rawYear);
-        if (rawYear.length === 2) {
+    // Pattern A
+    while ((match = paxA.exec(msg)) !== null) {
+        processPassenger(match[1], match[2], months[match[3].toLowerCase().substring(0, 3)], match[4], match[5]);
+    }
+
+    // Pattern B
+    while ((match = paxB.exec(msg)) !== null) {
+        // Assume MM/DD/YYYY
+        processPassenger(match[1], match[2], match[3], match[4], match[5]);
+    }
+
+    function processPassenger(fName: string, lName: string, month: string, day: string, year: string) {
+        const firstName = fName.charAt(0).toUpperCase() + fName.slice(1);
+        const lastName = lName.charAt(0).toUpperCase() + lName.slice(1);
+        const bMonth = month.padStart(2, '0');
+        const bDay = day.padStart(2, '0');
+        let fullYear = parseInt(year);
+        if (year.length === 2) {
             fullYear = fullYear > 25 ? 1900 + fullYear : 2000 + fullYear;
         }
 
         const birthDate = `${bDay}/${bMonth}/${fullYear}`;
-
-        // Categorization (Reference 2026)
         const age = 2026 - fullYear;
+
         if (age >= 12) data.adults++;
         else if (age >= 2) data.children++;
         else data.infants++;
 
-        // Infer gender (very basic dictionary)
         const femaleNames = ['maria', 'ana', 'julia', 'julia', 'lucia', 'carla', 'fernanda', 'andressa', 'alicia', 'beatriz', 'camila', 'clara', 'daniela', 'elisa', 'gabriela', 'isabela', 'laura', 'livia', 'luiza', 'manuela', 'mariana', 'nicole', 'paola', 'rafaela', 'sophia', 'valentina'];
-        const gender = femaleNames.includes(match[1].toLowerCase()) ? 'Feminino' : 'Masculino';
+        const gender = femaleNames.includes(fName.toLowerCase()) ? 'Feminino' : 'Masculino';
 
         data.passengers.push({
             firstName,
