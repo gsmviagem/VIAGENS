@@ -63,7 +63,8 @@ export default function CotacaoPage() {
                 setResults(data.results);
                 const updatedStatus: any = {};
                 data.results.forEach((r: any) => {
-                    updatedStatus[r.site.toLowerCase().replace(' ', '-')] = r.success ? 'done' : 'error';
+                    const key = r.site.toLowerCase().replace(/\s+/g, '-');
+                    updatedStatus[key] = r.success ? 'done' : 'error';
                 });
                 setSearchStatus(updatedStatus);
             }
