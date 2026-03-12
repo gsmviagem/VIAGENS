@@ -27,6 +27,7 @@ const sites = [
 
 export default function CotacaoPage() {
     const [isSearching, setIsSearching] = useState(false);
+    const [results, setResults] = useState<any[]>([]);
     const [searchStatus, setSearchStatus] = useState<Record<string, 'idle' | 'searching' | 'done' | 'error'>>({
         smiles: 'idle',
         latam: 'idle',
@@ -34,14 +35,43 @@ export default function CotacaoPage() {
         'busca-ideal': 'idle',
     });
 
-    const handleSearch = () => {
+    const [form, setForm] = useState({
+        origin: '',
+        destination: '',
+        date: '',
+        passengers: 1
+    });
+
+    const handleSearch = async () => {
+        if (!form.origin || !form.destination || !form.date) return;
+
         setIsSearching(true);
-        // Simulate search progress per site
         const newStatus = { ...searchStatus };
         Object.keys(newStatus).forEach(site => newStatus[site] = 'searching');
         setSearchStatus(newStatus);
+        setResults([]);
 
-        // This will eventually call /api/quotation
+        try {
+            const response = await fetch('/api/quotation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(form)
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                setResults(data.results);
+                const updatedStatus: any = {};
+                data.results.forEach((r: any) => {
+                    updatedStatus[r.site.toLowerCase().replace(' ', '-')] = r.success ? 'done' : 'error';
+                });
+                setSearchStatus(updatedStatus);
+            }
+        } catch (error) {
+            console.error('Search failed:', error);
+        } finally {
+            setIsSearching(false);
+        }
     };
 
     return (
@@ -86,6 +116,8 @@ export default function CotacaoPage() {
                                     <input
                                         type="text"
                                         placeholder="EX: GRU"
+                                        value={form.origin}
+                                        onChange={(e) => setForm({ ...form, origin: e.target.value.toUpperCase() })}
                                         className="bg-transparent border-none outline-none text-white font-bold w-full placeholder:text-slate-600 focus:ring-0"
                                     />
                                 </div>
@@ -104,6 +136,8 @@ export default function CotacaoPage() {
                                     <input
                                         type="text"
                                         placeholder="EX: LHR"
+                                        value={form.destination}
+                                        onChange={(e) => setForm({ ...form, destination: e.target.value.toUpperCase() })}
                                         className="bg-transparent border-none outline-none text-white font-bold w-full placeholder:text-slate-600 focus:ring-0"
                                     />
                                 </div>
@@ -114,14 +148,25 @@ export default function CotacaoPage() {
                                     <label className="text-[10px] font-bold uppercase text-slate-500 ml-1 mb-1 block">Date</label>
                                     <div className="flex items-center bg-white/5 border border-white/10 rounded-xl px-4 py-3">
                                         <Calendar className="w-4 h-4 text-slate-400 mr-3" />
-                                        <input type="text" placeholder="20/05/26" className="bg-transparent border-none outline-none text-white text-sm w-full placeholder:text-slate-600" />
+                                        <input
+                                            type="text"
+                                            placeholder="20/05/2026"
+                                            value={form.date}
+                                            onChange={(e) => setForm({ ...form, date: e.target.value })}
+                                            className="bg-transparent border-none outline-none text-white text-sm w-full placeholder:text-slate-600"
+                                        />
                                     </div>
                                 </div>
                                 <div className="group">
                                     <label className="text-[10px] font-bold uppercase text-slate-500 ml-1 mb-1 block">Passengers</label>
                                     <div className="flex items-center bg-white/5 border border-white/10 rounded-xl px-4 py-3">
                                         <Users className="w-4 h-4 text-slate-400 mr-3" />
-                                        <input type="number" defaultValue={1} className="bg-transparent border-none outline-none text-white text-sm w-full" />
+                                        <input
+                                            type="number"
+                                            value={form.passengers}
+                                            onChange={(e) => setForm({ ...form, passengers: parseInt(e.target.value) })}
+                                            className="bg-transparent border-none outline-none text-white text-sm w-full"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -221,7 +266,12 @@ export default function CotacaoPage() {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <p className="text-3xl font-black tracking-tighter text-white">---</p>
+                                                <p className="text-3xl font-black tracking-tighter text-white">
+                                                    {results.find(r => r.site.toLowerCase().includes(site.id))?.price || '---'}
+                                                    <span className="text-xs uppercase ml-1 opacity-50">
+                                                        {results.find(r => r.site.toLowerCase().includes(site.id))?.currency === 'miles' ? 'mi' : 'brl'}
+                                                    </span>
+                                                </p>
                                             )}
                                         </div>
                                         <Button variant="ghost" size="sm" className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-white">View Board</Button>
@@ -237,13 +287,45 @@ export default function CotacaoPage() {
                             <h3 className="font-bold text-slate-200">Comparative Flight Matrix</h3>
                             <p className="text-xs text-slate-500">Aggregated results for best routing efficiency</p>
                         </div>
-                        <div className="p-20 text-center">
-                            <div className="inline-flex p-4 rounded-full bg-white/5 mb-4 border border-white/10 group-hover:border-primary/30 transition-all">
-                                <Search className="w-8 h-8 text-slate-600" />
+                        {results.length > 0 ? (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead>
+                                        <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-slate-500">
+                                            <th className="px-6 py-4 font-bold">Source</th>
+                                            <th className="px-6 py-4 font-bold">Protocol</th>
+                                            <th className="px-6 py-4 font-bold text-right">Extracted Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5 font-medium">
+                                        {results.map((res: any) => (
+                                            <tr key={res.site} className="hover:bg-white/[0.02] transition-colors">
+                                                <td className="px-6 py-4 text-white font-bold">{res.site}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={cn(
+                                                        "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                                                        res.success ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
+                                                    )}>
+                                                        {res.success ? "Optimised" : "Fault"}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right text-primary font-black">
+                                                    {res.price} {res.currency === 'miles' ? 'MI' : 'BRL'}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
-                            <h4 className="text-slate-400 font-bold">No active search protocol</h4>
-                            <p className="text-xs text-slate-600 mt-1 max-w-[200px] mx-auto">Fill the flight details and initialize the quotation agent.</p>
-                        </div>
+                        ) : (
+                            <div className="p-20 text-center">
+                                <div className="inline-flex p-4 rounded-full bg-white/5 mb-4 border border-white/10 group-hover:border-primary/30 transition-all">
+                                    <Search className="w-8 h-8 text-slate-600" />
+                                </div>
+                                <h4 className="text-slate-400 font-bold">No active search protocol</h4>
+                                <p className="text-xs text-slate-600 mt-1 max-w-[200px] mx-auto">Fill the flight details and initialize the quotation agent.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
