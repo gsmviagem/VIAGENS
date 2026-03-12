@@ -73,7 +73,8 @@ export class AzulScraper {
             this.log(`Starting extraction for CPF: ${options.cpf}`);
 
             // ─── 1. Login ────────────────────────────────────────────────────
-            await page.goto('https://www.voeazul.com.br/minhas-viagens/reservas', {
+            // Azul Pelo Mundo — international awards booking portal
+            await page.goto('https://azulpelomundo.voeazul.com.br/pt/my-bookings', {
                 waitUntil: 'domcontentloaded',
                 timeout: 60000
             });
@@ -84,16 +85,18 @@ export class AzulScraper {
             const isLoggedIn = await page.$('.pnr-card, .reservas-list, [class*="reserva"]').then(el => !!el).catch(() => false);
 
             if (!isLoggedIn) {
-                this.log('Not logged in – starting login flow');
+                this.log('Not logged in – starting login flow on Azul Pelo Mundo');
 
                 // Click login / entrar button in header or modal
                 const loginSelectors = [
-                    'a[href*="login"]',
+                    // Azul Pelo Mundo uses a TudoAzul login modal
+                    'button:has-text("Login")',
+                    'a:has-text("Login")',
                     'button:has-text("Entrar")',
                     'a:has-text("Entrar")',
-                    '#header-login',
-                    '.btn-login',
+                    '[class*="login"]',
                     '[data-testid="login-btn"]',
+                    '[aria-label*="login"]',
                 ];
 
                 let loginClicked = false;
@@ -105,18 +108,21 @@ export class AzulScraper {
                 }
 
                 if (!loginClicked) {
-                    // Try direct login URL
-                    await page.goto('https://www.voeazul.com.br/login', { waitUntil: 'domcontentloaded', timeout: 30000 });
+                    // Try direct login URL for Azul Pelo Mundo
+                    await page.goto('https://azulpelomundo.voeazul.com.br/pt/login', { waitUntil: 'domcontentloaded', timeout: 30000 });
                 }
 
                 await page.waitForTimeout(2000);
 
                 // Fill CPF field
                 const cpfSelectors = [
+                    // Azul Pelo Mundo / TudoAzul login fields
                     'input[name="cpf"]',
                     'input[placeholder*="CPF"]',
+                    'input[placeholder*="cpf"]',
                     'input[id*="cpf"]',
                     'input[id*="login"]',
+                    'input[id*="username"]',
                     'input[type="text"]:first-of-type',
                     '#username',
                 ];
@@ -181,10 +187,10 @@ export class AzulScraper {
                 // Wait for navigation after login
                 await page.waitForTimeout(5000);
 
-                // Navigate to Minhas Viagens if not redirected automatically
+                // Navigate to Minhas Reservas on Azul Pelo Mundo
                 const currentUrl = page.url();
-                if (!currentUrl.includes('minhas-viagens') && !currentUrl.includes('reservas')) {
-                    await page.goto('https://www.voeazul.com.br/minhas-viagens/reservas', {
+                if (!currentUrl.includes('my-bookings') && !currentUrl.includes('booking')) {
+                    await page.goto('https://azulpelomundo.voeazul.com.br/pt/my-bookings', {
                         waitUntil: 'domcontentloaded',
                         timeout: 30000
                     });
@@ -384,9 +390,9 @@ export class AzulScraper {
                 };
             }, locator);
 
-            // Go back to the list
+            // Go back to the Azul Pelo Mundo bookings list
             await page.goBack({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(async () => {
-                await page.goto('https://www.voeazul.com.br/minhas-viagens/reservas', { waitUntil: 'domcontentloaded' });
+                await page.goto('https://azulpelomundo.voeazul.com.br/pt/my-bookings', { waitUntil: 'domcontentloaded' });
             });
             await page.waitForTimeout(2500);
 
@@ -394,8 +400,8 @@ export class AzulScraper {
 
         } catch (err: any) {
             this.log(`Failed to extract details for ${locator}: ${err.message}`);
-            // Try to navigate back
-            await page.goto('https://www.voeazul.com.br/minhas-viagens/reservas', {
+            // Try to navigate back to Azul Pelo Mundo bookings
+            await page.goto('https://azulpelomundo.voeazul.com.br/pt/my-bookings', {
                 waitUntil: 'domcontentloaded', timeout: 15000
             }).catch(() => {});
             await page.waitForTimeout(2000);
