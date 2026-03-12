@@ -1,438 +1,465 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Cpu,
-    Terminal as TerminalIcon,
-    Play,
-    Pause,
-    RefreshCw,
-    KeyRound,
-    CheckCircle2,
-    XCircle,
-    Zap,
-    Activity,
-    PlayCircle,
-    UserPlus,
-    Shield,
-    Trash2,
-    MoreVertical
+    Cpu, Terminal as TerminalIcon, RefreshCw, KeyRound, CheckCircle2, XCircle,
+    Zap, Activity, UserPlus, Shield, Trash2, Eye, EyeOff, Play, Pause, Loader2, AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    DialogFooter
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from '@/utils/supabase/client';
 import { toast } from "sonner";
 
-function DashboardCard({
-    title,
-    icon,
-    children,
-    accentColor,
-    headerExtra,
-    className = ''
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface Account {
+    id: string;
+    login_cpf: string;
+    description: string;
+    is_active: boolean;
+    integration_id: string;
+}
+
+interface AirlineConfig {
+    id: 'azul' | 'smiles' | 'latam';
+    name: string;
+    color: string;
+    icon: string;
+    syncEndpoint?: string;
+}
+
+const AIRLINES: AirlineConfig[] = [
+    { id: 'azul', name: 'Azul Viagens', color: 'sky', syncEndpoint: '/api/sync/azul', icon: '✈' },
+    { id: 'smiles', name: 'Smiles (GOL)', color: 'orange', icon: '⭐' },
+    { id: 'latam', name: 'LATAM Pass', color: 'red', icon: '🌎' },
+];
+
+const COLOR_MAP: Record<string, string> = {
+    sky: 'text-sky-400 border-sky-500/30 bg-sky-500/10',
+    orange: 'text-orange-400 border-orange-500/30 bg-orange-500/10',
+    red: 'text-red-400 border-red-500/30 bg-red-500/10',
+};
+
+// ─── Airline Credential Card ──────────────────────────────────────────────────
+function AirlineCard({
+    airline,
+    accounts,
+    isRunning,
+    onAddAccount,
+    onDeleteAccount,
+    onSync,
 }: {
-    title: string,
-    icon: React.ReactNode,
-    children: React.ReactNode,
-    accentColor: string,
-    headerExtra?: React.ReactNode,
-    className?: string
+    airline: AirlineConfig;
+    accounts: Account[];
+    isRunning: boolean;
+    onAddAccount: (airlineId: string, cpf: string, password: string, description: string) => Promise<void>;
+    onDeleteAccount: (id: string) => Promise<void>;
+    onSync: (airline: AirlineConfig, account: Account) => Promise<void>;
 }) {
-    const accentClass = accentColor === 'primary' ? 'text-primary border-primary/20 bg-primary/10' :
-        accentColor === 'accent-blue' ? 'text-accent-blue border-accent-blue/20 bg-accent-blue/10' :
-            accentColor === 'green' ? 'text-green-500 border-green-500/20 bg-green-500/10' :
-                'text-slate-400 border-white/10 bg-white/5';
+    const [showForm, setShowForm] = useState(false);
+    const [cpf, setCpf] = useState('');
+    const [password, setPassword] = useState('');
+    const [description, setDescription] = useState('');
+    const [showPass, setShowPass] = useState(false);
+    const [adding, setAdding] = useState(false);
+
+    const colorClass = COLOR_MAP[airline.color] ?? 'text-slate-400 border-white/10 bg-white/5';
+    const airlineAccounts = accounts.filter(a => {
+        // We'll match by a convention: we'll tag accounts externally
+        return true; // All accounts for this integration are already filtered outside
+    });
+
+    const handleAdd = async () => {
+        if (!cpf || !password) { toast.error('CPF e senha são obrigatórios'); return; }
+        setAdding(true);
+        await onAddAccount(airline.id, cpf, password, description);
+        setCpf(''); setPassword(''); setDescription('');
+        setShowForm(false);
+        setAdding(false);
+    };
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className={cn(
-                "glass-panel rounded-2xl p-6 flex flex-col gap-6 border border-white/5 relative overflow-hidden group",
-                className
-            )}
+            className="glass-panel rounded-2xl p-5 flex flex-col gap-4 border border-white/5"
         >
-            <div className="flex items-center justify-between relative z-10">
+            {/* Header */}
+            <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center border", accentClass)}>
-                        {icon}
+                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center border text-lg", colorClass)}>
+                        {airline.icon}
                     </div>
-                    <h3 className="font-bold text-lg text-white">{title}</h3>
+                    <div>
+                        <h3 className="font-bold text-white">{airline.name}</h3>
+                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">
+                            {airlineAccounts.length} conta{airlineAccounts.length !== 1 ? 's' : ''} ativa{airlineAccounts.length !== 1 ? 's' : ''}
+                        </p>
+                    </div>
                 </div>
-                {headerExtra}
+                <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-slate-400 hover:text-white border border-white/10 hover:border-white/20 rounded-xl px-3 h-8"
+                    onClick={() => setShowForm(f => !f)}
+                >
+                    <UserPlus className="w-3.5 h-3.5 mr-1.5" /> Add
+                </Button>
             </div>
-            <div className="flex-1 flex flex-col relative z-10">
-                {children}
+
+            {/* Add Account Form */}
+            <AnimatePresence>
+                {showForm && (
+                    <motion.div
+                        key="form"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
+                    >
+                        <div className="space-y-3 pt-2 pb-1">
+                            <div className="space-y-1.5">
+                                <Label className="text-[10px] uppercase font-black tracking-widest text-slate-500">CPF / Login</Label>
+                                <Input
+                                    placeholder="000.000.000-00"
+                                    className="bg-black/30 border-white/10 text-white focus-visible:ring-primary rounded-xl h-10 text-sm"
+                                    value={cpf}
+                                    onChange={e => setCpf(e.target.value)}
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-[10px] uppercase font-black tracking-widest text-slate-500">Senha</Label>
+                                <div className="relative">
+                                    <Input
+                                        type={showPass ? 'text' : 'password'}
+                                        placeholder="••••••••"
+                                        className="bg-black/30 border-white/10 text-white focus-visible:ring-primary rounded-xl h-10 text-sm pr-10"
+                                        value={password}
+                                        onChange={e => setPassword(e.target.value)}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                                        onClick={() => setShowPass(v => !v)}
+                                    >
+                                        {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-[10px] uppercase font-black tracking-widest text-slate-500">Apelido (opcional)</Label>
+                                <Input
+                                    placeholder="Ex: Conta do Diretor"
+                                    className="bg-black/30 border-white/10 text-white focus-visible:ring-primary rounded-xl h-10 text-sm"
+                                    value={description}
+                                    onChange={e => setDescription(e.target.value)}
+                                />
+                            </div>
+                            <Button
+                                className="w-full h-9 bg-primary text-black font-black text-xs rounded-xl"
+                                onClick={handleAdd}
+                                disabled={adding}
+                            >
+                                {adding ? <Loader2 className="animate-spin mr-1.5 w-3.5 h-3.5" /> : <Zap className="mr-1.5 w-3.5 h-3.5" />}
+                                SALVAR CREDENCIAIS
+                            </Button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Accounts List */}
+            <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar pr-0.5">
+                {airlineAccounts.length === 0 ? (
+                    <div className="text-center py-6 text-slate-600 border border-dashed border-white/8 rounded-xl">
+                        <KeyRound className="w-6 h-6 mx-auto mb-2 opacity-30" />
+                        <p className="text-[10px] font-black uppercase tracking-widest">Nenhuma conta cadastrada</p>
+                    </div>
+                ) : (
+                    airlineAccounts.map(account => (
+                        <motion.div
+                            key={account.id}
+                            layout
+                            initial={{ opacity: 0, scale: 0.97 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.97 }}
+                            className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 group hover:border-white/10 transition-all"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className={cn("w-7 h-7 rounded-full flex items-center justify-center border text-[10px] font-black", colorClass)}>
+                                    {account.login_cpf.slice(-3)}
+                                </div>
+                                <div>
+                                    <div className="text-xs font-bold text-white">{account.description || 'Conta de extração'}</div>
+                                    <div className="text-[10px] text-slate-500 font-mono">
+                                        {account.login_cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '***.$2.$3-**')}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                {airline.syncEndpoint && (
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        disabled={isRunning}
+                                        onClick={() => onSync(airline, account)}
+                                        className="h-7 px-2 text-slate-400 hover:text-primary border border-white/5 hover:border-primary/20 rounded-lg text-[10px] font-black"
+                                    >
+                                        {isRunning
+                                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                            : <><RefreshCw className="w-3.5 h-3.5 mr-1" /> Sync</>
+                                        }
+                                    </Button>
+                                )}
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 w-7 p-0 text-slate-600 hover:text-red-400 rounded-lg"
+                                    onClick={() => onDeleteAccount(account.id)}
+                                >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                            </div>
+                        </motion.div>
+                    ))
+                )}
             </div>
         </motion.div>
     );
 }
 
-const mockRobots = [
-    { id: '1', name: 'Azul Extractor', airline: 'Azul', status: 'running', lastRun: '10 min atrás', sessionsStatus: 'valid' },
-    { id: '2', name: 'Smiles Extractor', airline: 'Smiles', status: 'paused', lastRun: '2 horas atrás', sessionsStatus: 'expired' },
-    { id: '3', name: 'LATAM Extractor', airline: 'LATAM', status: 'idle', lastRun: '5 min atrás', sessionsStatus: 'valid' },
-]
-
+// ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function AutoExtratorPage() {
     const supabase = createClient();
-    const [isAddAccountOpen, setIsAddAccountOpen] = useState(false);
-    const [accounts, setAccounts] = useState<any[]>([]);
+    const [accountsByAirline, setAccountsByAirline] = useState<Record<string, Account[]>>({});
     const [isLoading, setIsLoading] = useState(true);
-    const [newAccount, setNewAccount] = useState({
-        cpf: '',
-        password: '',
-        description: ''
-    });
-
-    // Logs state
-    const [logs, setLogs] = useState<any[]>([
-        { id: 1, time: '10:45:02', level: 'info', message: '[SYSTEM] Hub iniciado. Pronto para comandos.' }
+    const [runningAirline, setRunningAirline] = useState<string | null>(null);
+    const [logs, setLogs] = useState<{ id: number; time: string; level: string; message: string }[]>([
+        { id: 1, time: new Date().toLocaleTimeString(), level: 'info', message: '[SYSTEM] Hub iniciado. Pronto para comandos.' }
     ]);
 
-    useEffect(() => {
-        fetchAccounts();
-
-        // Setup initial integration if not exists
-        ensureAzulIntegration();
+    const addLog = useCallback((level: string, message: string) => {
+        setLogs(prev => [
+            { id: Date.now(), time: new Date().toLocaleTimeString(), level, message },
+            ...prev.slice(0, 49)
+        ]);
     }, []);
 
-    async function ensureAzulIntegration() {
-        await supabase.from('airline_integrations').upsert({ airline: 'Azul' }, { onConflict: 'airline' });
-    }
-
-    async function fetchAccounts() {
+    // ─── Fetch all accounts grouped by airline ───────────────────────────────
+    const fetchAccounts = useCallback(async () => {
         setIsLoading(true);
-        const { data, error } = await supabase
-            .from('airline_accounts')
-            .select('*')
-            .order('created_at', { ascending: false });
+        const grouped: Record<string, Account[]> = { azul: [], smiles: [], latam: [] };
 
-        if (error) {
-            console.error('Error fetching accounts:', error);
-        } else {
-            setAccounts(data || []);
+        for (const airline of AIRLINES) {
+            // Ensure integration row exists
+            await supabase
+                .from('airline_integrations')
+                .upsert({ airline: airline.id }, { onConflict: 'airline' });
+
+            // Fetch integration id
+            const { data: intData } = await supabase
+                .from('airline_integrations')
+                .select('id')
+                .eq('airline', airline.id)
+                .single();
+
+            if (!intData) continue;
+
+            const { data: accounts } = await supabase
+                .from('airline_accounts')
+                .select('*')
+                .eq('integration_id', intData.id)
+                .order('created_at', { ascending: false });
+
+            grouped[airline.id] = accounts ?? [];
         }
+
+        setAccountsByAirline(grouped);
         setIsLoading(false);
-    }
+    }, [supabase]);
 
-    async function handleAddAccount() {
-        if (!newAccount.cpf || !newAccount.password) {
-            toast.error("Preencha CPF e Senha");
-            return;
-        }
+    useEffect(() => { fetchAccounts(); }, [fetchAccounts]);
 
-        // Get integration id for Azul
-        const { data: intData } = await supabase.from('airline_integrations').select('id').eq('airline', 'Azul').single();
+    // ─── Add account ─────────────────────────────────────────────────────────
+    const handleAddAccount = async (airlineId: string, cpf: string, password: string, description: string) => {
+        const { data: intData } = await supabase
+            .from('airline_integrations')
+            .select('id')
+            .eq('airline', airlineId)
+            .single();
 
-        if (!intData) return;
+        if (!intData) { toast.error('Integração não encontrada'); return; }
 
         const { error } = await supabase.from('airline_accounts').insert({
             integration_id: intData.id,
-            login_cpf: newAccount.cpf,
-            password: newAccount.password,
-            description: newAccount.description,
+            login_cpf: cpf,
+            password,
+            description,
             is_active: true
         });
 
         if (error) {
-            toast.error("Erro ao salvar conta: " + error.message);
+            toast.error('Erro ao salvar: ' + error.message);
         } else {
-            toast.success("Conta adicionada ao Vault");
-            setNewAccount({ cpf: '', password: '', description: '' });
-            setIsAddAccountOpen(false);
+            toast.success('Credenciais salvas no Vault');
+            addLog('info', `[VAULT] Nova conta adicionada para ${airlineId.toUpperCase()}: ${cpf}`);
             fetchAccounts();
-            addLog('info', `[VAULT] Nova conta de extração adicionada: ${newAccount.cpf}`);
         }
-    }
+    };
 
-    async function handleDeleteAccount(id: string) {
+    // ─── Delete account ──────────────────────────────────────────────────────
+    const handleDeleteAccount = async (id: string) => {
         const { error } = await supabase.from('airline_accounts').delete().eq('id', id);
-        if (error) {
-            toast.error("Erro ao remover");
-        } else {
-            toast.success("Conta removida");
-            fetchAccounts();
-        }
-    }
+        if (error) { toast.error('Erro ao remover'); }
+        else { toast.success('Conta removida'); fetchAccounts(); addLog('info', '[VAULT] Conta removida.'); }
+    };
 
-    function addLog(level: string, message: string) {
-        setLogs(prev => [
-            { id: Date.now(), time: new Date().toLocaleTimeString(), level, message },
-            ...prev.slice(0, 19)
-        ]);
-    }
-
-    const runSync = async (airline: string) => {
-        if (accounts.length === 0) {
-            toast.error("Nenhuma conta cadastrada no Vault");
+    // ─── Run sync ────────────────────────────────────────────────────────────
+    const handleSync = async (airline: AirlineConfig, account: Account) => {
+        if (!airline.syncEndpoint) {
+            toast.error('Sincronia ainda não disponível para ' + airline.name);
             return;
         }
 
-        addLog('info', `[${airline.toUpperCase()}] Iniciando sincronização forçada...`);
+        setRunningAirline(airline.id);
+        addLog('info', `[${airline.id.toUpperCase()}] Iniciando extração para conta ${account.login_cpf}...`);
+        addLog('info', `[${airline.id.toUpperCase()}] Fazendo login em voeazul.com.br...`);
 
         try {
-            const res = await fetch('/api/sync/azul', {
+            const res = await fetch(airline.syncEndpoint, {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    cpf: accounts[0].login_cpf,
-                    password: accounts[0].password,
-                    accountId: accounts[0].id
+                    cpf: account.login_cpf,
+                    password: account.password,
+                    accountId: account.id
                 })
             });
+
             const data = await res.json();
 
-            if (res.ok) {
-                addLog('success', `[${airline.toUpperCase()}] Sincronização concluída: ${data.message}`);
+            if (res.ok && data.success) {
+                addLog('success', `[${airline.id.toUpperCase()}] ${data.message}`);
+                if (data.bookings?.length > 0) {
+                    data.bookings.forEach((b: any) => {
+                        addLog('success', `[${airline.id.toUpperCase()}] ✓ ${b.locator}: ${b.route} (${b.date}) — ${b.miles?.toLocaleString()} pts — ${b.cabin}`);
+                    });
+                }
                 toast.success(data.message);
             } else {
-                addLog('error', `[${airline.toUpperCase()}] Falha: ${data.error}`);
+                addLog('error', `[${airline.id.toUpperCase()}] Falha: ${data.error}`);
                 toast.error(data.error);
             }
         } catch (err) {
-            addLog('error', `[${airline.toUpperCase()}] Erro de conexão com o terminal.`);
+            addLog('error', `[${airline.id.toUpperCase()}] Erro de conexão.`);
+            toast.error('Erro de conexão com o servidor.');
+        } finally {
+            setRunningAirline(null);
         }
-    }
+    };
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 max-w-6xl mx-auto">
+            {/* Header */}
             <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 className="flex flex-col md:flex-row md:items-end justify-between gap-6"
             >
                 <div>
-                    <h1 className="text-4xl font-black text-white tracking-tight mb-2">Auto-Extrator <span className="text-primary font-normal">Command</span></h1>
-                    <p className="text-slate-400 max-w-xl">Gerencie os conectores das companhias e acompanhe as rotinas de captura autônoma.</p>
+                    <h1 className="text-4xl font-black text-white tracking-tight mb-2">
+                        Auto-Extrator <span className="text-primary font-normal">Command</span>
+                    </h1>
+                    <p className="text-slate-400 max-w-xl">
+                        Gerencie credenciais das companhias e execute extrações automáticas de emissões.
+                    </p>
                 </div>
-                <div className="flex gap-3">
-                    <Dialog open={isAddAccountOpen} onOpenChange={setIsAddAccountOpen}>
-                        <DialogTrigger
-                            render={
-                                <Button className="bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10">
-                                    <UserPlus className="mr-2 h-4 w-4 text-primary" /> Adicionar Conta
-                                </Button>
-                            }
-                        />
-                        <DialogContent className="glass-panel-heavy border-white/10 text-white sm:max-w-md">
-                            <DialogHeader>
-                                <DialogTitle className="text-2xl font-black">Register <span className="text-primary">Extraction Node</span></DialogTitle>
-                                <DialogDescription className="text-slate-400">
-                                    Insira as credenciais de acesso para automatizar a captura de dados desta companhia.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] uppercase font-black tracking-widest text-slate-500">Companhia</Label>
-                                    <Input value="Azul" disabled className="bg-white/5 border-white/10" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] uppercase font-black tracking-widest text-slate-500">CPF / Matrícula</Label>
-                                    <Input
-                                        placeholder="000.000.000-00"
-                                        className="bg-white/5 border-white/10 text-white focus-visible:ring-primary"
-                                        value={newAccount.cpf}
-                                        onChange={e => setNewAccount({ ...newAccount, cpf: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] uppercase font-black tracking-widest text-slate-500">Senha de Acesso</Label>
-                                    <Input
-                                        type="password"
-                                        placeholder="••••••••"
-                                        className="bg-white/5 border-white/10 text-white focus-visible:ring-primary"
-                                        value={newAccount.password}
-                                        onChange={e => setNewAccount({ ...newAccount, password: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] uppercase font-black tracking-widest text-slate-500">Identificador (Opcional)</Label>
-                                    <Input
-                                        placeholder="Ex: Conta do Diretor"
-                                        className="bg-white/5 border-white/10 text-white focus-visible:ring-primary"
-                                        value={newAccount.description}
-                                        onChange={e => setNewAccount({ ...newAccount, description: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button onClick={handleAddAccount} className="w-full bg-primary text-background-dark font-black h-12 rounded-xl">
-                                    AUTHORIZE NODE
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                    <Button className="bg-primary text-background-dark font-bold hover:brightness-110">
-                        <PlayCircle className="mr-2 h-4 w-4" /> Executar Todos
-                    </Button>
-                </div>
+                {runningAirline && (
+                    <Badge className="bg-primary/10 text-primary border-primary/20 py-2 px-4 rounded-xl flex items-center gap-2 font-bold animate-pulse">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Extraindo {runningAirline.toUpperCase()}...
+                    </Badge>
+                )}
             </motion.div>
 
-            <div className="grid gap-6 md:grid-cols-3">
-                {mockRobots.map(robot => (
-                    <DashboardCard
-                        key={robot.id}
-                        title={robot.name}
-                        icon={<Cpu className="w-5 h-5" />}
-                        accentColor={robot.status === 'running' ? 'green' : robot.status === 'paused' ? 'primary' : 'slate'}
-                        headerExtra={
-                            <Badge className={cn(
-                                "rounded-full px-3 py-1 border-none",
-                                robot.status === 'running' ? 'bg-green-500/10 text-green-400' :
-                                    robot.status === 'paused' ? 'bg-primary/10 text-primary' :
-                                        'bg-slate-500/10 text-slate-400'
-                            )}>
-                                {robot.status === 'running' ? 'Active' : robot.status === 'paused' ? 'Paused' : 'Idle'}
-                            </Badge>
-                        }
-                    >
-                        <div className="space-y-4 pt-2">
-                            <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                                <span className="text-xs font-semibold text-slate-400">Auth Session</span>
-                                {robot.sessionsStatus === 'valid' ? (
-                                    <span className="flex items-center text-green-400 text-xs font-bold gap-1.5">
-                                        <CheckCircle2 className="w-4 h-4" /> VALID
-                                    </span>
-                                ) : (
-                                    <span className="flex items-center text-primary text-xs font-bold gap-1.5">
-                                        <XCircle className="w-4 h-4" /> 2FA REQ
-                                    </span>
-                                )}
-                            </div>
-                            <div className="flex justify-between items-center px-1">
-                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Last Sync</span>
-                                <span className="text-xs text-slate-300 font-medium">{robot.lastRun}</span>
-                            </div>
-
-                            <div className="flex gap-2 pt-4 mt-auto">
-                                {robot.sessionsStatus === 'expired' ? (
-                                    <Button className="flex-1 h-9 text-[10px] font-black uppercase tracking-tighter bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30 shadow-none">
-                                        <KeyRound className="w-3.5 h-3.5 mr-1.5" /> Validate SMS
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        variant="outline"
-                                        className="flex-1 h-9 text-[10px] font-black uppercase tracking-tighter glass-panel border-white/10 text-slate-400 hover:text-white"
-                                        onClick={() => runSync(robot.airline)}
-                                    >
-                                        <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Force Sync
-                                    </Button>
-                                )}
-                                <Button className="flex-1 h-9 text-[10px] font-black uppercase tracking-tighter bg-white/5 border border-white/10 text-white hover:bg-white/10">
-                                    {robot.status === 'paused' ? <Play className="w-3.5 h-3.5 mr-1.5" /> : <Pause className="w-3.5 h-3.5 mr-1.5" />}
-                                    {robot.status === 'paused' ? 'Resume' : 'Pause'}
-                                </Button>
-                            </div>
-                        </div>
-                    </DashboardCard>
-                ))}
+            {/* Credential Cards — one per airline */}
+            <div>
+                <div className="flex items-center gap-2 mb-4">
+                    <Shield className="text-primary w-4 h-4" />
+                    <h2 className="text-sm font-black uppercase tracking-widest text-slate-400">Vault de Credenciais</h2>
+                </div>
+                {isLoading ? (
+                    <div className="grid md:grid-cols-3 gap-4">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="glass-panel rounded-2xl p-5 h-40 animate-pulse opacity-30" />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="grid md:grid-cols-3 gap-4">
+                        {AIRLINES.map(airline => (
+                            <AirlineCard
+                                key={airline.id}
+                                airline={airline}
+                                accounts={accountsByAirline[airline.id] ?? []}
+                                isRunning={runningAirline === airline.id}
+                                onAddAccount={handleAddAccount}
+                                onDeleteAccount={handleDeleteAccount}
+                                onSync={handleSync}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
-                <DashboardCard
-                    title="Vault Accounts"
-                    icon={<Shield className="w-5 h-5" />}
-                    accentColor="accent-blue"
-                    headerExtra={
-                        <Badge variant="outline" className="bg-accent-blue/10 text-accent-blue border-none">
-                            {accounts.length} ACTIVE NODES
-                        </Badge>
-                    }
-                >
-                    <div className="space-y-3 pt-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
-                        {isLoading ? (
-                            <div className="text-center py-10 text-slate-500 font-black text-xs uppercase tracking-widest animate-pulse">
-                                Accessing Vault...
-                            </div>
-                        ) : accounts.length === 0 ? (
-                            <div className="text-center py-10 text-slate-500 font-black text-xs uppercase tracking-widest bg-white/5 rounded-2xl border border-dashed border-white/10">
-                                No accounts registered.
-                            </div>
-                        ) : (
-                            <AnimatePresence mode="popLayout">
-                                {accounts.map(account => (
-                                    <motion.div
-                                        key={account.id}
-                                        layout
-                                        initial={{ opacity: 0, scale: 0.95 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.95 }}
-                                        className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 group hover:border-white/10 transition-all"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-accent-blue/10 text-accent-blue flex items-center justify-center border border-accent-blue/20">
-                                                <Zap size={18} />
-                                            </div>
-                                            <div>
-                                                <div className="text-sm font-bold text-white tracking-tight">{account.description || 'Extraction Node'}</div>
-                                                <div className="text-[10px] text-slate-500 font-black flex items-center gap-2">
-                                                    {account.login_cpf} • ACTIVE
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-slate-500 hover:text-red-400"
-                                                onClick={() => handleDeleteAccount(account.id)}
-                                            >
-                                                <Trash2 size={16} />
-                                            </Button>
-                                            <Button variant="ghost" size="icon" className="text-slate-500 hover:text-white">
-                                                <MoreVertical size={16} />
-                                            </Button>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
-                        )}
-                    </div>
-                </DashboardCard>
-
-                <DashboardCard
-                    title="System Console Log"
-                    icon={<TerminalIcon className="w-5 h-5" />}
-                    accentColor="primary"
-                    headerExtra={<Activity className="text-primary w-4 h-4 animate-pulse" />}
-                >
-                    <div className="bg-black/40 rounded-xl p-6 font-mono text-sm leading-relaxed border border-white/5 overflow-hidden">
-                        <div className="space-y-3 custom-scrollbar overflow-y-auto max-h-[220px]">
-                            {logs.map(log => (
-                                <div key={log.id} className="flex gap-4 group">
-                                    <span className="text-slate-600 shrink-0 select-none">[{log.time}]</span>
-                                    <span className={cn(
-                                        "transition-colors",
-                                        log.level === 'error' ? 'text-primary' :
-                                            log.level === 'success' ? 'text-green-400' :
-                                                'text-slate-400'
-                                    )}>
-                                        {log.message}
-                                    </span>
-                                </div>
-                            ))}
-                            {isLoading && (
-                                <div className="flex items-center gap-2 text-slate-500 italic">
-                                    <span className="animate-bounce">...</span> Capturing packet from server node-brazil-1
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </DashboardCard>
+            {/* Extraction Info Banner */}
+            <div className="p-4 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 flex items-start gap-3">
+                <AlertTriangle className="text-yellow-500 w-5 h-5 mt-0.5 shrink-0" />
+                <div>
+                    <p className="text-sm font-bold text-yellow-400">Sobre a extração Azul</p>
+                    <p className="text-xs text-slate-400 mt-1">O extrator faz login real em <strong>voeazul.com.br</strong>, navega para "Minhas Viagens", abre cada reserva e extrai todos os dados. O processo pode levar 2–5 minutos dependendo do número de emissões. Os dados são salvos automaticamente no banco de dados.</p>
+                </div>
             </div>
+
+            {/* Console Log */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-panel rounded-2xl p-5 border border-white/5"
+            >
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+                            <TerminalIcon className="w-4 h-4 text-primary" />
+                        </div>
+                        <h3 className="font-bold text-white">System Console</h3>
+                    </div>
+                    <Activity className="text-primary w-4 h-4 animate-pulse" />
+                </div>
+                <div className="bg-black/60 rounded-xl p-4 font-mono text-xs leading-relaxed border border-white/5 max-h-[300px] overflow-y-auto custom-scrollbar space-y-2">
+                    <AnimatePresence initial={false}>
+                        {logs.map(log => (
+                            <motion.div
+                                key={log.id}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="flex gap-3"
+                            >
+                                <span className="text-slate-600 shrink-0 select-none">[{log.time}]</span>
+                                <span className={cn(
+                                    log.level === 'error' ? 'text-red-400' :
+                                        log.level === 'success' ? 'text-green-400' :
+                                            'text-slate-400'
+                                )}>
+                                    {log.message}
+                                </span>
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
+                </div>
+            </motion.div>
         </div>
-    )
+    );
 }
