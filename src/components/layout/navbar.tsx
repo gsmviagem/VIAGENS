@@ -24,6 +24,7 @@ import { logout } from '@/app/login/actions';
 
 const navItems = [
     { href: '/', label: 'Dashboard', icon: LayoutGrid },
+    { href: '/cotacao', label: 'Quoting', icon: Search },
     { href: '/auto-extrator', label: 'Automations', icon: Cpu },
     { href: '/emissoes', label: 'Financials', icon: CreditCard },
     { href: '/processamento', label: 'Processor', icon: TerminalIcon },
