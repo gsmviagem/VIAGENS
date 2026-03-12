@@ -152,22 +152,32 @@ export function parseFlightMessage(message: string): ProcessedData {
 
     // 6. Multi-Passenger & Age Categorization
     // We try two patterns:
-    // A: Name LastName Month Day Year
-    // B: Name LastName MM/DD/YYYY
-    const paxA = /([a-z]+)\s+([a-z]+)\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(\d{1,2})\s+(19\d{2}|20\d{2}|\d{2})/gi;
-    const paxB = /([a-z]+)\s+([a-z]+)\s+(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/gi;
+    // A: Name(s) Month Day Year
+    // B: Name(s) DD/MM/YYYY
+    const paxA = /([a-zÀ-ÿ\s]+)\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(\d{1,2})\s+(19\d{2}|20\d{2}|\d{2})/gi;
+    const paxB = /([a-zÀ-ÿ\s]+)\s+(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/gi;
 
     let match;
 
     // Pattern A
     while ((match = paxA.exec(msg)) !== null) {
-        processPassenger(match[1], match[2], months[match[3].toLowerCase().substring(0, 3)], match[4], match[5]);
+        const fullNames = match[1].trim().split(/\s+/);
+        if (fullNames.length >= 2) {
+            const fName = fullNames[0];
+            const lName = fullNames.slice(1).join(' ');
+            processPassenger(fName, lName, months[match[2].toLowerCase().substring(0, 3)], match[3], match[4]);
+        }
     }
 
     // Pattern B
     while ((match = paxB.exec(msg)) !== null) {
-        // Assume MM/DD/YYYY
-        processPassenger(match[1], match[2], match[3], match[4], match[5]);
+        const fullNames = match[1].trim().split(/\s+/);
+        if (fullNames.length >= 2) {
+            const fName = fullNames[0];
+            const lName = fullNames.slice(1).join(' ');
+            // Assume DD/MM/YYYY for Pattern B in this context
+            processPassenger(fName, lName, match[3], match[2], match[4]);
+        }
     }
 
     function processPassenger(fName: string, lName: string, month: string, day: string, year: string) {
@@ -181,13 +191,14 @@ export function parseFlightMessage(message: string): ProcessedData {
         }
 
         const birthDate = `${bDay}/${bMonth}/${fullYear}`;
-        const age = 2026 - fullYear;
+        const currentYear = new Date().getFullYear();
+        const age = currentYear - fullYear;
 
         if (age >= 12) data.adults++;
         else if (age >= 2) data.children++;
         else data.infants++;
 
-        const femaleNames = ['maria', 'ana', 'julia', 'julia', 'lucia', 'carla', 'fernanda', 'andressa', 'alicia', 'beatriz', 'camila', 'clara', 'daniela', 'elisa', 'gabriela', 'isabela', 'laura', 'livia', 'luiza', 'manuela', 'mariana', 'nicole', 'paola', 'rafaela', 'sophia', 'valentina'];
+        const femaleNames = ['maria', 'ana', 'julia', 'lucia', 'carla', 'fernanda', 'andressa', 'alicia', 'beatriz', 'camila', 'clara', 'daniela', 'elisa', 'gabriela', 'isabela', 'laura', 'livia', 'luiza', 'manuela', 'mariana', 'nicole', 'paola', 'rafaela', 'sophia', 'valentina', 'conceição', 'vitoria', 'vitória'];
         const gender = femaleNames.includes(fName.toLowerCase()) ? 'Feminino' : 'Masculino';
 
         data.passengers.push({
