@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Cpu, Terminal as TerminalIcon, RefreshCw, KeyRound, CheckCircle2, XCircle,
-    Zap, Activity, UserPlus, Shield, Trash2, Eye, EyeOff, Play, Pause, Loader2, AlertTriangle
+    Terminal as TerminalIcon, RefreshCw, KeyRound, CheckCircle2, XCircle,
+    Zap, Activity, UserPlus, Shield, Trash2, Eye, EyeOff, Loader2, AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -326,7 +326,7 @@ export default function AutoExtratorPage() {
 
         setRunningAirline(airline.id);
         addLog('info', `[${airline.id.toUpperCase()}] Iniciando extração para conta ${account.login_cpf}...`);
-        addLog('info', `[${airline.id.toUpperCase()}] Fazendo login em voeazul.com.br...`);
+        addLog('info', `[${airline.id.toUpperCase()}] Fazendo login em azulpelomundo.voeazul.com.br...`);
 
         try {
             const res = await fetch(airline.syncEndpoint, {

@@ -64,7 +64,7 @@ async function searchSmiles(opts: SearchOptions, dateISO: string): Promise<Quota
                     'accept': 'application/json, text/plain, */*',
                     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
                 },
-                signal: AbortSignal.timeout(12000),
+                // signal: AbortSignal.timeout(12000),
             }
         );
 
@@ -115,7 +115,7 @@ async function searchAzul(opts: SearchOptions, dateISO: string): Promise<Quotati
                 'Referer': 'https://azulpelomundo.voeazul.com.br/',
                 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             },
-            signal: AbortSignal.timeout(12000),
+           // signal: AbortSignal.timeout(12000),
         });
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -160,7 +160,7 @@ async function searchLatam(opts: SearchOptions, dateISO: string): Promise<Quotat
                 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             },
             body: JSON.stringify(body),
-            signal: AbortSignal.timeout(12000),
+            // signal: AbortSignal.timeout(12000),
         });
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
