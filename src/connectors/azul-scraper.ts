@@ -337,7 +337,7 @@ export class AzulScraper {
 
                 // Flight date
                 const dateEl = document.querySelector('[class*="date"], [class*="data"], time') ??
-                    Array.from(document.querySelectorAll('*')).find(e => /\d{1,2}\s+(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\s+20\d{2}/i.test(e.textContent ?? ''));
+                    Array.from(document.querySelectorAll('*')).find(e => /\d{1,2}\s+(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\s+20\d{2}/i.test(e.textContent ?? '')) ?? null;
                 const flightDate = text(dateEl);
 
                 // Times
