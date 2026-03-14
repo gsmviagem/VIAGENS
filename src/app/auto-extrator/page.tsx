@@ -11,27 +11,34 @@ import { createClient } from '@/utils/supabase/client';
 import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-interface AutomationAccount {
+interface Account {
     id: string;
     login_cpf: string;
     description: string;
-    password?: string;
     is_active: boolean;
     integration_id: string;
+    password?: string;
 }
 
 interface AirlineConfig {
     id: 'azul' | 'smiles' | 'latam';
     name: string;
+    color: string;
     icon: string;
     syncEndpoint?: string;
 }
 
 const AIRLINES: AirlineConfig[] = [
-    { id: 'azul', name: 'Azul Viagens', syncEndpoint: '/api/sync/azul', icon: 'flight_takeoff' },
-    { id: 'smiles', name: 'Smiles (GOL)', icon: 'auto_awesome' },
-    { id: 'latam', name: 'LATAM Pass', icon: 'public' },
+    { id: 'azul', name: 'Azul Viagens', color: 'sky', syncEndpoint: '/api/sync/azul', icon: '✈' },
+    { id: 'smiles', name: 'Smiles (GOL)', color: 'orange', icon: '⭐' },
+    { id: 'latam', name: 'LATAM Pass', color: 'red', icon: '🌎' },
 ];
+
+const COLOR_MAP: Record<string, string> = {
+    sky: 'text-sky-400 border-sky-500/30 bg-sky-500/10',
+    orange: 'text-orange-400 border-orange-500/30 bg-orange-500/10',
+    red: 'text-red-400 border-red-500/30 bg-red-500/10',
+};
 
 // ─── Airline Credential Card ──────────────────────────────────────────────────
 function AirlineCard({
@@ -43,11 +50,11 @@ function AirlineCard({
     onSync,
 }: {
     airline: AirlineConfig;
-    accounts: AutomationAccount[];
+    accounts: Account[];
     isRunning: boolean;
     onAddAccount: (airlineId: string, cpf: string, password: string, description: string) => Promise<void>;
     onDeleteAccount: (id: string) => Promise<void>;
-    onSync: (airline: AirlineConfig, account: AutomationAccount) => Promise<void>;
+    onSync: (airline: AirlineConfig, account: Account) => Promise<void>;
 }) {
     const [showForm, setShowForm] = useState(false);
     const [cpf, setCpf] = useState('');
@@ -56,7 +63,11 @@ function AirlineCard({
     const [showPass, setShowPass] = useState(false);
     const [adding, setAdding] = useState(false);
 
-    const airlineAccounts = accounts.filter(a => true);
+    const colorClass = COLOR_MAP[airline.color] ?? 'text-slate-400 border-white/10 bg-white/5';
+    const airlineAccounts = accounts.filter(a => {
+        // We'll match by a convention: we'll tag accounts externally
+        return true; // All accounts for this integration are already filtered outside
+    });
 
     const handleAdd = async () => {
         if (!cpf || !password) { toast.error('CPF e senha são obrigatórios'); return; }
@@ -69,114 +80,147 @@ function AirlineCard({
 
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="glass-panel rounded-2xl p-6 flex flex-col gap-6 premium-shadow relative overflow-hidden group"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-panel rounded-2xl p-5 flex flex-col gap-4 border border-white/5"
         >
-            <div className="absolute top-0 left-0 w-1 h-0 group-hover:h-full bg-primary transition-all duration-500"></div>
-            
             {/* Header */}
-            <div className="flex items-center justify-between relative z-10">
+            <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
-                        <span className="material-symbols-outlined text-primary text-2xl">{airline.icon}</span>
+                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center border text-lg", colorClass)}>
+                        {airline.icon}
                     </div>
                     <div>
-                        <h3 className="font-bold text-white tracking-wide">{airline.name}</h3>
-                        <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{airlineAccounts.length} ACTIVE NODES</p>
+                        <h3 className="font-bold text-white">{airline.name}</h3>
+                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">
+                            {airlineAccounts.length} conta{airlineAccounts.length !== 1 ? 's' : ''} ativa{airlineAccounts.length !== 1 ? 's' : ''}
+                        </p>
                     </div>
                 </div>
-                <button 
-                    onClick={() => setShowForm(!showForm)}
-                    className="size-8 rounded-full border border-white/10 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary/50 transition-all shadow-lg"
+                <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-slate-400 hover:text-white border border-white/10 hover:border-white/20 rounded-xl px-3 h-8"
+                    onClick={() => setShowForm(f => !f)}
                 >
-                    <span className="material-symbols-outlined text-sm">{showForm ? 'close' : 'add'}</span>
-                </button>
+                    <span className="material-symbols-outlined text-sm mr-1.5">person_add</span> Add
+                </Button>
             </div>
 
             {/* Add Account Form */}
             <AnimatePresence>
                 {showForm && (
                     <motion.div
+                        key="form"
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden bg-white/5 rounded-xl border border-white/5 p-4 space-y-4"
+                        className="overflow-hidden"
                     >
-                        <div className="space-y-1.5">
-                            <Label className="text-[10px] uppercase font-black tracking-widest text-slate-500 ml-1">CPF / Terminal Login</Label>
-                            <Input
-                                placeholder="000.000.000-00"
-                                className="bg-black/30 border-white/10 text-white rounded-xl h-12 focus-visible:ring-primary/50"
-                                value={cpf}
-                                onChange={e => setCpf(e.target.value)}
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label className="text-[10px] uppercase font-black tracking-widest text-slate-500 ml-1">Access Credentials</Label>
-                            <div className="relative">
+                        <div className="space-y-3 pt-2 pb-1">
+                            <div className="space-y-1.5">
+                                <Label className="text-[10px] uppercase font-black tracking-widest text-slate-500">CPF / Login</Label>
                                 <Input
-                                    type={showPass ? 'text' : 'password'}
-                                    placeholder="••••••••"
-                                    className="bg-black/30 border-white/10 text-white rounded-xl h-12 pr-10 focus-visible:ring-primary/50"
-                                    value={password}
-                                    onChange={e => setPassword(e.target.value)}
+                                    placeholder="000.000.000-00"
+                                    className="bg-black/30 border-white/10 text-white focus-visible:ring-primary rounded-xl h-10 text-sm"
+                                    value={cpf}
+                                    onChange={e => setCpf(e.target.value)}
                                 />
-                                <button
-                                    type="button"
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
-                                    onClick={() => setShowPass(v => !v)}
-                                >
-                                    <span className="material-symbols-outlined text-lg">{showPass ? 'visibility_off' : 'visibility'}</span>
-                                </button>
                             </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-[10px] uppercase font-black tracking-widest text-slate-500">Senha</Label>
+                                <div className="relative">
+                                    <Input
+                                        type={showPass ? 'text' : 'password'}
+                                        placeholder="••••••••"
+                                        className="bg-black/30 border-white/10 text-white focus-visible:ring-primary rounded-xl h-10 text-sm pr-10"
+                                        value={password}
+                                        onChange={e => setPassword(e.target.value)}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                                        onClick={() => setShowPass(v => !v)}
+                                    >
+                                        <span className="material-symbols-outlined text-lg">{showPass ? 'visibility_off' : 'visibility'}</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-[10px] uppercase font-black tracking-widest text-slate-500">Apelido (opcional)</Label>
+                                <Input
+                                    placeholder="Ex: Conta do Diretor"
+                                    className="bg-black/30 border-white/10 text-white focus-visible:ring-primary rounded-xl h-10 text-sm"
+                                    value={description}
+                                    onChange={e => setDescription(e.target.value)}
+                                />
+                            </div>
+                            <Button
+                                className="w-full h-9 bg-primary text-black font-black text-xs rounded-xl"
+                                onClick={handleAdd}
+                                disabled={adding}
+                            >
+                                {adding ? <span className="material-symbols-outlined animate-spin mr-1.5 text-sm">refresh</span> : <span className="material-symbols-outlined mr-1.5 text-sm">bolt</span>}
+                                SALVAR CREDENCIAIS
+                            </Button>
                         </div>
-                        <Button
-                            className="w-full h-12 bg-primary text-black font-black text-xs rounded-xl shadow-lg shadow-primary/10"
-                            onClick={handleAdd}
-                            disabled={adding}
-                        >
-                            {adding ? <div className="size-4 border-2 border-black/30 border-t-black rounded-full animate-spin"></div> : 'INITIATE CONNECTION'}
-                        </Button>
                     </motion.div>
                 )}
             </AnimatePresence>
 
             {/* Accounts List */}
-            <div className="space-y-3 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
+            <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar pr-0.5">
                 {airlineAccounts.length === 0 ? (
-                    <div className="text-center py-6 text-slate-600 border border-dashed border-white/10 rounded-xl">
-                        <span className="material-symbols-outlined text-3xl opacity-20 mb-2">vpn_key</span>
-                        <p className="text-[9px] font-black uppercase tracking-widest">NO NODES DETECTED</p>
+                    <div className="text-center py-6 text-slate-600 border border-dashed border-white/8 rounded-xl">
+                        <span className="material-symbols-outlined text-2xl mx-auto mb-2 opacity-30 block">key</span>
+                        <p className="text-[10px] font-black uppercase tracking-widest">Nenhuma conta cadastrada</p>
                     </div>
                 ) : (
-                    airlineAccounts.map((account, idx) => (
-                        <div key={account.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 group/item hover:bg-white/10 transition-all">
+                    airlineAccounts.map(account => (
+                        <motion.div
+                            key={account.id}
+                            layout
+                            initial={{ opacity: 0, scale: 0.97 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.97 }}
+                            className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 group hover:border-white/10 transition-all"
+                        >
                             <div className="flex items-center gap-3">
-                                <span className="material-symbols-outlined text-primary/50 text-xl">fingerprint</span>
+                                <div className={cn("w-7 h-7 rounded-full flex items-center justify-center border text-[10px] font-black", colorClass)}>
+                                    {account.login_cpf.slice(-3)}
+                                </div>
                                 <div>
-                                    <p className="text-white text-xs font-bold leading-tight">{account.description || 'Primary Engine'}</p>
-                                    <p className="text-[9px] text-slate-500 font-mono tracking-tighter">TERMINAL-{(account.login_cpf || '').slice(-4)}</p>
+                                    <div className="text-xs font-bold text-white">{account.description || 'Conta de extração'}</div>
+                                    <div className="text-[10px] text-slate-500 font-mono">
+                                        {account.login_cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '***.$2.$3-**')}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 opacity-60 group-hover/item:opacity-100 transition-opacity">
+                            <div className="flex items-center gap-1.5">
                                 {airline.syncEndpoint && (
-                                    <button 
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
                                         disabled={isRunning}
                                         onClick={() => onSync(airline, account)}
-                                        className="size-8 rounded-lg bg-primary/10 text-primary border border-primary/20 flex items-center justify-center hover:bg-primary hover:text-black transition-all"
+                                        className="h-7 px-2 text-slate-400 hover:text-primary border border-white/5 hover:border-primary/20 rounded-lg text-[10px] font-black"
                                     >
-                                        <span className={cn("material-symbols-outlined text-sm", isRunning && "animate-spin")}>sync</span>
-                                    </button>
+                                        {isRunning
+                                            ? <span className="material-symbols-outlined text-sm animate-spin">refresh</span>
+                                            : <><span className="material-symbols-outlined text-sm mr-1">sync</span> Sync</>
+                                        }
+                                    </Button>
                                 )}
-                                <button 
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 w-7 p-0 text-slate-600 hover:text-red-400 rounded-lg"
                                     onClick={() => onDeleteAccount(account.id)}
-                                    className="size-8 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
                                 >
                                     <span className="material-symbols-outlined text-sm">delete</span>
-                                </button>
+                                </Button>
                             </div>
-                        </div>
+                        </motion.div>
                     ))
                 )}
             </div>
@@ -187,11 +231,11 @@ function AirlineCard({
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function AutoExtratorPage() {
     const supabase = createClient();
-    const [accountsByAirline, setAccountsByAirline] = useState<Record<string, AutomationAccount[]>>({});
+    const [accountsByAirline, setAccountsByAirline] = useState<Record<string, Account[]>>({});
     const [isLoading, setIsLoading] = useState(true);
     const [runningAirline, setRunningAirline] = useState<string | null>(null);
     const [logs, setLogs] = useState<{ id: number; time: string; level: string; message: string }[]>([
-        { id: 1, time: new Date().toLocaleTimeString(), level: 'info', message: 'GSM-HUB SYSTEM INITIALIZED. PROTOCOLS LOADED.' }
+        { id: 1, time: new Date().toLocaleTimeString(), level: 'info', message: '[SYSTEM] Hub iniciado. Pronto para comandos.' }
     ]);
 
     const addLog = useCallback((level: string, message: string) => {
@@ -201,15 +245,18 @@ export default function AutoExtratorPage() {
         ]);
     }, []);
 
+    // ─── Fetch all accounts grouped by airline ───────────────────────────────
     const fetchAccounts = useCallback(async () => {
         setIsLoading(true);
-        const grouped: Record<string, AutomationAccount[]> = { azul: [], smiles: [], latam: [] };
+        const grouped: Record<string, Account[]> = { azul: [], smiles: [], latam: [] };
 
         for (const airline of AIRLINES) {
+            // Ensure integration row exists
             await supabase
                 .from('airline_integrations')
                 .upsert({ airline: airline.id }, { onConflict: 'airline' });
 
+            // Fetch integration id
             const { data: intData } = await supabase
                 .from('airline_integrations')
                 .select('id')
@@ -224,7 +271,7 @@ export default function AutoExtratorPage() {
                 .eq('integration_id', intData.id)
                 .order('created_at', { ascending: false });
 
-            grouped[airline.id] = (accounts ?? []) as AutomationAccount[];
+            grouped[airline.id] = accounts ?? [];
         }
 
         setAccountsByAirline(grouped);
@@ -233,6 +280,7 @@ export default function AutoExtratorPage() {
 
     useEffect(() => { fetchAccounts(); }, [fetchAccounts]);
 
+    // ─── Add account ─────────────────────────────────────────────────────────
     const handleAddAccount = async (airlineId: string, cpf: string, password: string, description: string) => {
         const { data: intData } = await supabase
             .from('airline_integrations')
@@ -254,26 +302,28 @@ export default function AutoExtratorPage() {
             toast.error('Erro ao salvar: ' + error.message);
         } else {
             toast.success('Credenciais salvas no Vault');
-            addLog('info', `CONNECTION ESTABLISHED FOR ${airlineId.toUpperCase()}: TERMINAL LOADED`);
+            addLog('info', `[VAULT] Nova conta adicionada para ${airlineId.toUpperCase()}: ${cpf}`);
             fetchAccounts();
         }
     };
 
+    // ─── Delete account ──────────────────────────────────────────────────────
     const handleDeleteAccount = async (id: string) => {
         const { error } = await supabase.from('airline_accounts').delete().eq('id', id);
         if (error) { toast.error('Erro ao remover'); }
-        else { toast.success('Conta removida'); fetchAccounts(); addLog('info', 'TERMINAL DISCONNECTED AND PURGED.'); }
+        else { toast.success('Conta removida'); fetchAccounts(); addLog('info', '[VAULT] Conta removida.'); }
     };
 
-    const handleSync = async (airline: AirlineConfig, account: AutomationAccount) => {
+    // ─── Run sync ────────────────────────────────────────────────────────────
+    const handleSync = async (airline: AirlineConfig, account: Account) => {
         if (!airline.syncEndpoint) {
             toast.error('Sincronia ainda não disponível para ' + airline.name);
             return;
         }
 
         setRunningAirline(airline.id);
-        addLog('info', `[${airline.id.toUpperCase()}] SCANNING NODE ${account.login_cpf.slice(-4)}...`);
-        addLog('info', `[${airline.id.toUpperCase()}] TARGET: SATELLITE RELAY ...`);
+        addLog('info', `[${airline.id.toUpperCase()}] Iniciando extração para conta ${account.login_cpf}...`);
+        addLog('info', `[${airline.id.toUpperCase()}] Fazendo login em azulpelomundo.voeazul.com.br...`);
 
         try {
             const res = await fetch(airline.syncEndpoint, {
@@ -281,7 +331,7 @@ export default function AutoExtratorPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     cpf: account.login_cpf,
-                    password: account.password || '',
+                    password: account.password ?? '',
                     accountId: account.id
                 })
             });
@@ -289,19 +339,19 @@ export default function AutoExtratorPage() {
             const data = await res.json();
 
             if (res.ok && data.success) {
-                addLog('success', `[${airline.id.toUpperCase()}] SYNC SECURE: ${data.message}`);
+                addLog('success', `[${airline.id.toUpperCase()}] ${data.message}`);
                 if (data.bookings?.length > 0) {
                     data.bookings.forEach((b: any) => {
-                        addLog('success', `[${airline.id.toUpperCase()}] EXTR: ${b.locator} → ${b.route} | ${b.miles?.toLocaleString()} PTS`);
+                        addLog('success', `[${airline.id.toUpperCase()}] ✓ ${b.locator}: ${b.route} (${b.date}) — ${b.miles?.toLocaleString()} pts — ${b.cabin}`);
                     });
                 }
                 toast.success(data.message);
             } else {
-                addLog('error', `[${airline.id.toUpperCase()}] RELAY LOST: ${data.error}`);
+                addLog('error', `[${airline.id.toUpperCase()}] Falha: ${data.error}`);
                 toast.error(data.error);
             }
         } catch (err) {
-            addLog('error', `[${airline.id.toUpperCase()}] CONNECTION TIMEOUT.`);
+            addLog('error', `[${airline.id.toUpperCase()}] Erro de conexão.`);
             toast.error('Erro de conexão com o servidor.');
         } finally {
             setRunningAirline(null);
@@ -309,142 +359,104 @@ export default function AutoExtratorPage() {
     };
 
     return (
-        <div className="space-y-12">
+        <div className="space-y-8 max-w-6xl mx-auto">
             {/* Header */}
-            <div className="flex justify-between items-end">
-                <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                >
-                    <h1 className="text-white text-4xl font-light tracking-tight mb-2">Automation <span className="text-primary font-bold">Center</span></h1>
-                    <p className="text-slate-400 text-sm font-medium flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary text-xs">precision_manufacturing</span>
-                        Robotic Process Automation Relay
+            <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex flex-col md:flex-row md:items-end justify-between gap-6"
+            >
+                <div>
+                    <h1 className="text-4xl font-black text-white tracking-tight mb-2">
+                        Auto-Extrator <span className="text-primary font-normal">Command</span>
+                    </h1>
+                    <p className="text-slate-400 max-w-xl">
+                        Gerencie credenciais das companhias e execute extrações automáticas de emissões.
                     </p>
-                </motion.div>
+                </div>
                 {runningAirline && (
-                    <Badge className="bg-primary/10 text-primary border border-primary/20 py-2 px-6 rounded-full font-black animate-pulse uppercase tracking-[0.2em] text-[10px]">
-                        Scaning {runningAirline} ...
+                    <Badge className="bg-primary/10 text-primary border-primary/20 py-2 px-4 rounded-xl flex items-center gap-2 font-bold animate-pulse">
+                        <span className="material-symbols-outlined text-sm animate-spin">refresh</span>
+                        Extraindo {runningAirline.toUpperCase()}...
                     </Badge>
                 )}
-            </div>
+            </motion.div>
 
-            {/* Credential Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Credential Cards — one per airline */}
+            <div>
+                <div className="flex items-center gap-2 mb-4">
+                    <span className="material-symbols-outlined text-primary text-sm">shield</span>
+                    <h2 className="text-sm font-black uppercase tracking-widest text-slate-400">Vault de Credenciais</h2>
+                </div>
                 {isLoading ? (
-                    [1, 2, 3].map(i => <div key={i} className="glass-panel rounded-2xl h-64 animate-pulse bg-white/5 border border-white/5" />)
+                    <div className="grid md:grid-cols-3 gap-4">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="glass-panel rounded-2xl p-5 h-40 animate-pulse opacity-30" />
+                        ))}
+                    </div>
                 ) : (
-                    AIRLINES.map(airline => (
-                        <AirlineCard
-                            key={airline.id}
-                            airline={airline}
-                            accounts={accountsByAirline[airline.id] ?? []}
-                            isRunning={runningAirline === airline.id}
-                            onAddAccount={handleAddAccount}
-                            onDeleteAccount={handleDeleteAccount}
-                            onSync={handleSync}
-                        />
-                    ))
+                    <div className="grid md:grid-cols-3 gap-4">
+                        {AIRLINES.map(airline => (
+                            <AirlineCard
+                                key={airline.id}
+                                airline={airline}
+                                accounts={accountsByAirline[airline.id] ?? []}
+                                isRunning={runningAirline === airline.id}
+                                onAddAccount={handleAddAccount}
+                                onDeleteAccount={handleDeleteAccount}
+                                onSync={handleSync}
+                            />
+                        ))}
+                    </div>
                 )}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                {/* Console */}
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="lg:col-span-8 glass-panel rounded-2xl overflow-hidden premium-shadow border border-white/10"
-                >
-                    <div className="p-4 border-b border-white/10 bg-white/5 flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                            <span className="material-symbols-outlined text-primary text-xl">terminal</span>
-                            <h3 className="text-white font-bold text-xs uppercase tracking-widest">System Console</h3>
-                        </div>
-                        <div className="flex gap-1.5">
-                            <div className="size-2 rounded-full bg-red-500/50"></div>
-                            <div className="size-2 rounded-full bg-yellow-500/50"></div>
-                            <div className="size-2 rounded-full bg-emerald-500/50"></div>
-                        </div>
-                    </div>
-                    <div className="bg-[#050505] p-6 font-mono text-[11px] leading-relaxed relative min-h-[400px]">
-                        <div className="absolute inset-0 carbon-texture opacity-20 pointer-events-none"></div>
-                        <div className="relative z-10 space-y-2">
-                            <AnimatePresence initial={false}>
-                                {logs.map(log => (
-                                    <motion.div
-                                        key={log.id}
-                                        initial={{ opacity: 0, x: -5 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        className="flex gap-4 group"
-                                    >
-                                        <span className="text-slate-700 select-none group-hover:text-primary transition-colors">[{log.time}]</span>
-                                        <span className={cn(
-                                            "flex-1",
-                                            log.level === 'error' ? 'text-red-400 font-bold' :
-                                            log.level === 'success' ? 'text-emerald-400 font-bold' :
-                                            'text-slate-400'
-                                        )}>
-                                            <span className="opacity-50 mr-2">{'>'}</span>{log.message}
-                                        </span>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
-                        </div>
-                    </div>
-                </motion.div>
-
-                {/* Info Panel */}
-                <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="lg:col-span-4 space-y-6"
-                >
-                    <div className="glass-panel p-6 rounded-2xl border border-primary/20 premium-shadow">
-                        <div className="flex items-center gap-3 mb-4">
-                            <span className="material-symbols-outlined text-primary">info</span>
-                            <h2 className="text-white font-bold text-sm">Protocol Details</h2>
-                        </div>
-                        <div className="space-y-4">
-                            <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
-                                <p className="text-[10px] font-black uppercase text-primary mb-2">Azul Extraction</p>
-                                <p className="text-[11px] text-slate-400 leading-relaxed">
-                                    The engine initiates a headless connection to <span className="text-white font-mono">voeazul.voeazul.com.br</span>. 
-                                    Each booking in "My Trips" is parsed for locator, passenger data, and cabin clearance.
-                                </p>
-                            </div>
-                            <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                                <p className="text-[10px] font-black uppercase text-slate-500 mb-2">Security Vault</p>
-                                <p className="text-[11px] text-slate-400 leading-relaxed">
-                                    All credentials are encrypted using AES-256 before being committed to the neural relay.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="glass-panel p-6 rounded-2xl border border-white/5 bg-gradient-to-br from-primary/5 to-transparent">
-                        <div className="flex justify-between items-center mb-6">
-                            <span className="material-symbols-outlined text-slate-500">settings_suggest</span>
-                            <span className="text-[9px] font-bold text-primary uppercase tracking-[0.2em]">Operational</span>
-                        </div>
-                        <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-4">Automaton Stats</h4>
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center pb-2 border-b border-white/5">
-                                <span className="text-[10px] text-slate-500 uppercase font-black">Success Rate</span>
-                                <span className="text-sm font-bold text-emerald-500">98.2%</span>
-                            </div>
-                            <div className="flex justify-between items-center pb-2 border-b border-white/5">
-                                <span className="text-[10px] text-slate-500 uppercase font-black">Avg Response</span>
-                                <span className="text-sm font-bold text-white">4.2s</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-[10px] text-slate-500 uppercase font-black">Uptime</span>
-                                <span className="text-sm font-bold text-white">100%</span>
-                            </div>
-                        </div>
-                    </div>
-                </motion.div>
+            {/* Extraction Info Banner */}
+            <div className="p-4 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 flex items-start gap-3">
+                <span className="material-symbols-outlined text-yellow-500 text-xl mt-0.5 shrink-0">warning</span>
+                <div>
+                    <p className="text-sm font-bold text-yellow-400">Sobre a extração Azul</p>
+                    <p className="text-xs text-slate-400 mt-1">O extrator faz login real em <strong>voeazul.com.br</strong>, navega para "Minhas Viagens", abre cada reserva e extrai todos os dados. O processo pode levar 2–5 minutos dependendo do número de emissões. Os dados são salvos automaticamente no banco de dados.</p>
+                </div>
             </div>
+
+            {/* Console Log */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-panel rounded-2xl p-5 border border-white/5"
+            >
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="size-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-sm text-primary">terminal</span>
+                        </div>
+                        <h3 className="font-bold text-white">System Console</h3>
+                    </div>
+                    <span className="material-symbols-outlined text-primary text-sm animate-pulse">monitoring</span>
+                </div>
+                <div className="bg-black/60 rounded-xl p-4 font-mono text-xs leading-relaxed border border-white/5 max-h-[300px] overflow-y-auto custom-scrollbar space-y-2">
+                    <AnimatePresence initial={false}>
+                        {logs.map(log => (
+                            <motion.div
+                                key={log.id}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="flex gap-3"
+                            >
+                                <span className="text-slate-600 shrink-0 select-none">[{log.time}]</span>
+                                <span className={cn(
+                                    log.level === 'error' ? 'text-red-400' :
+                                        log.level === 'success' ? 'text-green-400' :
+                                            'text-slate-400'
+                                )}>
+                                    {log.message}
+                                </span>
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
+                </div>
+            </motion.div>
         </div>
     );
 }

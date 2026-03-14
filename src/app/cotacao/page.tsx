@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const sites = [
-    { id: 'smiles', name: 'Smiles Rewards', logo: 'orange' },
-    { id: 'latam', name: 'LATAM Pass', logo: 'purple' },
-    { id: 'azul', name: 'Azul Rewards', logo: 'blue' },
-    { id: 'busca-ideal', name: 'Premium Feed', logo: 'gold' },
+    { id: 'smiles', name: 'Smiles Rewards', color: 'border-orange-500/30 text-orange-400' },
+    { id: 'latam', name: 'LATAM Pass', color: 'border-purple-500/30 text-purple-400' },
+    { id: 'azul', name: 'Azul Rewards', color: 'border-blue-500/30 text-blue-400' },
+    { id: 'busca-ideal', name: 'Busca Ideal', color: 'border-cyan-500/30 text-cyan-400' },
 ];
 
 export default function CotacaoPage() {
@@ -51,14 +51,7 @@ export default function CotacaoPage() {
                 const updatedStatus: any = {};
                 data.results.forEach((r: any) => {
                     const key = r.site.toLowerCase().replace(/\s+/g, '-');
-                    if (updatedStatus[key]) {
-                      updatedStatus[key] = r.success ? 'done' : 'error';
-                    }
-                });
-                // Ensure all keys are updated based on mapping if needed
-                sites.forEach(s => {
-                   const res = data.results.find((r:any) => r.site.toLowerCase().includes(s.id.replace('-', '')));
-                   updatedStatus[s.id] = res ? (res.success ? 'done' : 'error') : 'error';
+                    updatedStatus[key] = r.success ? 'done' : 'error';
                 });
                 setSearchStatus(updatedStatus);
             }
@@ -70,261 +63,257 @@ export default function CotacaoPage() {
     };
 
     return (
-        <div className="space-y-10 pb-20">
-            {/* Header section */}
-            <div className="flex justify-between items-end">
-                <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                >
-                    <h1 className="text-white text-4xl font-light tracking-tight mb-2">Operations <span className="text-primary font-bold">Matrix</span></h1>
-                    <p className="text-slate-400 text-sm font-medium flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary text-xs">travel_explore</span>
-                        Global Logistics Optimization Relay
-                    </p>
-                </motion.div>
-                <div className="hidden md:flex gap-4">
-                    <div className="glass-panel px-4 py-2 rounded-full border border-white/5 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary text-sm animate-pulse">satellite_alt</span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nodes Active: 04</span>
-                    </div>
-                </div>
-            </div>
+        <div className="min-h-screen pt-24 pb-12 px-6 lg:px-12 relative overflow-hidden">
+            {/* Background elements */}
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 blur-[150px] -z-10 animate-pulse"></div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
-                {/* Search Configuration */}
+            <header className="mb-12">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="xl:col-span-4 space-y-6"
+                    className="flex items-center gap-4 mb-2"
                 >
-                    <div className="glass-panel p-8 rounded-[2rem] border border-white/10 premium-shadow relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
-                            <span className="material-symbols-outlined text-9xl">public</span>
+                    <div className="p-3 bg-primary/20 rounded-2xl border border-primary/30">
+                        <span className="material-symbols-outlined text-primary text-2xl font-bold">public</span>
+                    </div>
+                    <div>
+                        <h1 className="text-4xl font-extrabold tracking-tight text-white">Quotation Matrix</h1>
+                        <p className="text-slate-400 font-medium">Multi-source flight comparison intelligence</p>
+                    </div>
+                </motion.div>
+            </header>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Search Form Panel */}
+                <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="lg:col-span-4 space-y-6"
+                >
+                    <div className="glass-panel p-6 border-white/5 bg-white/[0.02]">
+                        <div className="flex items-center gap-2 mb-6 text-primary">
+                            <span className="material-symbols-outlined text-sm">bolt</span>
+                            <h2 className="font-bold uppercase tracking-widest text-sm">Target Flight details</h2>
                         </div>
-                        
-                        <div className="relative z-10 space-y-6">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
-                                    <span className="material-symbols-outlined text-primary">flight_takeoff</span>
+
+                        <div className="space-y-4">
+                            <div className="group relative">
+                                <label className="text-[10px] font-bold uppercase text-slate-500 ml-1 mb-1 block group-focus-within:text-primary transition-colors">Origin (IATA)</label>
+                                <div className="flex items-center bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus-within:border-primary/50 transition-all">
+                                    <span className="material-symbols-outlined text-slate-400 mr-3 text-lg rotate-45">flight</span>
+                                    <input
+                                        type="text"
+                                        placeholder="EX: GRU"
+                                        value={form.origin}
+                                        onChange={(e) => setForm({ ...form, origin: e.target.value.toUpperCase() })}
+                                        className="bg-transparent border-none outline-none text-white font-bold w-full placeholder:text-slate-600 focus:ring-0"
+                                    />
                                 </div>
-                                <h2 className="text-white font-bold uppercase tracking-widest text-xs">Target Parameters</h2>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-4">
-                                <div className="space-y-2 group">
-                                    <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Departure (IATA)</label>
-                                    <div className="relative group">
-                                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl group-focus-within:text-primary transition-colors">location_on</span>
-                                        <input
-                                            type="text"
-                                            placeholder="GRU"
-                                            value={form.origin}
-                                            onChange={(e) => setForm({ ...form, origin: e.target.value.toUpperCase() })}
-                                            className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 text-white font-bold uppercase placeholder:text-slate-700 focus:outline-none focus:border-primary/50 transition-all"
-                                        />
-                                    </div>
-                                </div>
+                            <div className="flex justify-center -my-2 relative z-10">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-primary/20 border border-primary/30 text-primary hover:bg-primary/30">
+                                    <span className="material-symbols-outlined text-sm rotate-90">swap_horiz</span>
+                                </Button>
+                            </div>
 
-                                <div className="space-y-2 group">
-                                    <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Arrival (IATA)</label>
-                                    <div className="relative group">
-                                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl group-focus-within:text-primary transition-colors">flight_land</span>
-                                        <input
-                                            type="text"
-                                            placeholder="JFK"
-                                            value={form.destination}
-                                            onChange={(e) => setForm({ ...form, destination: e.target.value.toUpperCase() })}
-                                            className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 text-white font-bold uppercase placeholder:text-slate-700 focus:outline-none focus:border-primary/50 transition-all"
-                                        />
-                                    </div>
+                            <div className="group relative">
+                                <label className="text-[10px] font-bold uppercase text-slate-500 ml-1 mb-1 block group-focus-within:text-primary transition-colors">Destination (IATA)</label>
+                                <div className="flex items-center bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus-within:border-primary/50 transition-all">
+                                    <span className="material-symbols-outlined text-slate-400 mr-3 text-lg -rotate-45">flight</span>
+                                    <input
+                                        type="text"
+                                        placeholder="EX: LHR"
+                                        value={form.destination}
+                                        onChange={(e) => setForm({ ...form, destination: e.target.value.toUpperCase() })}
+                                        className="bg-transparent border-none outline-none text-white font-bold w-full placeholder:text-slate-600 focus:ring-0"
+                                    />
                                 </div>
+                            </div>
 
-                                <div className="space-y-2 group">
-                                    <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Relay Date</label>
-                                    <div className="relative group">
-                                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">calendar_today</span>
+                            <div className="grid grid-cols-2 gap-4 mt-6">
+                                <div className="group">
+                                    <label className="text-[10px] font-bold uppercase text-slate-500 ml-1 mb-1 block">Date</label>
+                                    <div className="flex items-center bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+                                        <span className="material-symbols-outlined text-slate-400 mr-3 text-lg">calendar_today</span>
                                         <input
                                             type="text"
                                             placeholder="20/05/2026"
                                             value={form.date}
                                             onChange={(e) => setForm({ ...form, date: e.target.value })}
-                                            className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 text-white font-medium focus:outline-none focus:border-primary/50 transition-all"
+                                            className="bg-transparent border-none outline-none text-white text-sm w-full placeholder:text-slate-600"
                                         />
                                     </div>
                                 </div>
-
-                                <div className="space-y-2 group">
-                                    <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Total Passengers</label>
-                                    <div className="relative group">
-                                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">person</span>
+                                <div className="group">
+                                    <label className="text-[10px] font-bold uppercase text-slate-500 ml-1 mb-1 block">Passengers</label>
+                                    <div className="flex items-center bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+                                        <span className="material-symbols-outlined text-slate-400 mr-3 text-lg">person</span>
                                         <input
                                             type="number"
                                             value={form.passengers}
                                             onChange={(e) => setForm({ ...form, passengers: parseInt(e.target.value) })}
-                                            className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 text-white font-bold focus:outline-none focus:border-primary/50 transition-all"
+                                            className="bg-transparent border-none outline-none text-white text-sm w-full"
                                         />
                                     </div>
                                 </div>
                             </div>
 
-                            <button
+                            <Button
                                 onClick={handleSearch}
                                 disabled={isSearching}
-                                className="w-full h-16 bg-primary hover:bg-primary/80 transition-all text-black font-bold uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/10 flex items-center justify-center gap-3 disabled:opacity-50"
+                                className="w-full h-14 bg-primary hover:bg-primary-hover text-black font-extrabold text-lg mt-8 rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-95 group"
                             >
                                 {isSearching ? (
-                                    <>
-                                        <div className="size-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                                        <span>Relaying...</span>
-                                    </>
+                                    <span className="material-symbols-outlined animate-spin mr-2">refresh</span>
                                 ) : (
-                                    <>
-                                        <span className="material-symbols-outlined">rocket_launch</span>
-                                        <span>Initiate Vector</span>
-                                    </>
+                                    <span className="material-symbols-outlined mr-2">bolt</span>
                                 )}
-                            </button>
+                                {isSearching ? 'COMPILING DATA...' : 'INITIALIZE QUOTATION'}
+                            </Button>
                         </div>
                     </div>
 
-                    {/* History Sidebar */}
-                    <div className="glass-panel p-6 rounded-2xl border border-white/5 premium-shadow">
+                    <div className="glass-panel p-6 border-primary/20 bg-primary/5">
                         <div className="flex items-center gap-2 mb-4">
                             <span className="material-symbols-outlined text-primary text-sm">history</span>
-                            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Previous Matrices</h3>
+                            <h3 className="text-xs font-bold uppercase tracking-widest text-primary/80">Search History</h3>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                             {[1, 2].map(i => (
-                                <div key={i} className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 cursor-pointer transition-all group">
+                                <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5">
                                     <div>
-                                        <p className="text-white font-bold text-xs">GRU <span className="text-primary mx-1">→</span> JFK</p>
-                                        <p className="text-[9px] text-slate-500 uppercase tracking-tighter">20/05/2026 • 1 Pax</p>
+                                        <p className="text-sm font-bold text-white">GRU → JFK</p>
+                                        <p className="text-[10px] text-slate-500">20/05/2026 • 1 Pax</p>
                                     </div>
-                                    <span className="material-symbols-outlined text-slate-600 group-hover:text-primary transition-colors text-sm">arrow_forward_ios</span>
+                                    <div className="text-right">
+                                        <p className="text-xs font-black text-primary">65k mi</p>
+                                        <p className="text-[9px] text-slate-500 lowercase">Smiles</p>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     </div>
                 </motion.div>
 
-                {/* Results View */}
-                <div className="xl:col-span-8 space-y-6">
+                {/* Results Area */}
+                <div className="lg:col-span-8 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {sites.map((site, index) => (
+                        {sites.map((site) => (
                             <motion.div
                                 key={site.id}
-                                initial={{ opacity: 0, scale: 0.98 }}
+                                initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: index * 0.1 }}
-                                className="glass-panel p-6 rounded-2xl border border-white/5 premium-shadow relative group hover:border-primary/30 transition-all flex flex-col justify-between min-h-[180px]"
+                                className={cn(
+                                    "glass-panel p-6 flex flex-col justify-between border-l-4 min-h-[160px] relative overflow-hidden group",
+                                    site.color
+                                )}
                             >
-                                <div className="absolute top-0 left-0 h-1 w-0 group-hover:w-full bg-primary transition-all duration-500"></div>
-                                <div className="flex justify-between items-start">
-                                    <div className="space-y-1">
-                                        <h3 className="text-white font-bold text-sm tracking-wide">{site.name}</h3>
-                                        <div className="flex items-center gap-2">
+                                {/* Site specific background glow */}
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-current opacity-5 blur-3xl -z-10 group-hover:opacity-10 transition-opacity"></div>
+
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 className="text-sm font-bold uppercase tracking-tighter text-slate-300">{site.name}</h3>
+                                        <div className="flex items-center gap-2 mt-1">
                                             {searchStatus[site.id] === 'searching' ? (
-                                                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-primary animate-pulse flex items-center gap-1">
-                                                   <span className="size-1 bg-primary rounded-full animate-ping"></span> Scanning Matrix
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="material-symbols-outlined w-3 h-3 animate-spin text-primary text-sm">refresh</span>
+                                                    <span className="text-[10px] font-bold text-primary animate-pulse uppercase">Analysing Matrix...</span>
+                                                </div>
                                             ) : searchStatus[site.id] === 'done' ? (
-                                                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-500 flex items-center gap-1">
-                                                   <span className="material-symbols-outlined text-[10px]">check_circle</span> Vector Optimal
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-sm text-emerald-400">check_circle</span>
+                                                    <span className="text-[10px] font-bold text-emerald-400 uppercase">Found Optimised Path</span>
+                                                </div>
                                             ) : searchStatus[site.id] === 'error' ? (
-                                                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-primary/50 flex items-center gap-1">
-                                                   <span className="material-symbols-outlined text-[10px]">error</span> Relay Lost
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-sm text-red-400">cancel</span>
+                                                    <span className="text-[10px] font-bold text-red-400 uppercase">Extraction Fault</span>
+                                                </div>
                                             ) : (
-                                                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-600">Standby Protocol</span>
+                                                <span className="text-[10px] font-bold text-slate-600 uppercase">Waiting Protocol...</span>
                                             )}
                                         </div>
                                     </div>
-                                    <span className="material-symbols-outlined text-white/10 group-hover:text-primary/20 transition-colors text-4xl">travel_explore</span>
+                                    <span className="material-symbols-outlined opacity-20 text-xl text-primary font-bold">public</span>
                                 </div>
 
-                                <div className="mt-8 flex items-end justify-between">
-                                    <div>
-                                        {searchStatus[site.id] === 'searching' ? (
-                                            <div className="flex gap-1.5 h-8 items-center">
-                                                {[1, 2, 3].map(i => <div key={i} className="w-1 bg-primary/30 rounded-full animate-[bounce_1s_infinite]" style={{ animationDelay: `${i * 0.2}s` }}></div>)}
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-baseline gap-1">
-                                                <span className="text-3xl font-bold text-white tracking-tighter">
-                                                    {results.find(r => r.site.toLowerCase().includes(site.id.replace('-', '')) || r.site.toLowerCase().includes(site.id))?.price || '---'}
-                                                </span>
-                                                <span className="text-[10px] font-bold text-slate-500 uppercase">
-                                                    {results.find(r => r.site.toLowerCase().includes(site.id.replace('-', '')) || r.site.toLowerCase().includes(site.id))?.currency === 'miles' ? 'pts' : 'brl'}
-                                                </span>
-                                            </div>
-                                        )}
+                                <div className="mt-4">
+                                    <div className="flex items-end justify-between">
+                                        <div className="h-10 flex items-center">
+                                            {searchStatus[site.id] === 'searching' ? (
+                                                <div className="flex gap-1">
+                                                    {[1, 2, 3].map(i => (
+                                                        <motion.div
+                                                            key={i}
+                                                            animate={{ height: [4, 16, 4] }}
+                                                            transition={{ repeat: Infinity, duration: 1, delay: i * 0.2 }}
+                                                            className="w-1 bg-primary/40 rounded-full"
+                                                        />
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <p className="text-3xl font-black tracking-tighter text-white">
+                                                    {results.find(r => r.site.toLowerCase().includes(site.id))?.price || '---'}
+                                                    <span className="text-xs uppercase ml-1 opacity-50">
+                                                        {results.find(r => r.site.toLowerCase().includes(site.id))?.currency === 'miles' ? 'mi' : 'brl'}
+                                                    </span>
+                                                </p>
+                                            )}
+                                        </div>
+                                        <Button variant="ghost" size="sm" className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-white">View Board</Button>
                                     </div>
-                                    <button className="text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors border-b border-transparent hover:border-primary pb-1">Analyze Clearance</button>
                                 </div>
                             </motion.div>
                         ))}
                     </div>
 
-                    {/* Detailed Matrix Table */}
-                    <div className="glass-panel rounded-2xl border border-white/5 premium-shadow overflow-hidden">
-                        <div className="p-6 border-b border-white/5 bg-white/[0.02]">
-                            <h3 className="text-white font-bold text-lg">Integrated Fleet Feed</h3>
-                            <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Real-time Comparative Dynamics</p>
+                    {/* Comparative Table / Detailed Results */}
+                    <div className="glass-panel p-1 border-white/5 bg-white/[0.01]">
+                        <div className="p-6 border-b border-white/5">
+                            <h3 className="font-bold text-slate-200">Comparative Flight Matrix</h3>
+                            <p className="text-xs text-slate-500">Aggregated results for best routing efficiency</p>
                         </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead>
-                                    <tr className="border-b border-white/5 text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 bg-white/[0.01]">
-                                        <th className="px-8 py-5">Source Node</th>
-                                        <th className="px-8 py-5">Protocol Status</th>
-                                        <th className="px-8 py-5 text-right">Extracted Value</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-white/5">
-                                    {results.length > 0 ? (
-                                        results.map((res: any, i) => (
-                                            <motion.tr 
-                                                key={res.site}
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: i * 0.05 }}
-                                                className="hover:bg-white/[0.03] transition-colors group"
-                                            >
-                                                <td className="px-8 py-5">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="size-2 rounded-full bg-primary/40 group-hover:bg-primary transition-colors"></div>
-                                                        <span className="text-white font-bold text-sm uppercase tracking-wide">{res.site}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-5">
-                                                    <div className={cn(
-                                                        "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest",
-                                                        res.success ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-primary/10 text-primary border border-primary/20"
-                                                    )}>
-                                                        <span className="material-symbols-outlined text-[12px]">{res.success ? 'check_circle' : 'bolt'}</span>
-                                                        {res.success ? "Optimized" : "Fault"}
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-5 text-right">
-                                                    <span className="text-primary font-bold text-lg tracking-tighter">{res.price}</span>
-                                                    <span className="text-[8px] font-black text-slate-500 uppercase ml-1">{res.currency === 'miles' ? 'pts' : 'brl'}</span>
-                                                </td>
-                                            </motion.tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td colSpan={3} className="px-8 py-20 text-center">
-                                                <span className="material-symbols-outlined text-slate-700 text-6xl mb-4 block">query_stats</span>
-                                                <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">No Active Protocol</p>
-                                                <p className="text-[10px] text-slate-600 mt-1">Configure flight vector parameters to begin extraction.</p>
-                                            </td>
+                        {results.length > 0 ? (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead>
+                                        <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-slate-500">
+                                            <th className="px-6 py-4 font-bold">Source</th>
+                                            <th className="px-6 py-4 font-bold">Protocol</th>
+                                            <th className="px-6 py-4 font-bold text-right">Extracted Value</th>
                                         </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5 font-medium">
+                                        {results.map((res: any) => (
+                                            <tr key={res.site} className="hover:bg-white/[0.02] transition-colors">
+                                                <td className="px-6 py-4 text-white font-bold">{res.site}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={cn(
+                                                        "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                                                        res.success ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
+                                                    )}>
+                                                        {res.success ? "Optimised" : "Fault"}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right text-primary font-black">
+                                                    {res.price} {res.currency === 'miles' ? 'MI' : 'BRL'}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="p-20 text-center">
+                                <div className="inline-flex p-4 rounded-full bg-white/5 mb-4 border border-white/10 group-hover:border-primary/30 transition-all">
+                                    <span className="material-symbols-outlined w-8 h-8 text-slate-600 flex items-center justify-center">search</span>
+                                </div>
+                                <h4 className="text-slate-400 font-bold">No active search protocol</h4>
+                                <p className="text-xs text-slate-600 mt-1 max-w-[200px] mx-auto">Fill the flight details and initialize the quotation agent.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
