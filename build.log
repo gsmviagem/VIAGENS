@@ -1,0 +1,26 @@
+
+> gsmviagem-hub@0.1.0 build
+> next build
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+- Experiments (use with caution):
+  · serverActions
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 5.8s
+  Running TypeScript ...
+Failed to compile.
+
+./src/app/auto-extrator/page.tsx:337:39
+Type error: Property 'password' does not exist on type 'Account'.
+
+[0m [90m 335 |[39m                 body[33m:[39m [33mJSON[39m[33m.[39mstringify({
+ [90m 336 |[39m                     cpf[33m:[39m account[33m.[39mlogin_cpf[33m,[39m
+[31m[1m>[22m[39m[90m 337 |[39m                     password[33m:[39m account[33m.[39mpassword[33m,[39m
+ [90m     |[39m                                       [31m[1m^[22m[39m
+ [90m 338 |[39m                     accountId[33m:[39m account[33m.[39mid
+ [90m 339 |[39m                 })
+ [90m 340 |[39m             })[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null

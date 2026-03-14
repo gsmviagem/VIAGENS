@@ -1,114 +1,123 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Database, FileSpreadsheet, RefreshCw, CheckCircle2, AlertCircle, TrendingUp, Clock } from "lucide-react"
+'use client';
+
+import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function PlanilhaPage() {
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-white">Sincronização com Planilha</h1>
-                    <p className="text-slate-400 mt-1">Integração bidirecional com Google Sheets para gestão financeira.</p>
+        <div className="space-y-10 pb-20">
+            {/* Header section */}
+            <div className="flex justify-between items-end">
+                <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                >
+                    <h1 className="text-white text-4xl font-light tracking-tight mb-2">Logistics <span className="text-primary font-bold">Registry</span></h1>
+                    <p className="text-slate-400 text-sm font-medium flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary text-xs">sync_alt</span>
+                        Bidirectional Cloud Spreadsheet Synchronization
+                    </p>
+                </motion.div>
+                <div className="hidden md:flex gap-4">
+                    <button className="h-12 bg-primary hover:bg-primary/80 transition-all text-black font-bold uppercase tracking-[0.2em] rounded-2xl px-8 flex items-center gap-3 shadow-xl shadow-primary/10">
+                        <span className="material-symbols-outlined text-lg">sync</span>
+                        Force Relay
+                    </button>
                 </div>
-                <Button className="bg-cyan-600 hover:bg-cyan-700 text-white shadow-lg shadow-cyan-900/20">
-                    <RefreshCw className="mr-2 h-4 w-4" /> Enviar Pendentes Agora
-                </Button>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-4">
-                <Card className="bg-slate-900/50 border-slate-800 backdrop-blur-sm">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-400">Status da Conexão</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex items-center text-green-400 font-bold text-xl drop-shadow-[0_0_8px_rgba(74,222,128,0.3)]">
-                            <CheckCircle2 className="mr-2 h-5 w-5" /> Ativa
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                    { label: 'Relay Connection', value: 'ACTIVE', status: 'optimal', icon: 'link' },
+                    { label: 'Last Operations', value: '10:45 AM', status: 'done', icon: 'schedule' },
+                    { label: 'Pending Extraction', value: '04 Units', status: 'warning', icon: 'inventory_2' },
+                    { label: 'Neural Stability', value: '100%', status: 'optimal', icon: 'verified_user' },
+                ].map((kpi, idx) => (
+                    <motion.div
+                        key={kpi.label}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        className="glass-panel p-6 rounded-2xl border border-white/5 premium-shadow relative group"
+                    >
+                        <div className="flex justify-between items-start mb-4">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-primary transition-colors">{kpi.label}</p>
+                            <span className="material-symbols-outlined text-white/10 group-hover:text-primary/20 transition-colors">{kpi.icon}</span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-2 bg-slate-950/50 inline-block px-2 py-1 rounded border border-slate-800">Autenticado via Service Account</p>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-slate-900/50 border-slate-800 backdrop-blur-sm">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-400">Última Sincronização</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-xl font-bold text-slate-200">Hoje, 10:45</div>
-                        <p className="text-xs text-slate-500 mt-2 bg-slate-950/50 inline-block px-2 py-1 rounded border border-slate-800">12 linhas inseridas com sucesso</p>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-slate-900/50 border-slate-800 backdrop-blur-sm">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-400">Pendências</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-xl font-bold text-amber-400">4 Emissões</div>
-                        <p className="text-xs text-slate-500 mt-2 bg-slate-950/50 inline-block px-2 py-1 rounded border border-slate-800">Aguardando lote das 11:00</p>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-slate-900/50 border-slate-800 backdrop-blur-sm relative overflow-hidden">
-                    <CardHeader className="pb-2 relative z-10">
-                        <CardTitle className="text-sm font-medium text-slate-400">Falhas Recentes</CardTitle>
-                    </CardHeader>
-                    <CardContent className="relative z-10">
-                        <div className="flex items-center text-slate-300 font-bold text-xl">
-                            <AlertCircle className="mr-2 h-5 w-5 text-slate-500" /> 0
+                        <div className="flex items-baseline gap-2">
+                            <span className={cn(
+                                "text-2xl font-bold tracking-tight",
+                                kpi.status === 'optimal' ? "text-emerald-500" :
+                                kpi.status === 'warning' ? "text-primary" : "text-white"
+                            )}>
+                                {kpi.value}
+                            </span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-2 bg-slate-950/50 inline-block px-2 py-1 rounded border border-slate-800">Sincronização 100% estável</p>
-                    </CardContent>
-                </Card>
+                        <div className="mt-4 pt-4 border-t border-white/5">
+                            <p className="text-[9px] text-slate-600 uppercase font-bold tracking-tighter">Protocol: Google Sheets Relay</p>
+                        </div>
+                    </motion.div>
+                ))}
             </div>
 
-            <Card className="bg-[#0b101e] border-slate-800 shadow-xl overflow-hidden mt-6">
-                <CardHeader className="bg-slate-900/80 border-b border-slate-800 pb-4">
-                    <div className="flex items-center justify-between">
-                        <CardTitle className="text-slate-300 flex items-center text-sm font-mono tracking-wide">
-                            <FileSpreadsheet className="w-5 h-5 mr-3 text-green-500" />
-                            Histórico de Sincronização
-                        </CardTitle>
-                        <Badge variant="outline" className="border-green-500/30 text-green-400 bg-green-500/10 hidden sm:inline-flex">Google Sheets ID: 1aB2...xYz</Badge>
+            {/* History Table */}
+            <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="glass-panel rounded-2xl border border-white/5 premium-shadow overflow-hidden"
+            >
+                <div className="p-6 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
+                    <div>
+                        <h3 className="text-white font-bold text-lg">Synchronization Feed</h3>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Real-time Batch Execution Logging</p>
                     </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                    <div className="p-4 sm:p-6 space-y-3">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-slate-800/60 rounded-lg bg-slate-950/50 text-sm hover:border-slate-700 transition-colors">
-                            <div className="flex flex-col gap-1.5 mb-2 sm:mb-0">
-                                <span className="font-semibold text-slate-200">Lote de Envio Automático #8492</span>
-                                <span className="text-xs text-slate-500 flex items-center"><Clock className="w-3 h-3 mr-1" /> 10:45:00 - 09 Mar 2026</span>
+                    <Badge variant="outline" className="border-white/10 text-slate-500 font-mono text-[9px]">ID: 1aB2...xYz</Badge>
+                </div>
+                
+                <div className="divide-y divide-white/5">
+                    {[
+                        { id: '#8492', time: '10:45:00', date: '09 Mar 2026', items: '12 Rows', status: 'optimized', duration: '1.2s' },
+                        { id: '#8491', time: '10:40:00', date: '09 Mar 2026', items: '03 Rows', status: 'optimized', duration: '0.8s' },
+                        { id: '#8490', time: '10:35:00', date: '09 Mar 2026', items: '00 Rows', status: 'standby', duration: '0.3s' },
+                    ].map((log, i) => (
+                        <div key={log.id} className="flex flex-col md:flex-row md:items-center justify-between p-6 hover:bg-white/[0.02] transition-colors group">
+                            <div className="flex items-center gap-4 mb-4 md:mb-0">
+                                <div className="size-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-primary/30 transition-all">
+                                    <span className="material-symbols-outlined text-slate-500 group-hover:text-primary transition-colors text-xl">description</span>
+                                </div>
+                                <div>
+                                    <h4 className="text-white font-bold text-sm">Batch Command {log.id}</h4>
+                                    <p className="text-[10px] text-slate-500 uppercase font-black">{log.time} • {log.date}</p>
+                                </div>
                             </div>
-                            <div className="flex flex-col sm:items-end gap-1.5">
-                                <span className="text-green-400 font-medium flex items-center"><CheckCircle2 className="w-4 h-4 mr-1.5" /> Sucesso (12 linhas inseridas)</span>
-                                <span className="text-xs text-slate-500 font-mono">Duração: 1.2s</span>
+                            
+                            <div className="flex items-center gap-8">
+                                <div className="text-right hidden sm:block">
+                                    <p className="text-xs font-bold text-slate-300">{log.items}</p>
+                                    <p className="text-[9px] text-slate-600 uppercase font-black">EXTRACTED</p>
+                                </div>
+                                
+                                <div className="flex items-center gap-4">
+                                    <div className={cn(
+                                        "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.1em] border",
+                                        log.status === 'optimized' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-white/5 text-slate-500 border-white/10"
+                                    )}>
+                                        {log.status === 'optimized' ? 'Optimized' : 'Standby'}
+                                    </div>
+                                    <span className="text-[10px] font-mono text-slate-700 w-12 text-right">{log.duration}</span>
+                                </div>
                             </div>
                         </div>
-
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-slate-800/60 rounded-lg bg-slate-950/50 text-sm hover:border-slate-700 transition-colors">
-                            <div className="flex flex-col gap-1.5 mb-2 sm:mb-0">
-                                <span className="font-semibold text-slate-200">Lote de Envio Automático #8491</span>
-                                <span className="text-xs text-slate-500 flex items-center"><Clock className="w-3 h-3 mr-1" /> 10:40:00 - 09 Mar 2026</span>
-                            </div>
-                            <div className="flex flex-col sm:items-end gap-1.5">
-                                <span className="text-green-400 font-medium flex items-center"><CheckCircle2 className="w-4 h-4 mr-1.5" /> Sucesso (3 linhas inseridas)</span>
-                                <span className="text-xs text-slate-500 font-mono">Duração: 0.8s</span>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-slate-800/60 rounded-lg bg-slate-950/30 text-sm opacity-70">
-                            <div className="flex flex-col gap-1.5 mb-2 sm:mb-0">
-                                <span className="font-semibold text-slate-200">Lote de Envio Automático #8490</span>
-                                <span className="text-xs text-slate-500 flex items-center"><Clock className="w-3 h-3 mr-1" /> 10:35:00 - 09 Mar 2026</span>
-                            </div>
-                            <div className="flex flex-col sm:items-end gap-1.5">
-                                <span className="text-slate-400 font-medium flex items-center">Ignorado (Sem novos dados)</span>
-                                <span className="text-xs text-slate-500 font-mono">Duração: 0.3s</span>
-                            </div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+                    ))}
+                </div>
+                
+                <div className="p-4 bg-white/[0.01] border-t border-white/5 text-center">
+                    <button className="text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary transition-colors">See Archive</button>
+                </div>
+            </motion.div>
         </div>
-    )
+    );
 }

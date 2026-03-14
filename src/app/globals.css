@@ -8,96 +8,69 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
+  --font-display: "Public Sans", var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
+  
+  --color-primary: #D4AF37;
+  --color-primary-foreground: #000000;
+  
+  --color-background-light: #f8f6f6;
+  --color-background-dark: #050505;
+
   --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
-  --color-background-dark: #0B1117;
-  --color-primary: #00ffc8;
-  --color-accent-blue: #0088ff;
-  --color-accent-purple: #9d00ff;
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.58 0.22 27);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-  --radius: 0.625rem;
+  --background: #f8f6f6;
+  --foreground: #050505;
+  --primary: #D4AF37;
+  --primary-foreground: #ffffff;
+  --card: #ffffff;
+  --card-foreground: #050505;
+  --popover: #ffffff;
+  --popover-foreground: #050505;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #D4AF37;
+  --radius: 0.5rem;
 }
 
 .dark {
-  --background: #0B1117;
-  --foreground: oklch(0.985 0 0);
-  --card: rgba(255, 255, 255, 0.03);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: rgba(11, 17, 23, 0.9);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: #00ffc8;
-  --primary-foreground: #0B1117;
-  --secondary: rgba(255, 255, 255, 0.05);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: rgba(255, 255, 255, 0.05);
-  --muted-foreground: #00c8a0;
-  --accent: rgba(0, 255, 200, 0.1);
-  --accent-foreground: #00ffc8;
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: rgba(255, 255, 255, 0.1);
+  --background: #050505;
+  --foreground: #f8f6f6;
+  --primary: #D4AF37;
+  --primary-foreground: #000000;
+  --card: rgba(10, 10, 10, 0.7);
+  --card-foreground: #f8f6f6;
+  --popover: rgba(5, 5, 5, 0.95);
+  --popover-foreground: #f8f6f6;
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --accent: rgba(212, 175, 55, 0.1);
+  --accent-foreground: #D4AF37;
+  --destructive: #7f1d1d;
+  --destructive-foreground: #fafafa;
+  --border: rgba(212, 175, 55, 0.15);
   --input: rgba(255, 255, 255, 0.05);
-  --ring: #00ffc8;
-  --radius: 1rem;
+  --ring: #D4AF37;
 }
 
 @layer base {
@@ -112,23 +85,28 @@
 
 @layer utilities {
   .glass-panel {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(10, 10, 10, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(212, 175, 55, 0.15);
   }
 
-  .glass-panel-heavy {
-    background: rgba(11, 17, 23, 0.7);
-    backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+  .carbon-texture {
+    background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+    background-size: 4px 4px;
   }
 
-  .glow-primary {
-    box-shadow: 0 0 15px rgba(0, 255, 200, 0.3);
+  .metallic-border {
+    border: 1px solid;
+    border-image-source: linear-gradient(135deg, #D4AF37 0%, #7d631e 50%, #D4AF37 100%);
+    border-image-slice: 1;
   }
 
-  .status-pulse {
-    animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  .premium-shadow {
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  }
+
+  .letter-spacing-wide {
+    letter-spacing: 0.15em;
   }
 
   .custom-scrollbar::-webkit-scrollbar {
@@ -137,31 +115,15 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(0, 0, 0, 0.2);
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(0, 255, 200, 0.3);
+    background: rgba(212, 175, 55, 0.3);
     border-radius: 10px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 255, 200, 0.5);
-  }
-}
-
-@keyframes pulse-glow {
-
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(0, 255, 200, 0.4);
-  }
-
-  50% {
-    opacity: 0.7;
-    transform: scale(1.05);
-    box-shadow: 0 0 12px 2px rgba(0, 255, 200, 0.2);
+    background: rgba(212, 175, 55, 0.5);
   }
 }
