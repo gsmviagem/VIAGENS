@@ -27,8 +27,7 @@ export default async function RootLayout({
       <body className={`${inter.className} bg-background-dark font-display text-slate-100 min-h-screen antialiased overflow-x-hidden`}>
         <div className="relative flex min-h-screen w-full flex-col bg-background-dark group/design-root overflow-x-hidden">
           {/* Hero/Cinematic Background */}
-          <div className="fixed inset-0 z-0 opacity-70 grayscale-[0.1] pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80"></div>
+          <div className="fixed inset-0 z-0 opacity-100 pointer-events-none">
             <img 
               alt="Premium Background" 
               className="w-full h-full object-cover" 
