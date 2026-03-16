@@ -384,7 +384,7 @@ export default function DashboardPage() {
                   statusColor="text-green-500"
                 />
                 <SideCard
-                  icon="shield_with_check"
+                  icon="shield"
                   title="Firewall Status"
                   sub="Layer 7 protection ON"
                   value="Active"
