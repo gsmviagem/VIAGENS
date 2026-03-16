@@ -184,17 +184,19 @@ export function parseFlightMessage(message: string): ProcessedData {
     let explicitChildren = 0;
     let explicitInfants = 0;
 
-    const adultMatch = msg.match(/(\d+)\s*(?:adulto|adultos|pax|passageiro|passageiros|adult|adults)/);
-    if (adultMatch) explicitAdults = parseInt(adultMatch[1]);
+    // Supports both "1 Adulto" and "Adultos: 1"
+    const adultMatch = msg.match(/(?:(\d+)\s*(?:adulto|adultos|pax|adults?))|(?:(?:adulto|adultos|pax|adults?)\s*[:\-]?\s*(\d+))/i);
+    if (adultMatch) explicitAdults = parseInt(adultMatch[1] || adultMatch[2]);
     
-    const childMatch = msg.match(/(\d+)\s*(?:criança|crianças|child|children)/);
-    if (childMatch) explicitChildren = parseInt(childMatch[1]);
+    const childMatch = msg.match(/(?:(\d+)\s*(?:criança|crianças|child|children))|(?:(?:criança|crianças|child|children)\s*[:\-]?\s*(\d+))/i);
+    if (childMatch) explicitChildren = parseInt(childMatch[1] || childMatch[2]);
 
-    const infantMatch = msg.match(/(\d+)\s*(?:bebê|bebês|infant|infants)/);
-    if (infantMatch) explicitInfants = parseInt(infantMatch[1]);
+    const infantMatch = msg.match(/(?:(\d+)\s*(?:bebê|bebês|infant|infants))|(?:(?:bebê|bebês|infant|infants)\s*[:\-]?\s*(\d+))/i);
+    if (infantMatch) explicitInfants = parseInt(infantMatch[1] || infantMatch[2]);
 
-    // 6. Multi-Passenger & Age Categorization (Legacy naming extraction)
-    const paxA = /([a-zÀ-ÿ\s]+)\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(\d{1,2})\s+(19\d{2}|20\d{2}|\d{2})/gi;
+    // 6. Multi-Passenger & Age Categorization
+    // Updated paxA to support "14 Aug 2002" or "Aug 14 2002"
+    const paxA = /([a-zÀ-ÿ\s]+)\s+(?:(\d{1,2})\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(?:(\d{1,2})\s+)?(19\d{2}|20\d{2}|\d{2})/gi;
     const paxB = /([a-zÀ-ÿ\s]+)\s+(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/gi;
 
     let match;
@@ -207,7 +209,9 @@ export function parseFlightMessage(message: string): ProcessedData {
             const fName = fullNames[0];
             const lName = fullNames.slice(1).join(' ');
             foundNames.push(`${fName} ${lName}`);
-            processPassenger(fName, lName, months[match[2].toLowerCase().substring(0, 3)], match[3], match[4]);
+            const day = match[2] || match[4];
+            const monthName = match[3];
+            processPassenger(fName, lName, months[monthName.toLowerCase().substring(0, 3)], day, match[5]);
         }
     }
 
@@ -252,18 +256,16 @@ export function parseFlightMessage(message: string): ProcessedData {
             gender,
             birthDate,
             passportNumber: generateRandomPassport(),
-            nationality: 'Estados Unidos',
+            nationality: 'Brasil',
             passportExpiry: generateRandomExpiry(),
-            passportIssuanceCountry: 'Estados Unidos'
+            passportIssuanceCountry: 'Brasil'
         });
     }
 
-    // Finalize counts: Use names if provided, fallback to explicit counts
-    if (data.passengers.length === 0) {
-        data.adults = explicitAdults;
-        data.children = explicitChildren;
-        data.infants = explicitInfants;
-    }
+    // Finalize counts: Max of names found or explicit counts
+    data.adults = Math.max(data.adults, explicitAdults);
+    data.children = Math.max(data.children, explicitChildren);
+    data.infants = Math.max(data.infants, explicitInfants);
 
     return data;
 }
