@@ -64,40 +64,49 @@ export function parseFlightMessage(message: string): ProcessedData {
 
     // 2. Date
     const months: { [key: string]: string } = {
-        jan: '01', january: '01',
-        feb: '02', february: '02',
-        mar: '03', march: '03',
-        apr: '04', april: '04',
-        may: '05',
-        jun: '06', june: '06',
-        jul: '07', july: '07',
-        aug: '08', august: '08',
-        sep: '09', september: '09',
-        oct: '10', october: '10',
-        nov: '11', november: '11',
-        dec: '12', december: '12'
+        jan: '01', january: '01', janeiro: '01',
+        feb: '02', february: '02', fevereiro: '02',
+        mar: '03', march: '03', marco: '03', março: '03',
+        apr: '04', april: '04', abril: '04',
+        may: '05', maio: '05',
+        jun: '06', june: '06', junho: '06',
+        jul: '07', july: '07', julho: '07',
+        aug: '08', august: '08', agosto: '08',
+        sep: '09', september: '09', setembro: '09',
+        oct: '10', october: '10', outubro: '10',
+        nov: '11', november: '11', novembro: '11',
+        dec: '12', december: '12', dezembro: '12'
     };
 
     const monthKeys = Object.keys(months).join('|');
     
-    // Check for DD/MM or DD/MM/YYYY
+    // 2a. Check for DD/MM or DD/MM/YYYY
     const slashDateMatch = msg.match(/(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?/);
+    
+    // 2b. Check for DD de Month or DD Month
+    const textualDateMatch = msg.match(new RegExp(`(\\d{1,2})\\s*(?:de\\s+)?(${monthKeys})(?:[\\s,]*(\\d{4}))?`, 'i'));
+    
+    // 2c. Check for Month DD
+    const monthFirstMatch = msg.match(new RegExp(`(${monthKeys})\\s*(\\d{1,2})`, 'i'));
+
     if (slashDateMatch) {
         const day = slashDateMatch[1].padStart(2, '0');
         const month = slashDateMatch[2].padStart(2, '0');
         const year = slashDateMatch[3] ? (slashDateMatch[3].length === 2 ? `20${slashDateMatch[3]}` : slashDateMatch[3]) : '2026';
         data.date = `${day}/${month}/${year}`;
+    } else if (textualDateMatch) {
+        const day = textualDateMatch[1].padStart(2, '0');
+        const month = months[textualDateMatch[2].toLowerCase()];
+        const year = textualDateMatch[3] || '2026';
+        data.date = `${day}/${month}/${year}`;
+    } else if (monthFirstMatch) {
+        const month = months[monthFirstMatch[1].toLowerCase()];
+        const day = monthFirstMatch[2].padStart(2, '0');
+        data.date = `${day}/${month}/2026`;
     } else {
-        const dateMatch = msg.match(new RegExp(`(${monthKeys})\\s*(\\d{1,2})`, 'i'));
-        if (dateMatch) {
-            const month = months[dateMatch[1].toLowerCase()];
-            const day = dateMatch[2].padStart(2, '0');
-            data.date = `${day}/${month}/2026`;
-        } else {
-            const weekdayMatch = msg.match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
-            if (weekdayMatch) {
-                data.date = getNextWeekdayDate(weekdayMatch[1]);
-            }
+        const weekdayMatch = msg.match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
+        if (weekdayMatch) {
+            data.date = getNextWeekdayDate(weekdayMatch[1]);
         }
     }
 
