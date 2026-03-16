@@ -62,6 +62,7 @@ export default function CotacaoPage() {
         }
     };
 
+    return (
         <div className="relative overflow-visible">
             {/* Background elements */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 blur-[150px] -z-10 animate-pulse"></div>

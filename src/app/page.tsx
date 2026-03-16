@@ -406,7 +406,7 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-        </main>
+        </div>
 
         <footer className="mt-auto py-8 px-10 border-t border-white/5 glass-panel text-slate-500 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-6">
