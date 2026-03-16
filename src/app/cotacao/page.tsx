@@ -62,8 +62,7 @@ export default function CotacaoPage() {
         }
     };
 
-    return (
-        <div className="min-h-screen pt-24 pb-12 px-6 lg:px-12 relative overflow-hidden">
+        <div className="relative overflow-visible">
             {/* Background elements */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 blur-[150px] -z-10 animate-pulse"></div>
 
@@ -71,14 +70,14 @@ export default function CotacaoPage() {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-4 mb-2"
+                    className="flex items-center gap-4"
                 >
-                    <div className="p-3 bg-black/10 rounded-2xl border border-black/20">
+                    <div className="p-3 bg-black/5 rounded-2xl border border-black/10">
                         <span className="material-symbols-outlined text-black text-2xl font-bold">public</span>
                     </div>
-                    <div>
-                        <h1 className="text-4xl font-extrabold tracking-tight text-black">Quotation Matrix</h1>
-                        <p className="text-black/70 font-semibold">Multi-source flight comparison intelligence</p>
+                    <div className="flex flex-col gap-1">
+                        <h1 className="text-4xl font-black tracking-tight text-black">Quotation Matrix</h1>
+                        <p className="text-black/70 font-bold">Multi-source flight comparison intelligence</p>
                     </div>
                 </motion.div>
             </header>

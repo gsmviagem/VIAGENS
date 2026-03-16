@@ -75,14 +75,14 @@ DADOS DO PASSAGEIRO
     };
 
     return (
-        <div className="space-y-8 max-w-6xl mx-auto">
+        <div className="space-y-12 w-full">
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col gap-2"
+                className="flex flex-col gap-1 mb-12"
             >
                 <h1 className="text-4xl font-black text-black tracking-tight">Semantic Processor</h1>
-                <p className="text-black/70 font-semibold">Transforme mensagens brutas de solicitações em formatos prontos para emissão.</p>
+                <p className="text-black/70 font-bold">Transforme mensagens brutas de solicitações em formatos prontos para emissão.</p>
             </motion.div>
 
             <div className="grid md:grid-cols-2 gap-8 items-start">

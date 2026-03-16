@@ -39,8 +39,8 @@ export default async function RootLayout({
             <Navbar />
           </div>
 
-          <main className="flex-1 relative z-10 pt-20">
-            <div className="w-full max-w-[1440px] mx-auto px-4 md:px-10 py-8 gap-8">
+          <main className="flex-1 relative z-10 pt-32">
+            <div className="w-full max-w-[1440px] mx-auto px-6 md:px-10">
               {children}
             </div>
           </main>

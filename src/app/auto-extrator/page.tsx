@@ -359,18 +359,18 @@ export default function AutoExtratorPage() {
     };
 
     return (
-        <div className="space-y-8 max-w-6xl mx-auto">
+        <div className="space-y-12 w-full">
             {/* Header */}
             <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="flex flex-col md:flex-row md:items-end justify-between gap-6"
+                className="flex flex-col md:flex-row md:items-center justify-between gap-6"
             >
-                <div>
-                    <h1 className="text-4xl font-black text-black tracking-tight mb-2">
+                <div className="flex flex-col gap-1">
+                    <h1 className="text-4xl font-black text-black tracking-tight">
                         Auto-Extrator Command
                     </h1>
-                    <p className="text-black/70 max-w-xl font-semibold">
+                    <p className="text-black/70 max-w-xl font-bold">
                         Gerencie credenciais das companhias e execute extrações automáticas de emissões.
                     </p>
                 </div>

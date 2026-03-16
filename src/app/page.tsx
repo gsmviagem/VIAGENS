@@ -156,18 +156,18 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col relative bg-transparent">
       <div className="relative z-10 flex flex-col flex-1">
-        <main className="flex-1 p-6 lg:p-10 max-w-[1600px] mx-auto w-full">
+        <div className="flex-1 w-full">
           {/* Header Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10"
+            className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12"
           >
-            <div>
-              <h2 className="text-4xl font-black text-black tracking-tight mb-2">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-4xl font-black text-black tracking-tight">
                 Global Operations Hub
-              </h2>
-              <p className="text-black/70 max-w-xl font-medium">
+              </h1>
+              <p className="text-black/70 max-w-xl font-bold">
                 Monitoramento de frota SaaS em tempo real, controle de emissão autônomo e sincronização financeira.
               </p>
             </div>
@@ -176,7 +176,7 @@ export default function DashboardPage() {
                 <span className="w-2 h-2 bg-primary rounded-full status-pulse"></span>
                 <span className="text-xs font-bold text-primary tracking-wide uppercase">System Status: Optimal</span>
               </div>
-              <button className="bg-white text-background-dark font-bold text-sm px-6 py-2.5 rounded-lg hover:bg-primary transition-all flex items-center gap-2">
+              <button className="bg-black text-white font-bold text-sm px-6 py-2.5 rounded-lg hover:bg-primary transition-all flex items-center gap-2">
                 <span className="material-symbols-outlined text-lg">add</span> New Request
               </button>
             </div>
