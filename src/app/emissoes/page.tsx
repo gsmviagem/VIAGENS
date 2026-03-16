@@ -62,28 +62,27 @@ export default function EmissoesPage() {
         item.destination?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    return (
-        <div className="space-y-8 pb-20">
+        <div className="space-y-12 w-full">
             <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="flex flex-col md:flex-row md:items-end justify-between gap-6"
+                className="flex flex-col md:flex-row md:items-center justify-between gap-6"
             >
-                <div>
-                    <h1 className="text-4xl font-black text-white tracking-tight mb-2">Operational <span className="text-primary font-normal">Ledger</span></h1>
-                    <p className="text-slate-400 max-w-xl">Histórico centralizado de todas as emissões capturadas via auto-extração ou busca manual.</p>
+                <div className="flex flex-col gap-1">
+                    <h1 className="text-4xl font-black text-black tracking-tight">Operational Ledger</h1>
+                    <p className="text-black/70 max-w-xl font-bold">Histórico centralizado de todas as emissões capturadas via auto-extração ou busca manual.</p>
                 </div>
                 <div className="flex gap-3">
                     <Button
                         onClick={handleExport}
                         disabled={data.length === 0}
-                        className="glass-panel border-white/10 text-slate-300 hover:bg-white/5 uppercase text-[10px] font-black tracking-widest px-6 disabled:opacity-50"
+                        className="glass-panel border-black/10 text-black/60 hover:bg-black/5 uppercase text-[10px] font-black tracking-widest px-6 disabled:opacity-50"
                     >
                         <FileDown className="mr-2 h-4 w-4 text-primary" /> Export Excel
                     </Button>
                     <Button
                         onClick={fetchEmissoes}
-                        className="bg-primary text-background-dark font-bold hover:brightness-110"
+                        className="bg-black text-white font-bold hover:bg-primary transition-all"
                     >
                         <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} /> Sincronizar Tudo
                     </Button>

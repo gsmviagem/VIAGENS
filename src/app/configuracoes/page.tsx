@@ -24,19 +24,18 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ConfiguracoesPage() {
-    return (
-        <div className="space-y-8">
+        <div className="space-y-12 w-full">
             <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="flex flex-col md:flex-row md:items-end justify-between gap-6"
+                className="flex flex-col md:flex-row md:items-center justify-between gap-6"
             >
-                <div>
-                    <h1 className="text-4xl font-black text-white tracking-tight mb-2">System <span className="text-primary font-normal">Matrix</span></h1>
-                    <p className="text-slate-400 max-w-xl">Configure parâmetros operacionais, credenciais de segurança e motores de automação.</p>
+                <div className="flex flex-col gap-1">
+                    <h1 className="text-4xl font-black text-black tracking-tight">System Matrix</h1>
+                    <p className="text-black/70 max-w-xl font-bold">Configure parâmetros operacionais, credenciais de segurança e motores de automação.</p>
                 </div>
                 <div className="flex gap-3">
-                    <Button variant="outline" className="glass-panel border-white/10 text-slate-300 hover:bg-white/5 uppercase text-[10px] font-black tracking-widest">
+                    <Button variant="outline" className="glass-panel border-black/10 text-black/60 hover:bg-black/5 uppercase text-[10px] font-black tracking-widest">
                         <Fingerprint className="mr-2 h-4 w-4" /> Audit Logs
                     </Button>
                 </div>
