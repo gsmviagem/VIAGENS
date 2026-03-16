@@ -81,8 +81,8 @@ DADOS DO PASSAGEIRO
                 animate={{ opacity: 1, y: 0 }}
                 className="flex flex-col gap-2"
             >
-                <h1 className="text-4xl font-black text-white tracking-tight">Semantic <span className="text-primary font-normal">Processor</span></h1>
-                <p className="text-slate-400">Transforme mensagens brutas de solicitações em formatos prontos para emissão.</p>
+                <h1 className="text-4xl font-black text-black tracking-tight">Semantic Processor</h1>
+                <p className="text-black/70 font-semibold">Transforme mensagens brutas de solicitações em formatos prontos para emissão.</p>
             </motion.div>
 
             <div className="grid md:grid-cols-2 gap-8 items-start">

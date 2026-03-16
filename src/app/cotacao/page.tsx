@@ -73,12 +73,12 @@ export default function CotacaoPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="flex items-center gap-4 mb-2"
                 >
-                    <div className="p-3 bg-primary/20 rounded-2xl border border-primary/30">
-                        <span className="material-symbols-outlined text-primary text-2xl font-bold">public</span>
+                    <div className="p-3 bg-black/10 rounded-2xl border border-black/20">
+                        <span className="material-symbols-outlined text-black text-2xl font-bold">public</span>
                     </div>
                     <div>
-                        <h1 className="text-4xl font-extrabold tracking-tight text-white">Quotation Matrix</h1>
-                        <p className="text-slate-400 font-medium">Multi-source flight comparison intelligence</p>
+                        <h1 className="text-4xl font-extrabold tracking-tight text-black">Quotation Matrix</h1>
+                        <p className="text-black/70 font-semibold">Multi-source flight comparison intelligence</p>
                     </div>
                 </motion.div>
             </header>

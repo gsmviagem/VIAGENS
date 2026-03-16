@@ -164,10 +164,10 @@ export default function DashboardPage() {
             className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10"
           >
             <div>
-              <h2 className="text-4xl font-black text-white tracking-tight mb-2">
-                Global Operations <span className="text-primary font-normal">Hub</span>
+              <h2 className="text-4xl font-black text-black tracking-tight mb-2">
+                Global Operations Hub
               </h2>
-              <p className="text-slate-400 max-w-xl">
+              <p className="text-black/70 max-w-xl font-medium">
                 Monitoramento de frota SaaS em tempo real, controle de emissão autônomo e sincronização financeira.
               </p>
             </div>

@@ -367,10 +367,10 @@ export default function AutoExtratorPage() {
                 className="flex flex-col md:flex-row md:items-end justify-between gap-6"
             >
                 <div>
-                    <h1 className="text-4xl font-black text-white tracking-tight mb-2">
-                        Auto-Extrator <span className="text-primary font-normal">Command</span>
+                    <h1 className="text-4xl font-black text-black tracking-tight mb-2">
+                        Auto-Extrator Command
                     </h1>
-                    <p className="text-slate-400 max-w-xl">
+                    <p className="text-black/70 max-w-xl font-semibold">
                         Gerencie credenciais das companhias e execute extrações automáticas de emissões.
                     </p>
                 </div>
