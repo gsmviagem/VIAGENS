@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ConfiguracoesPage() {
+    return (
         <div className="space-y-12 w-full">
             <motion.div
                 initial={{ opacity: 0, x: -20 }}

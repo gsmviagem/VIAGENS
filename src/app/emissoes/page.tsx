@@ -62,6 +62,7 @@ export default function EmissoesPage() {
         item.destination?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    return (
         <div className="space-y-12 w-full">
             <motion.div
                 initial={{ opacity: 0, x: -20 }}
