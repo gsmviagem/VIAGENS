@@ -102,20 +102,29 @@ export function parseFlightMessage(message: string): ProcessedData {
     }
 
     // 3. Time & Flight Number
-    const timeMatch = msg.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+    const timeMatch = msg.match(/(\d{1,2}:\d{2})\s*(am|pm)?|(\d{1,2})\s*(am|pm)/i);
     let extractedTime = '';
     if (timeMatch) {
-        let hour = parseInt(timeMatch[1]);
-        const minutes = timeMatch[2] || '00';
-        const period = timeMatch[3]?.toLowerCase();
+        let hour = 0;
+        let minutes = '00';
+        let period = '';
+
+        if (timeMatch[1]) {
+            // HH:MM format
+            const parts = timeMatch[1].split(':');
+            hour = parseInt(parts[0]);
+            minutes = parts[1];
+            period = timeMatch[2]?.toLowerCase();
+        } else {
+            // HH am/pm format
+            hour = parseInt(timeMatch[3]);
+            period = timeMatch[4].toLowerCase();
+        }
 
         if (period === 'pm' && hour < 12) hour += 12;
         if (period === 'am' && hour === 12) hour = 0;
         
-        // Ensure it's likely a time (if no period, must have colon or be 24h context)
-        if (period || timeMatch[0].includes(':') || (hour >= 0 && hour <= 23 && !msg.includes(`${hour} adult`))) {
-            extractedTime = `${hour.toString().padStart(2, '0')}:${minutes}`;
-        }
+        extractedTime = `${hour.toString().padStart(2, '0')}:${minutes}`;
     }
 
     const flightNoMatch = msg.match(/(?:\s|^)([a-z]{2})\s*(\d{1,4})(?:\s|$)/i);

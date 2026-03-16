@@ -29,9 +29,9 @@ export default async function RootLayout({
           <div className="fixed inset-0 z-0 opacity-40 grayscale-[0.2] pointer-events-none">
             <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black"></div>
             <img 
-              alt="Luxury Hypercar Background" 
+              alt="Premium Background" 
               className="w-full h-full object-cover" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnGcskNZeW6WpN70kyPItcVLOyrJw73t09Hk04Kw1B9M6gLc5qSvu6xu8ldYSVt6N0qEKQ77hfw8R5EoMyvJ3y-5btFstM_rDPNbrWsB52bFCtaeHlIeo1B8B4eJN_Ixynv1yBK2QNtoH6zugo_Lpn9Nc5yOL6AW9TPlnvEqVu1EJRpZLGobP1NxBbL7qYBEIEHds_6DnWaLuKZdMOdaGQyXAZ03yp-VnhgYrnBdrWuMUOoE4roNn5LKkDexBxNOhvBmN7UNF_Nw"
+              src="/assets/images/wallpaper.jpg"
             />
           </div>
 
