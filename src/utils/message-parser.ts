@@ -79,43 +79,63 @@ export function parseFlightMessage(message: string): ProcessedData {
     };
 
     const monthKeys = Object.keys(months).join('|');
-    const dateMatch = msg.match(new RegExp(`(${monthKeys})\\s*(\\d{1,2})`, 'i'));
-
-    if (dateMatch) {
-        const month = months[dateMatch[1].toLowerCase()];
-        const day = dateMatch[2].padStart(2, '0');
-        data.date = `${day}/${month}/2026`;
+    
+    // Check for DD/MM or DD/MM/YYYY
+    const slashDateMatch = msg.match(/(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?/);
+    if (slashDateMatch) {
+        const day = slashDateMatch[1].padStart(2, '0');
+        const month = slashDateMatch[2].padStart(2, '0');
+        const year = slashDateMatch[3] ? (slashDateMatch[3].length === 2 ? `20${slashDateMatch[3]}` : slashDateMatch[3]) : '2026';
+        data.date = `${day}/${month}/${year}`;
     } else {
-        const weekdayMatch = msg.match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
-        if (weekdayMatch) {
-            data.date = getNextWeekdayDate(weekdayMatch[1]);
+        const dateMatch = msg.match(new RegExp(`(${monthKeys})\\s*(\\d{1,2})`, 'i'));
+        if (dateMatch) {
+            const month = months[dateMatch[1].toLowerCase()];
+            const day = dateMatch[2].padStart(2, '0');
+            data.date = `${day}/${month}/2026`;
+        } else {
+            const weekdayMatch = msg.match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
+            if (weekdayMatch) {
+                data.date = getNextWeekdayDate(weekdayMatch[1]);
+            }
         }
     }
 
     // 3. Time & Flight Number
-    const timeMatch = msg.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
+    const timeMatch = msg.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
     let extractedTime = '';
     if (timeMatch) {
         let hour = parseInt(timeMatch[1]);
         const minutes = timeMatch[2] || '00';
-        const period = timeMatch[3].toLowerCase();
+        const period = timeMatch[3]?.toLowerCase();
 
         if (period === 'pm' && hour < 12) hour += 12;
         if (period === 'am' && hour === 12) hour = 0;
-
-        extractedTime = `${hour.toString().padStart(2, '0')}:${minutes}`;
+        
+        // Ensure it's likely a time (if no period, must have colon or be 24h context)
+        if (period || timeMatch[0].includes(':') || (hour >= 0 && hour <= 23 && !msg.includes(`${hour} adult`))) {
+            extractedTime = `${hour.toString().padStart(2, '0')}:${minutes}`;
+        }
     }
 
-    const flightNoMatch = msg.match(/([a-z]{2})\s*(\d{1,4})/i);
+    const flightNoMatch = msg.match(/(?:\s|^)([a-z]{2})\s*(\d{1,4})(?:\s|$)/i);
     if (flightNoMatch) {
-        const fNo = `${flightNoMatch[1].toUpperCase()} ${flightNoMatch[2]}`;
-        data.flightTime = extractedTime ? `${extractedTime} (${fNo})` : fNo;
+        const airlineCode = flightNoMatch[1].toUpperCase();
+        // Avoid matching route codes (if it matches origin/destination, skip)
+        if (airlineCode !== data.origin && airlineCode !== data.destination) {
+            const fNo = `${airlineCode} ${flightNoMatch[2]}`;
+            data.flightTime = extractedTime ? `${extractedTime} (${fNo})` : fNo;
+        } else {
+            data.flightTime = extractedTime;
+        }
     } else {
         data.flightTime = extractedTime;
     }
 
     // 4. Class & Partner
-    if (msg.includes('economy') || msg.includes('economica')) data.classType = 'ECONOMICA';
+    if (msg.includes('premium economy')) data.classType = 'PREMIUM ECONOMY';
+    else if (msg.includes('economy') || msg.includes('economica')) data.classType = 'ECONOMICA';
+    
     if (msg.includes('business') || msg.includes('executiva')) data.classType = 'EXECUTIVA';
     if (msg.includes('first') || msg.includes('primeira')) data.classType = 'PRIMEIRA';
 
@@ -150,14 +170,26 @@ export function parseFlightMessage(message: string): ProcessedData {
         }
     }
 
-    // 6. Multi-Passenger & Age Categorization
-    // We try two patterns:
-    // A: Name(s) Month Day Year
-    // B: Name(s) DD/MM/YYYY
+    // 5. Explicit Passenger Counts
+    let explicitAdults = 0;
+    let explicitChildren = 0;
+    let explicitInfants = 0;
+
+    const adultMatch = msg.match(/(\d+)\s*(?:adulto|adultos|pax|passageiro|passageiros|adult|adults)/);
+    if (adultMatch) explicitAdults = parseInt(adultMatch[1]);
+    
+    const childMatch = msg.match(/(\d+)\s*(?:criança|crianças|child|children)/);
+    if (childMatch) explicitChildren = parseInt(childMatch[1]);
+
+    const infantMatch = msg.match(/(\d+)\s*(?:bebê|bebês|infant|infants)/);
+    if (infantMatch) explicitInfants = parseInt(infantMatch[1]);
+
+    // 6. Multi-Passenger & Age Categorization (Legacy naming extraction)
     const paxA = /([a-zÀ-ÿ\s]+)\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(\d{1,2})\s+(19\d{2}|20\d{2}|\d{2})/gi;
     const paxB = /([a-zÀ-ÿ\s]+)\s+(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/gi;
 
     let match;
+    const foundNames: string[] = [];
 
     // Pattern A
     while ((match = paxA.exec(msg)) !== null) {
@@ -165,6 +197,7 @@ export function parseFlightMessage(message: string): ProcessedData {
         if (fullNames.length >= 2) {
             const fName = fullNames[0];
             const lName = fullNames.slice(1).join(' ');
+            foundNames.push(`${fName} ${lName}`);
             processPassenger(fName, lName, months[match[2].toLowerCase().substring(0, 3)], match[3], match[4]);
         }
     }
@@ -175,10 +208,13 @@ export function parseFlightMessage(message: string): ProcessedData {
         if (fullNames.length >= 2) {
             const fName = fullNames[0];
             const lName = fullNames.slice(1).join(' ');
-            // Assume DD/MM/YYYY for Pattern B in this context
-            processPassenger(fName, lName, match[3], match[2], match[4]);
+            const fullName = `${fName} ${lName}`;
+            if (!foundNames.includes(fullName)) {
+                processPassenger(fName, lName, match[3], match[2], match[4]);
+            }
         }
     }
+
 
     function processPassenger(fName: string, lName: string, month: string, day: string, year: string) {
         const firstName = fName.charAt(0).toUpperCase() + fName.slice(1);
@@ -211,6 +247,13 @@ export function parseFlightMessage(message: string): ProcessedData {
             passportExpiry: generateRandomExpiry(),
             passportIssuanceCountry: 'Estados Unidos'
         });
+    }
+
+    // Finalize counts: Use names if provided, fallback to explicit counts
+    if (data.passengers.length === 0) {
+        data.adults = explicitAdults;
+        data.children = explicitChildren;
+        data.infants = explicitInfants;
     }
 
     return data;
