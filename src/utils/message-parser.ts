@@ -184,20 +184,13 @@ export function parseFlightMessage(message: string): ProcessedData {
     let explicitChildren = 0;
     let explicitInfants = 0;
 
-    // Supports both "1 Adulto" and "Adultos: 1"
+    // Supports "1 Adulto", "Adultos: 1", "1 pax", "pax: 1"
     const adultMatch = msg.match(/(?:(\d+)\s*(?:adulto|adultos|pax|adults?))|(?:(?:adulto|adultos|pax|adults?)\s*[:\-]?\s*(\d+))/i);
     if (adultMatch) explicitAdults = parseInt(adultMatch[1] || adultMatch[2]);
     
-    const childMatch = msg.match(/(?:(\d+)\s*(?:criança|crianças|child|children))|(?:(?:criança|crianças|child|children)\s*[:\-]?\s*(\d+))/i);
-    if (childMatch) explicitChildren = parseInt(childMatch[1] || childMatch[2]);
-
-    const infantMatch = msg.match(/(?:(\d+)\s*(?:bebê|bebês|infant|infants))|(?:(?:bebê|bebês|infant|infants)\s*[:\-]?\s*(\d+))/i);
-    if (infantMatch) explicitInfants = parseInt(infantMatch[1] || infantMatch[2]);
-
-    // 6. Multi-Passenger & Age Categorization
-    // Updated paxA to support "14 Aug 2002" or "Aug 14 2002"
-    const paxA = /([a-zÀ-ÿ\s]+)\s+(?:(\d{1,2})\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(?:(\d{1,2})\s+)?(19\d{2}|20\d{2}|\d{2})/gi;
-    const paxB = /([a-zÀ-ÿ\s]+)\s+(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/gi;
+    // Pattern A (Supports "Name (14 Aug 2002)" or "Name 14 Aug 2002")
+    const paxA = /([a-zÀ-ÿ\s]+)\s*\(?(?:(\d{1,2})\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(?:(\d{1,2})\s+)?(19\d{2}|20\d{2}|\d{2})\)?/gi;
+    const paxB = /([a-zÀ-ÿ\s]+)\s*\(?(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})\)?/gi;
 
     let match;
     const foundNames: string[] = [];
@@ -256,9 +249,9 @@ export function parseFlightMessage(message: string): ProcessedData {
             gender,
             birthDate,
             passportNumber: generateRandomPassport(),
-            nationality: 'Brasil',
+            nationality: 'Estados Unidos',
             passportExpiry: generateRandomExpiry(),
-            passportIssuanceCountry: 'Brasil'
+            passportIssuanceCountry: 'Estados Unidos'
         });
     }
 
