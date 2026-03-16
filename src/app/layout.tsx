@@ -10,6 +10,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "GSMVIAGEM HUB - Command Center",
   description: "Hub operacional moderno para gestão de passagens e automação",
+  themeColor: "#050505",
 };
 
 export default async function RootLayout({
