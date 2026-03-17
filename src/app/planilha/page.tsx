@@ -2,8 +2,36 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export default function PlanilhaPage() {
+    const [isSyncing, setIsSyncing] = useState(false);
+
+    const handleSync = async () => {
+        setIsSyncing(true);
+        toast.loading("Sincronizando com Google Sheets...", { id: "sync-sheets" });
+
+        try {
+            const response = await fetch('/api/sync/sheets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success(`Sincronizado! ${data.count} itens enviados.`, { id: "sync-sheets" });
+            } else {
+                toast.error(data.error || "Erro ao sincronizar", { id: "sync-sheets" });
+            }
+        } catch (error) {
+            toast.error("Falha na comunicação com o servidor", { id: "sync-sheets" });
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -11,8 +39,15 @@ export default function PlanilhaPage() {
                     <h1 className="text-3xl font-bold tracking-tight text-white">Sincronização com Planilha</h1>
                     <p className="text-slate-400 mt-1">Integração bidirecional com Google Sheets para gestão financeira.</p>
                 </div>
-                <Button className="bg-primary hover:brightness-110 text-black font-black text-xs h-10 px-6 rounded-xl shadow-lg">
-                    <span className="material-symbols-outlined text-sm mr-2">refresh</span> Enviar Pendentes Agora
+                <Button 
+                    onClick={handleSync}
+                    disabled={isSyncing}
+                    className="bg-primary hover:brightness-110 text-black font-black text-xs h-10 px-6 rounded-xl shadow-lg disabled:opacity-50"
+                >
+                    <span className={`material-symbols-outlined text-sm mr-2 ${isSyncing ? 'animate-spin' : ''}`}>
+                        {isSyncing ? 'refresh' : 'sync'}
+                    </span> 
+                    {isSyncing ? 'Sincronizando...' : 'Enviar Pendentes Agora'}
                 </Button>
             </div>
 
