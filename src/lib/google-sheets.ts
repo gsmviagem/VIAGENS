@@ -32,12 +32,11 @@ export class GoogleSheetsService {
             console.warn('[GoogleSheets] Missing credentials or Spreadsheet ID');
         }
 
-        this.auth = new google.auth.JWT(
-            clientEmail,
-            undefined,
-            privateKey,
-            ['https://www.googleapis.com/auth/spreadsheets']
-        );
+        this.auth = new google.auth.JWT({
+            email: clientEmail,
+            key: privateKey,
+            scopes: ['https://www.googleapis.com/auth/spreadsheets']
+        });
 
         this.sheets = google.sheets({ version: 'v4', auth: this.auth });
     }
