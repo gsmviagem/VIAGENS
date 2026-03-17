@@ -2,29 +2,20 @@ const { google } = require('googleapis');
 require('dotenv').config({ path: '.env.local' });
 
 async function testSheets() {
-    const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
-
-    if (!clientEmail || !privateKey || !spreadsheetId) {
-        console.log('Missing env vars');
-        return;
-    }
-
     const auth = new google.auth.JWT({
-        email: clientEmail,
-        key: privateKey,
+        email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
         scopes: ['https://www.googleapis.com/auth/spreadsheets']
     });
 
     const sheets = google.sheets({ version: 'v4', auth });
-
     try {
-        const res = await sheets.spreadsheets.values.get({
-            spreadsheetId,
-            range: 'SAÍDAS!A1:T20'
+        const res = await sheets.spreadsheets.get({
+            spreadsheetId: process.env.GOOGLE_SHEET_ID,
         });
-        console.log(JSON.stringify(res.data.values, null, 2));
+        res.data.sheets.forEach(s => {
+            console.log(`Tab Name: ${s.properties.title}, GID: ${s.properties.sheetId}`);
+        });
     } catch (err) {
         console.error('Error:', err.message);
     }

@@ -35,15 +35,42 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: 'Google Sheets não está configurado.' }, { status: 500 });
         }
 
-        const rawData = await sheetsService.readSheetData('SAÍDAS!B:S');
-
+        // Fetch core data from SAÍDAS
+        const rawData = await sheetsService.readSheetData('SAÍDAS!B:T');
         if (!rawData) {
             throw new Error('Falha ao ler dados da planilha SAÍDAS.');
         }
 
+        // Fetch manual credit ledger from SUPPLIER Z:AC
+        // Z=0(SUPPLIER), AA=1(VALOR), AB=2(DETALHES), AC=3(SITUAÇÃO)
+        const creditData = await sheetsService.readSheetData('SUPPLIER!Z2:AC1000');
+        const manualCredits: Record<string, { ok: number, pending: number }> = {};
+        
+        if (creditData) {
+            for (const row of creditData) {
+                if (!row || !row[0]) continue;
+                const suppName = row[0].trim().toUpperCase();
+                const val = parseCurrency(row[1]);
+                const status = (row[3] || '').trim().toUpperCase(); // AC column
+                
+                if (!manualCredits[suppName]) {
+                    manualCredits[suppName] = { ok: 0, pending: 0 };
+                }
+                
+                if (status === 'OK') {
+                    manualCredits[suppName].ok += val;
+                } else if (status === 'PENDENTE') {
+                    manualCredits[suppName].pending += val;
+                }
+                // 'ABATIDO' is ignored
+            }
+        }
+
         const ledger: any[] = [];
-        const supplierCredits: Record<string, number> = {};
+        const supplierDebts: Record<string, number> = {};
         let filteredTotal = 0;
+        let generatedFullText = '';
+        let generatedSummaryText = '';
 
         const filterStart = startDate ? new Date(startDate) : null;
         let filterEnd = endDate ? new Date(endDate) : null;
@@ -61,10 +88,14 @@ export async function POST(req: NextRequest) {
             const rowLoc = (row[2] || '').trim().toUpperCase();
             const rowSupplierMiles = (row[6] || '').trim().toUpperCase();
             const valMiles = parseCurrency(row[7]);
+            const valMilesPrice = row[5] || '0'; // Price P/mile
+            const valMilesQty = row[4] || '0'; // Quant. Miles
             const rowSupplierTax = (row[8] || '').trim().toUpperCase();
             const valTax = parseCurrency(row[9]);
             const rowSupplierRep = (row[10] || '').trim().toUpperCase();
             const valRep = parseCurrency(row[11]);
+            const paxName = row[1] || '';
+            const product = row[3] || '';
             
             const totalStr = row[12] || '0';
 
@@ -72,18 +103,19 @@ export async function POST(req: NextRequest) {
             const statusTax = (row[16] || '').trim(); // R
             const statusRep = (row[17] || '').trim(); // S
 
-            // 1. Accumulate ALL supplier credits globally (independent of filters)
+            // 1. Accumulate ALL supplier DEBTS globally (independent of filters)
+            // If the status cell is empty, it means we OWE this money (it's pending payment)
             if (statusMiles === '') {
-                if (rowSupplierMiles) supplierCredits[rowSupplierMiles] = (supplierCredits[rowSupplierMiles] || 0) + valMiles;
+                if (rowSupplierMiles) supplierDebts[rowSupplierMiles] = (supplierDebts[rowSupplierMiles] || 0) + valMiles;
             }
             if (statusTax === '') {
-                if (rowSupplierTax) supplierCredits[rowSupplierTax] = (supplierCredits[rowSupplierTax] || 0) + valTax;
+                if (rowSupplierTax) supplierDebts[rowSupplierTax] = (supplierDebts[rowSupplierTax] || 0) + valTax;
             }
             if (statusRep === '') {
-                if (rowSupplierRep) supplierCredits[rowSupplierRep] = (supplierCredits[rowSupplierRep] || 0) + valRep;
+                if (rowSupplierRep) supplierDebts[rowSupplierRep] = (supplierDebts[rowSupplierRep] || 0) + valRep;
             }
 
-            // 2. Apply Filters for the Ledger
+            // 2. Apply Filters for the View Ledger
             let include = true;
 
             if (locator && locator.trim() !== '') {
@@ -133,9 +165,9 @@ export async function POST(req: NextRequest) {
                 ledger.push({
                     date: dateStr,
                     loc: rowLoc,
-                    product: row[3] || '',
-                    price: row[5] || '0', 
-                    miles: row[4] || '0', 
+                    product: product,
+                    price: valMilesPrice, 
+                    miles: valMilesQty, 
                     value: row[7] || '0', 
                     taxesCc: row[8] || '', 
                     tax: row[9] || '0',   
@@ -144,18 +176,44 @@ export async function POST(req: NextRequest) {
                     supplier: rowSupplierMiles || rowSupplierTax || rowSupplierRep,
                 });
                 filteredTotal += parseCurrency(totalStr);
+
+                // Build Text Generator Strings
+                const priceFormatted = valMilesPrice !== '0' ? `R$ ${valMilesPrice.replace('R$', '').trim()}` : '-';
+                const totalFormatted = totalStr !== '0' ? `R$ ${totalStr.replace('R$', '').trim()}` : 'R$ 0,00';
+                const taxFormatted = (row[9] && row[9] !== '0') ? `R$ ${row[9].replace('R$', '').trim()}` : 'R$ 0,00';
+                const valFormatted = (row[7] && row[7] !== '0') ? `R$ ${row[7].replace('R$', '').trim()}` : 'R$ 0,00';
+
+                generatedFullText += `*${dateStr} - ${rowLoc}*\nPAX: ${paxName}\nMILHAS: ${valMilesQty}K\nPREÇO: ${priceFormatted}\nVALOR: ${valFormatted}\nTAX: ${taxFormatted}\n*TOTAL: ${totalFormatted}*\n\n`;
+                generatedSummaryText += `${rowLoc} - ${totalFormatted}\n`;
             }
         }
 
-        const suppliersList = Object.keys(supplierCredits)
-            .filter(name => supplierCredits[name] > 0)
-            .map(name => ({
-                name,
-                credit: formatCurrency(supplierCredits[name]),
-                total: formatCurrency(supplierCredits[name]), 
-                highlight: false
-            }))
-            .sort((a, b) => parseCurrency(b.credit) - parseCurrency(a.credit)); 
+        // Consolidate Supplier List
+        // A supplier appears if they have Debt (SAÍDAS) OR Manual Credits (Z:AC)
+        const allSuppliers = new Set([...Object.keys(supplierDebts), ...Object.keys(manualCredits)]);
+        const suppliersList = Array.from(allSuppliers)
+            .filter(name => name.trim() !== '')
+            .map(name => {
+                const totalDebtAmount = supplierDebts[name] || 0;
+                const creditOk = manualCredits[name]?.ok || 0;
+                const creditPending = manualCredits[name]?.pending || 0;
+                
+                // Saldo Líquido = Credit OK - Debt
+                const saldo = creditOk - totalDebtAmount;
+                
+                return {
+                    name,
+                    debt: formatCurrency(totalDebtAmount),
+                    creditOk: formatCurrency(creditOk),
+                    creditPending: formatCurrency(creditPending),
+                    saldo: formatCurrency(Math.abs(saldo)),
+                    saldoType: saldo > 0 ? 'POSITIVE' : (saldo < 0 ? 'NEGATIVE' : 'NEUTRAL'),
+                    highlight: false
+                };
+            })
+            // Only show suppliers that actually have SOME financial activity pending/owed
+            .filter(s => parseCurrency(s.debt) > 0 || parseCurrency(s.creditOk) > 0 || parseCurrency(s.creditPending) > 0)
+            .sort((a, b) => parseCurrency(b.debt) - parseCurrency(a.debt)); // sort by largest debt first
 
         return NextResponse.json({
             success: true,
@@ -164,7 +222,11 @@ export async function POST(req: NextRequest) {
                     totalValue: formatCurrency(filteredTotal),
                 },
                 suppliers: suppliersList,
-                ledger
+                ledger,
+                generated: {
+                    full: generatedFullText.trim(),
+                    summary: generatedSummaryText.trim()
+                }
             }
         });
 
