@@ -77,6 +77,25 @@ export class GoogleSheetsService {
     }
 
     /**
+     * Reads data from a specific range in the Google Sheet
+     */
+    async readSheetData(range: string): Promise<any[][] | null> {
+        try {
+            if (!this.spreadsheetId) throw new Error('Spreadsheet ID not configured');
+
+            const response = await this.sheets.spreadsheets.values.get({
+                spreadsheetId: this.spreadsheetId,
+                range,
+            });
+
+            return response.data.values || [];
+        } catch (error: any) {
+            console.error(`[GoogleSheets] Error reading range ${range}:`, error.message);
+            return null;
+        }
+    }
+
+    /**
      * Checks if the service is properly configured
      */
     isConfigured(): boolean {

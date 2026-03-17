@@ -13,6 +13,7 @@ const navItems = [
     { href: '/cotacao', label: 'Quoting', icon: 'search' },
     { href: '/auto-extrator', label: 'Automations', icon: 'precision_manufacturing' },
     { href: '/emissoes', label: 'Financials', icon: 'payments' },
+    { href: '/fornecedores', label: 'Suppliers', icon: 'handshake' },
     { href: '/processamento', label: 'Processor', icon: 'terminal' },
     { href: '/configuracoes', label: 'Settings', icon: 'settings' },
 ];
