@@ -41,6 +41,22 @@ export async function POST(req: NextRequest) {
             throw new Error('Falha ao ler dados da planilha SAÍDAS.');
         }
 
+        // Fetch BASE data for accurate Quant. Miles and Price p/mile mapping
+        const baseData = await sheetsService.readSheetData('BASE!G:K');
+        const baseMilesMap: Record<string, { price: string, miles: string }> = {};
+        if (baseData) {
+            // Skip header row
+            for (let i = 1; i < baseData.length; i++) {
+                const row = baseData[i];
+                if (!row || !row[0]) continue;
+                const pnr = row[0].trim().toUpperCase();
+                baseMilesMap[pnr] = {
+                    price: row[3] || '0', // Col J
+                    miles: row[4] || '0'  // Col K
+                };
+            }
+        }
+
         // Fetch manual credit ledger from SUPPLIER Z:AC
         // Z=0(SUPPLIER), AA=1(VALOR), AB=2(DETALHES), AC=3(SITUAÇÃO)
         const creditData = await sheetsService.readSheetData('SUPPLIER!Z2:AC1000');
@@ -86,10 +102,14 @@ export async function POST(req: NextRequest) {
             let rowDate = parseDateStr(dateStr);
 
             const rowLoc = (row[2] || '').trim().toUpperCase();
+            
+            // Accurate Miles & Price from BASE, fallback to corrected SAÍDAS indices (4: Price, 5: Qty)
+            const baseInfo = baseMilesMap[rowLoc];
+            const valMilesPrice = baseInfo ? baseInfo.price : (row[4] || '0');
+            const valMilesQty = baseInfo ? baseInfo.miles : (row[5] || '0');
+
             const rowSupplierMiles = (row[6] || '').trim().toUpperCase();
             const valMiles = parseCurrency(row[7]);
-            const valMilesPrice = row[5] || '0'; // Price P/mile
-            const valMilesQty = row[4] || '0'; // Quant. Miles
             const rowSupplierTax = (row[8] || '').trim().toUpperCase();
             const valTax = parseCurrency(row[9]);
             const rowSupplierRep = (row[10] || '').trim().toUpperCase();
