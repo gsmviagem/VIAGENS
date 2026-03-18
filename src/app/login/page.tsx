@@ -14,7 +14,8 @@ import {
     Mail,
     ArrowRight,
     Zap,
-    Cpu
+    Cpu,
+    Flame
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { SubmitButton } from './submit-button';
@@ -42,31 +43,31 @@ function LoginContent() {
                 className="relative z-10 w-full max-w-md"
             >
                 {/* Logo Section */}
-                <div className="flex flex-col items-center mb-10 text-center">
+                <div className="flex flex-col items-center mb-10 text-center text-white">
                     <motion.div
                         initial={{ scale: 0.8, rotate: -10 }}
                         animate={{ scale: 1, rotate: 0 }}
-                        className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center border border-primary/30 shadow-[0_0_30px_rgba(0,255,200,0.2)] mb-6 group hover:rotate-6 transition-transform cursor-default"
+                        className="w-20 h-20 bg-red-600/10 rounded-[32px] flex items-center justify-center border border-red-600/20 shadow-[0_0_40px_rgba(255,0,0,0.15)] mb-6 group hover:rotate-6 transition-transform cursor-default"
                     >
-                        <Rocket className="text-primary w-10 h-10 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                        <Flame className="text-red-600 w-10 h-10 group-hover:scale-110 transition-transform" />
                     </motion.div>
-                    <h1 className="text-4xl font-black text-white tracking-tighter mb-2">
-                        GSMVIAGEM <span className="text-primary drop-shadow-[0_0_8px_rgba(0,255,200,0.5)]">HUB</span>
+                    <h1 className="text-4xl font-black tracking-tighter mb-2 italic">
+                        GSMVIAGEM <span className="text-red-700 drop-shadow-[0_0_12px_rgba(255,0,0,0.4)]">HUB</span>
                     </h1>
-                    <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em]">Operational Access Protocol</p>
+                    <p className="text-white/40 font-black uppercase text-[10px] tracking-[0.4em]">Operational Security Protocol</p>
                 </div>
 
                 {/* Login Card */}
-                <div className="glass-panel-heavy p-8 rounded-[40px] border border-white/10 shadow-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <Cpu size={120} className="text-primary rotate-12" />
+                <div className="bg-black/90 backdrop-blur-3xl p-10 rounded-[48px] border border-white/10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.7)] relative overflow-hidden group transition-all hover:border-red-900/40">
+                    <div className="absolute -top-10 -right-10 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Rocket size={240} className="text-red-700 -rotate-12" />
                     </div>
 
                     <form action={login} className="space-y-6 relative z-10">
-                        <div className="space-y-2 group">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-primary transition-colors ml-1">Authentication ID</Label>
+                        <div className="space-y-3 group">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-red-600 transition-colors ml-1">Authentication ID</Label>
                             <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-primary transition-colors" />
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-red-600 transition-colors" />
                                 <Input
                                     id="email"
                                     name="email"
@@ -74,18 +75,18 @@ function LoginContent() {
                                     required
                                     defaultValue="admin@gsmviagem.com"
                                     placeholder="name@gsmviagem.com"
-                                    className="pl-12 h-14 bg-white/5 border-white/10 text-white rounded-2xl focus-visible:ring-primary text-lg font-bold transition-all placeholder:text-slate-600"
+                                    className="pl-12 h-16 bg-white/5 border-white/10 text-white rounded-2xl focus-visible:ring-red-700 text-lg font-bold transition-all placeholder:text-slate-700"
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-2 group">
+                        <div className="space-y-3 group">
                             <div className="flex items-center justify-between ml-1">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-primary transition-colors">Security Key</Label>
-                                <a href="#" className="text-[10px] font-black text-primary/50 hover:text-primary transition-colors uppercase tracking-widest">Lost Key?</a>
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-red-600 transition-colors">Security Key</Label>
+                                <a href="#" className="text-[10px] font-black text-red-900 hover:text-red-500 transition-colors uppercase tracking-widest">Lost Access?</a>
                             </div>
                             <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-primary transition-colors" />
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-red-600 transition-colors" />
                                 <Input
                                     id="password"
                                     name="password"
@@ -93,34 +94,34 @@ function LoginContent() {
                                     required
                                     defaultValue="admin123"
                                     placeholder="••••••••"
-                                    className="pl-12 h-14 bg-white/5 border-white/10 text-white rounded-2xl focus-visible:ring-primary text-lg font-bold transition-all"
+                                    className="pl-12 h-16 bg-white/5 border-white/10 text-white rounded-2xl focus-visible:ring-red-700 text-lg font-bold transition-all"
                                 />
                             </div>
                         </div>
 
-                        <div className="pt-4 flex flex-col gap-4">
-                            <SubmitButton className="h-14 bg-primary text-background-dark font-black text-lg rounded-2xl shadow-[0_0_20px_rgba(0,255,200,0.3)] hover:brightness-110">
-                                INITIALIZE SESSION <ArrowRight size={20} className="ml-2" />
+                        <div className="pt-6 flex flex-col gap-4">
+                            <SubmitButton className="h-16 bg-red-700 hover:bg-red-800 text-white font-black text-lg rounded-2xl shadow-[0_4px_0_0_rgba(0,0,0,1)] hover:brightness-110 active:translate-y-[2px] active:shadow-none">
+                                EXECUTE ACCESS <ArrowRight size={20} className="ml-2" />
                             </SubmitButton>
 
                             <SubmitButton
                                 formAction={signup}
                                 variant="ghost"
-                                className="h-14 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white border border-transparent hover:border-white/10 rounded-2xl"
+                                className="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white border border-transparent hover:border-white/10 rounded-2xl transition-colors"
                             >
-                                Request Authorization Code
+                                Request Encryption Code
                             </SubmitButton>
                         </div>
                     </form>
 
-                    <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-center gap-3">
-                        <ShieldCheck className="text-green-500/50 w-4 h-4" />
-                        <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">AES-256 Encrypted Tunnel</span>
+                    <div className="mt-10 pt-6 border-t border-white/5 flex items-center justify-center gap-3">
+                        <ShieldCheck className="text-red-900/50 w-4 h-4" />
+                        <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Level 4 Redundant Encryption</span>
                     </div>
                 </div>
 
-                <p className="mt-8 text-center text-slate-600 text-[10px] font-bold uppercase tracking-widest">
-                    © 2026 GSMVIAGEM Systems Corp.
+                <p className="mt-10 text-center text-slate-700 text-[10px] font-black uppercase tracking-widest opacity-60">
+                    © 2026 GSMVIAGEM Intelligence Hub
                 </p>
             </motion.div>
         </div>
@@ -129,7 +130,7 @@ function LoginContent() {
 
 export default function LoginPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-background-dark flex items-center justify-center text-primary font-black uppercase tracking-widest">Initialising Secure Tunnel...</div>}>
+        <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-red-700 font-black uppercase tracking-[0.5em] animate-pulse">Establishing Secure Uplink...</div>}>
             <LoginContent />
         </Suspense>
     );

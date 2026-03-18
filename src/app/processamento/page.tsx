@@ -142,224 +142,216 @@ DADOS DO PASSAGEIRO
         if (!result) return;
         setIsCopying(true);
         navigator.clipboard.writeText(formatOutput(result));
-        toast.success("Copiado para a área de transferência");
+        toast.success("Copiado!");
         setTimeout(() => setIsCopying(false), 2000);
     };
+
+    const redButtonStyle = "bg-red-700 hover:bg-red-800 text-white font-black uppercase tracking-widest border-none shadow-[0_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-y-[2px] transition-all";
 
     return (
         <div className="space-y-8 w-full pb-20">
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col gap-1 mb-8"
+                className="flex flex-col gap-1 mb-4"
             >
                 <div className="flex items-center gap-4">
-                    <div className="size-12 bg-black/10 rounded-2xl flex items-center justify-center border border-black/20">
-                        <BookIcon size={28} className="text-black" />
+                    <div className="size-12 bg-black/40 rounded-2xl flex items-center justify-center border border-white/10 shadow-lg">
+                        <BookIcon size={28} className="text-red-600" />
                     </div>
                     <div>
                         <h1 className="text-4xl font-black text-black tracking-tight">Book</h1>
-                        <p className="text-black/70 font-bold">Processamento de mensagens e atalhos rápidos.</p>
+                        <p className="text-black/70 font-bold">Protocolos de emissão e atalhos de contingência.</p>
                     </div>
                 </div>
             </motion.div>
 
-            <div className="grid lg:grid-cols-12 gap-8 items-start">
-                {/* Main Processor - Left Column (8 units) */}
-                <div className="lg:col-span-8 space-y-8">
-                    <div className="grid md:grid-cols-2 gap-8 items-start">
-                        {/* Input Section */}
-                        <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="glass-panel p-6 rounded-3xl border border-white/5 space-y-6"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                                    <Terminal size={20} className="text-primary" />
-                                </div>
-                                <h3 className="font-bold text-lg text-white">Mensagem Bruta</h3>
-                            </div>
-
-                            <Textarea
-                                placeholder="Cole aqui a mensagem bruta... (Ex: Pls issue lhr-jfk for today mar10 8pm Jacob halberstam march 25 85)"
-                                className="min-h-[300px] bg-black/40 border-white/10 text-slate-300 font-mono text-sm focus-visible:ring-primary rounded-2xl resize-none"
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                            />
-
-                            <Button
-                                onClick={handleProcess}
-                                className="w-full h-14 bg-primary text-background-dark font-black text-lg rounded-2xl hover:brightness-110 shadow-[0_0_20px_rgba(0,255,200,0.2)] transition-all active:scale-[0.98]"
-                            >
-                                <Zap className="mr-2 h-5 w-5" /> PROCESSAR DADOS
-                            </Button>
-                        </motion.div>
-
-                        {/* Output Section */}
-                        <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="glass-panel p-6 rounded-3xl border border-white/5 space-y-6 relative min-h-[500px]"
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-accent-blue/10 border border-accent-blue/20 flex items-center justify-center">
-                                        <LayoutTemplate size={20} className="text-accent-blue" />
-                                    </div>
-                                    <h3 className="font-bold text-lg text-white">Resultado</h3>
-                                </div>
-                                {result && (
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="text-xs font-bold text-slate-400 hover:text-white"
-                                        onClick={handleCopy}
-                                    >
-                                        {isCopying ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                                        COPIAR TUDO
-                                    </Button>
-                                )}
-                            </div>
-
-                            <div className="bg-black/60 rounded-2xl p-6 border border-white/5 min-h-[380px] font-mono text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">
-                                {!result ? (
-                                    <div className="h-full flex flex-col items-center justify-center text-slate-600 gap-4 mt-20">
-                                        <AlertCircle size={48} strokeWidth={1} />
-                                        <p className="font-black uppercase tracking-widest text-[10px]">Aguardando processamento...</p>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                        {formatOutput(result)}
-                                    </div>
-                                )}
-                            </div>
-
-                            {result && (
-                                <div className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center gap-3">
-                                            <Users size={16} className="text-primary" />
-                                            <div className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">
-                                                <span className="block text-white">TOTAL PASSAGEIROS</span>
-                                                {result.passengers.length} ({result.adults}A, {result.children}C, {result.infants}I)
-                                            </div>
-                                        </div>
-                                        <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center gap-3">
-                                            <Plane size={16} className="text-accent-blue" />
-                                            <div className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">
-                                                <span className="block text-white">ROTA</span>
-                                                {result.origin || 'N/A'} → {result.destination || 'N/A'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </motion.div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                
+                {/* 1. MENSAGEM BRUTA */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-black/90 backdrop-blur-3xl p-6 rounded-[32px] border border-white/10 h-[750px] flex flex-col gap-6 shadow-2xl"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-red-600/10 border border-red-600/20 flex items-center justify-center">
+                            <Terminal size={20} className="text-red-600" />
+                        </div>
+                        <h3 className="font-black text-lg text-white uppercase tracking-tighter">Mensagem Bruta</h3>
                     </div>
-                </div>
 
-                {/* Shortcut Blocks - Right Column (4 units) */}
-                <div className="lg:col-span-4 space-y-8">
-                    {/* Shortcuts Tabs/Headers */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="glass-panel p-6 rounded-3xl border border-white/5 space-y-6"
+                    <div className="flex-1 overflow-hidden">
+                        <Textarea
+                            placeholder="Cole aqui a mensagem bruta..."
+                            className="h-full bg-black/40 border-white/5 text-slate-300 font-mono text-xs focus-visible:ring-red-600 rounded-2xl resize-none custom-scrollbar p-5 leading-loose"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                        />
+                    </div>
+
+                    <Button
+                        onClick={handleProcess}
+                        className={`w-full h-16 rounded-2xl text-lg ${redButtonStyle}`}
                     >
-                        <div className="flex gap-2">
-                            <Button
-                                onClick={() => setActiveSection('contas')}
-                                className={`flex-1 rounded-xl h-12 font-black text-xs uppercase tracking-widest transition-all ${
-                                    activeSection === 'contas' 
-                                    ? 'bg-primary text-background-dark shadow-lg shadow-primary/20' 
-                                    : 'bg-white/5 text-slate-400 hover:bg-white/10'
-                                }`}
-                            >
-                                <Wallet className="mr-2 size-4" /> Contas
-                            </Button>
-                            <Button
-                                onClick={() => setActiveSection('pagamentos')}
-                                className={`flex-1 rounded-xl h-12 font-black text-xs uppercase tracking-widest transition-all ${
-                                    activeSection === 'pagamentos' 
-                                    ? 'bg-accent-blue text-background-dark shadow-lg shadow-accent-blue/20' 
-                                    : 'bg-white/5 text-slate-400 hover:bg-white/10'
-                                }`}
-                            >
-                                <Banknote className="mr-2 size-4" /> Pagamentos
-                            </Button>
-                        </div>
+                        <Zap className="mr-2 h-6 w-6 fill-current" /> PROCESSAR DADOS
+                    </Button>
+                </motion.div>
 
-                        {/* Current List */}
-                        <div className="space-y-3 min-h-[200px] max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                            {(activeSection === 'contas' ? contas : pagamentos).length === 0 ? (
-                                <div className="h-40 flex flex-col items-center justify-center text-slate-600 border border-dashed border-white/10 rounded-2xl">
-                                    <Plus size={24} className="opacity-20 mb-2" />
-                                    <p className="text-[10px] font-black uppercase tracking-widest">Nenhum atalho salvo</p>
+                {/* 2. RESULTADO */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className="bg-black/95 backdrop-blur-3xl p-6 rounded-[32px] border border-white/10 h-[750px] flex flex-col gap-6 shadow-2xl"
+                >
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-red-600/10 border border-red-600/20 flex items-center justify-center">
+                                <LayoutTemplate size={20} className="text-red-600" />
+                            </div>
+                            <h3 className="font-black text-lg text-white uppercase tracking-tighter">Resultado</h3>
+                        </div>
+                        {result && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-[10px] font-black text-red-500 hover:text-red-400 uppercase tracking-widest bg-red-600/5 hover:bg-red-600/10"
+                                onClick={handleCopy}
+                            >
+                                {isCopying ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                                COPIAR TUDO
+                            </Button>
+                        )}
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto bg-black/40 rounded-2xl p-6 border border-white/5 font-mono text-[11px] text-slate-300 whitespace-pre-wrap leading-relaxed custom-scrollbar">
+                        {!result ? (
+                            <div className="h-full flex flex-col items-center justify-center text-slate-700 gap-4">
+                                <AlertCircle size={48} strokeWidth={1} />
+                                <p className="font-black uppercase tracking-widest text-[10px]">Aguardando sinal...</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {formatOutput(result)}
+                            </div>
+                        )}
+                    </div>
+
+                    {result && (
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-3">
+                                <Users size={18} className="text-red-600" />
+                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">
+                                    <span className="block text-white">PASSAGEIROS</span>
+                                    {result.passengers.length} ({result.adults}A, {result.children}C, {result.infants}I)
                                 </div>
-                            ) : (
-                                (activeSection === 'contas' ? contas : pagamentos).map((item) => (
-                                    <div 
-                                        key={item.id} 
-                                        className="group p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-all flex items-center justify-between"
-                                    >
-                                        <div className="flex-1 min-w-0 pr-4">
-                                            <p className="text-white font-black text-[10px] uppercase tracking-wider mb-1 opacity-60">
-                                                {item.label}
-                                            </p>
-                                            <p className="text-slate-300 text-xs font-mono truncate">
-                                                {item.text}
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                onClick={() => copyShortcut(item.text)}
-                                                className="size-9 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all active:scale-95"
-                                            >
-                                                <Copy size={16} />
-                                            </Button>
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                onClick={() => deleteShortcut(activeSection, item.id)}
-                                                className="size-9 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                                            >
-                                                <Trash2 size={16} />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
+                            </div>
+                            <div className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-3">
+                                <Plane size={18} className="text-red-600" />
+                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">
+                                    <span className="block text-white">ROTA</span>
+                                    {result.origin || 'N/A'} → {result.destination || 'N/A'}
+                                </div>
+                            </div>
                         </div>
+                    )}
+                </motion.div>
 
-                        {/* Add New Form */}
-                        <div className="pt-4 border-t border-white/5 space-y-3">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-white/40 px-1">Novo Atalho</p>
-                            <Input 
-                                placeholder="Nome (Ex: Pix Itaú)"
-                                value={newLabel}
-                                onChange={e => setNewLabel(e.target.value)}
-                                className="h-12 bg-black/40 border-white/10 rounded-xl text-xs font-bold"
-                            />
-                            <Textarea 
-                                placeholder="Texto do atalho..."
-                                value={newText}
-                                onChange={e => setNewText(e.target.value)}
-                                className="bg-black/40 border-white/10 rounded-xl text-xs font-mono min-h-[80px] resize-none"
-                            />
-                            <Button
-                                onClick={addShortcut}
-                                className={`w-full h-12 font-black text-xs uppercase tracking-widest rounded-xl transition-all ${
-                                    activeSection === 'contas' ? 'bg-primary' : 'bg-accent-blue'
-                                } text-background-dark active:scale-[0.98] shadow-lg`}
-                            >
-                                <Plus className="mr-2 size-4" /> Adicionar a {activeSection === 'contas' ? 'Contas' : 'Pagamentos'}
-                            </Button>
-                        </div>
-                    </motion.div>
-                </div>
+                {/* 3. ATALHOS */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="bg-black/90 backdrop-blur-3xl p-6 rounded-[32px] border border-white/10 h-[750px] flex flex-col gap-6 shadow-2xl"
+                >
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={() => setActiveSection('contas')}
+                            className={`flex-1 rounded-xl h-12 font-black text-[10px] uppercase tracking-widest transition-all ${
+                                activeSection === 'contas' 
+                                ? 'bg-red-700 text-white shadow-[0_4px_0_0_rgba(0,0,0,1)]' 
+                                : 'bg-white/5 text-slate-400 hover:bg-white/10'
+                            }`}
+                        >
+                            <Wallet className="mr-2 size-4" /> Contas
+                        </Button>
+                        <Button
+                            onClick={() => setActiveSection('pagamentos')}
+                            className={`flex-1 rounded-xl h-12 font-black text-[10px] uppercase tracking-widest transition-all ${
+                                activeSection === 'pagamentos' 
+                                ? 'bg-red-700 text-white shadow-[0_4px_0_0_rgba(0,0,0,1)]' 
+                                : 'bg-white/5 text-slate-400 hover:bg-white/10'
+                            }`}
+                        >
+                            <Banknote className="mr-2 size-4" /> Pagamentos
+                        </Button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar bg-black/40 rounded-2xl p-4 border border-white/10 space-y-3">
+                        {(activeSection === 'contas' ? contas : pagamentos).length === 0 ? (
+                            <div className="h-full flex flex-col items-center justify-center text-slate-700">
+                                <Plus size={32} strokeWidth={1} className="opacity-20 mb-2" />
+                                <p className="text-[10px] font-black uppercase tracking-widest text-center px-4 leading-relaxed">Nenhuma credencial configurada</p>
+                            </div>
+                        ) : (
+                            (activeSection === 'contas' ? contas : pagamentos).map((item) => (
+                                <div 
+                                    key={item.id} 
+                                    className="group p-4 rounded-xl bg-white/5 border border-white/5 hover:border-red-600/30 transition-all flex items-center justify-between"
+                                >
+                                    <div className="flex-1 min-w-0 pr-4">
+                                        <p className="text-red-500 font-black text-[9px] uppercase tracking-wider mb-1 opacity-80">
+                                            {item.label}
+                                        </p>
+                                        <p className="text-slate-200 text-xs font-mono truncate leading-tight">
+                                            {item.text}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            onClick={() => copyShortcut(item.text)}
+                                            className="size-10 rounded-xl bg-white/5 hover:bg-red-600/20 text-white transition-all active:scale-90"
+                                        >
+                                            <Copy size={16} />
+                                        </Button>
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            onClick={() => deleteShortcut(activeSection, item.id)}
+                                            className="size-10 rounded-xl bg-red-900/10 hover:bg-red-900/40 text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                                        >
+                                            <Trash2 size={16} />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    <div className="pt-2 space-y-3">
+                        <Input 
+                            placeholder="Nome (Ex: Pix Itaú)"
+                            value={newLabel}
+                            onChange={e => setNewLabel(e.target.value)}
+                            className="h-12 bg-black/60 border-white/10 rounded-2xl text-xs font-bold focus-visible:ring-red-600"
+                        />
+                        <Textarea 
+                            placeholder="Texto do atalho..."
+                            value={newText}
+                            onChange={e => setNewText(e.target.value)}
+                            className="bg-black/60 border-white/10 rounded-2xl text-xs font-mono min-h-[100px] resize-none focus-visible:ring-red-600 custom-scrollbar p-4"
+                        />
+                        <Button
+                            onClick={addShortcut}
+                            className={`w-full h-16 rounded-2xl text-sm ${redButtonStyle}`}
+                        >
+                            <Plus className="mr-2 size-5" /> ADICIONAR ATALHO
+                        </Button>
+                    </div>
+                </motion.div>
             </div>
         </div>
     );

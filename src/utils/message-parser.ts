@@ -160,8 +160,11 @@ export function parseFlightMessage(message: string): ProcessedData {
         workingMsg = workingMsg.replace(timeMatch[0], ' ');
     }
     
+    // 4. Class & Partner
+    const classWorkingMsg = workingMsg; // Save msg state for class extraction
+    
     // Sanitize operational words out of the working string before looking for passenger names
-    workingMsg = workingMsg.replace(/\b(?:vs|dep|arr|rt|ow|for|issue|pax)\b/gi, ' ');
+    workingMsg = workingMsg.replace(/\b(?:vs|dep|arr|rt|ow|for|issue|pax|eco|premium|biz)\b/gi, ' ');
 
     const flightNoMatch = workingMsg.match(/(?:\s|^)([a-z]{2})\s*(\d{1,4})(?:\s|$)/i);
     if (flightNoMatch) {
@@ -177,18 +180,17 @@ export function parseFlightMessage(message: string): ProcessedData {
         data.flightTime = extractedTime;
     }
 
-    // 4. Class & Partner
-    if (/\bpremium\s*(?:economy|eco)\b/i.test(workingMsg)) {
+    if (/\bpremium\s*(?:economy|eco)\b/i.test(classWorkingMsg)) {
         data.classType = 'PREMIUM ECONOMY';
-    } else if (/\beconomy\b|\beconomica\b|\beco\b/i.test(workingMsg)) {
+    } else if (/\beconomy\b|\beconomica\b|\beco\b/i.test(classWorkingMsg)) {
         data.classType = 'ECONOMICA';
     }
     
-    if (/\bbusiness\b|\bexecutiva\b|\bbiz\b/i.test(workingMsg)) {
+    if (/\bbusiness\b|\bexecutiva\b|\bbiz\b/i.test(classWorkingMsg)) {
         data.classType = 'EXECUTIVA';
     }
     
-    if (/\bfirst\b|\bprimeira\b/i.test(workingMsg)) {
+    if (/\bfirst\b|\bprimeira\b/i.test(classWorkingMsg)) {
         data.classType = 'PRIMEIRA';
     }
 
