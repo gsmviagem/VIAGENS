@@ -61,10 +61,14 @@ export function parseFlightMessage(message: string): ProcessedData {
     // 1. Route
     const monthSet = new Set(['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'january', 'february', 'march', 'april', 'maio', 'june', 'junho', 'july', 'julho', 'august', 'agosto', 'september', 'setembro', 'october', 'outubro', 'november', 'novembro', 'december', 'dezembro']);
     const routeRegex = /\b([a-z]{3})\s*(?:-|to|\/|\s+)\s*([a-z]{3})\b/g;
+    const excludedWords = new Set(['eco', 'for', 'pax', 'via', 'the', 'and', 'dep', 'arr', 'pls', 'now', 'day']);
     let routeMatch;
     let finalRouteMatch = null;
     while ((routeMatch = routeRegex.exec(workingMsg)) !== null) {
-        if (!monthSet.has(routeMatch[1]) && !monthSet.has(routeMatch[2])) {
+        const code1 = routeMatch[1].toLowerCase();
+        const code2 = routeMatch[2].toLowerCase();
+        
+        if (!monthSet.has(code1) && !monthSet.has(code2) && !excludedWords.has(code1) && !excludedWords.has(code2)) {
             finalRouteMatch = routeMatch;
             break;
         }
@@ -174,11 +178,19 @@ export function parseFlightMessage(message: string): ProcessedData {
     }
 
     // 4. Class & Partner
-    if (msg.includes('premium economy')) data.classType = 'PREMIUM ECONOMY';
-    else if (msg.includes('economy') || msg.includes('economica')) data.classType = 'ECONOMICA';
+    if (/\bpremium\s*(?:economy|eco)\b/i.test(workingMsg)) {
+        data.classType = 'PREMIUM ECONOMY';
+    } else if (/\beconomy\b|\beconomica\b|\beco\b/i.test(workingMsg)) {
+        data.classType = 'ECONOMICA';
+    }
     
-    if (msg.includes('business') || msg.includes('executiva')) data.classType = 'EXECUTIVA';
-    if (msg.includes('first') || msg.includes('primeira')) data.classType = 'PRIMEIRA';
+    if (/\bbusiness\b|\bexecutiva\b|\bbiz\b/i.test(workingMsg)) {
+        data.classType = 'EXECUTIVA';
+    }
+    
+    if (/\bfirst\b|\bprimeira\b/i.test(workingMsg)) {
+        data.classType = 'PRIMEIRA';
+    }
 
     const partnerMap: { [key: string]: string } = {
         vs: 'Virgin',

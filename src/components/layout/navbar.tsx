@@ -14,7 +14,7 @@ const navItems = [
     { href: '/auto-extrator', label: 'Automations', icon: 'precision_manufacturing' },
     { href: '/emissoes', label: 'Financials', icon: 'payments' },
     { href: '/fornecedores', label: 'Suppliers', icon: 'handshake' },
-    { href: '/processamento', label: 'Processor', icon: 'terminal' },
+    { href: '/processamento', label: 'Book', icon: 'auto_stories' },
     { href: '/configuracoes', label: 'Settings', icon: 'settings' },
 ];
 
