@@ -17,7 +17,8 @@ import {
     Trash2,
     Book as BookIcon,
     Wallet,
-    Banknote
+    Banknote,
+    FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ export default function BookPage() {
     const [input, setInput] = useState('');
     const [result, setResult] = useState<ProcessedData | null>(null);
     const [isCopying, setIsCopying] = useState(false);
+    const [outputMode, setOutputMode] = useState<'full' | 'simple'>('full');
 
     // Shortcut States
     const [contas, setContas] = useState<Shortcut[]>([]);
@@ -98,7 +100,7 @@ export default function BookPage() {
         toast.success("Copiado!");
     };
 
-    const handleProcess = () => {
+    const handleProcess = (mode: 'full' | 'simple') => {
         if (!input.trim()) {
             toast.error("Insira uma mensagem para processar");
             return;
@@ -107,7 +109,8 @@ export default function BookPage() {
         try {
             const data = parseFlightMessage(input);
             setResult(data);
-            toast.success("Mensagem processada com sucesso!");
+            setOutputMode(mode);
+            toast.success(`Dados processados (${mode === 'full' ? 'Completo' : 'Simplificado'})`);
         } catch (err) {
             toast.error("Erro ao processar mensagem");
         }
@@ -124,7 +127,17 @@ export default function BookPage() {
 ⇾ Bebês: ${data.infants}
 ⇾ Voo: ${data.flightTime}`;
 
-        const passengerBlocks = data.passengers.map(p => `
+        const passengerBlocks = data.passengers.map(p => {
+            if (outputMode === 'simple') {
+                return `
+DADOS DO PASSAGEIRO
+➔ Nome: ${p.firstName}
+➔ Sobrenom: ${p.lastName}
+➔ Nascimento: ${p.birthDate}
+➔ Gênero: ${p.gender}`;
+            }
+
+            return `
 DADOS DO PASSAGEIRO
 ➔ Primeiro nome: ${p.firstName}
 ➔ Último nome: ${p.lastName}
@@ -133,7 +146,8 @@ DADOS DO PASSAGEIRO
 ➔ Número do passaporte: ${p.passportNumber}
 ➔ Nacionalidade: ${p.nationality}
 ➔ Data de validade do passaporte: ${p.passportExpiry}
-➔ País de emissão do passaporte: ${p.passportIssuanceCountry}`).join('\n');
+➔ País de emissão do passaporte: ${p.passportIssuanceCountry}`;
+        }).join('\n');
 
         return `${baseInfo}\n${passengerBlocks}`;
     };
@@ -191,12 +205,20 @@ DADOS DO PASSAGEIRO
                         />
                     </div>
 
-                    <Button
-                        onClick={handleProcess}
-                        className={`w-full h-14 shrink-0 rounded-2xl text-base ${redButtonStyle}`}
-                    >
-                        <Zap className="mr-2 h-5 w-5 fill-current" /> PROCESSAR DADOS
-                    </Button>
+                    <div className="grid grid-cols-2 gap-3 shrink-0">
+                        <Button
+                            onClick={() => handleProcess('full')}
+                            className={`h-14 rounded-2xl text-[10px] ${redButtonStyle}`}
+                        >
+                            <Zap className="mr-2 h-4 w-4 fill-current" /> COMPLETO
+                        </Button>
+                        <Button
+                            onClick={() => handleProcess('simple')}
+                            className={`h-14 rounded-2xl text-[10px] bg-red-900/40 hover:bg-red-900/60 text-white font-black uppercase tracking-widest border-none shadow-[0_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-y-[2px] transition-all`}
+                        >
+                            <FileText className="mr-2 h-4 w-4" /> SIMPLIFICADO
+                        </Button>
+                    </div>
                 </motion.div>
 
                 {/* 2. RESULTADO */}
