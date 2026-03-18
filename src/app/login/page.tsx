@@ -58,7 +58,7 @@ function LoginContent() {
                 </div>
 
                 {/* Login Card */}
-                <div className="bg-black/90 backdrop-blur-3xl p-10 rounded-[48px] border border-white/10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.7)] relative overflow-hidden group transition-all hover:border-red-900/40">
+                <div className="bg-black/40 backdrop-blur-3xl p-10 rounded-[48px] border border-white/10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.7)] relative overflow-hidden group transition-all hover:border-red-900/40">
                     <div className="absolute -top-10 -right-10 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <Rocket size={240} className="text-red-700 -rotate-12" />
                     </div>
