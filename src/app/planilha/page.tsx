@@ -44,7 +44,7 @@ export default function PlanilhaPage() {
                 <Button 
                     onClick={handleSync}
                     disabled={isSyncing}
-                    className="bg-primary hover:brightness-110 text-black font-black text-xs h-10 px-6 rounded-xl shadow-lg disabled:opacity-50"
+                    className="bg-primary hover:brightness-110 text-white font-black text-xs h-10 px-6 rounded-xl shadow-lg disabled:opacity-50"
                 >
                     <span className={`material-symbols-outlined text-sm mr-2 ${isSyncing ? 'animate-spin' : ''}`}>
                         {isSyncing ? 'refresh' : 'sync'}

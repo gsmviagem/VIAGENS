@@ -74,11 +74,11 @@ export default function CotacaoPage() {
                     className="flex items-center gap-4"
                 >
                     <div className="p-3 bg-black/5 rounded-2xl border border-black/10">
-                        <span className="material-symbols-outlined text-black text-2xl font-bold">public</span>
+                        <span className="material-symbols-outlined text-white text-2xl font-bold">public</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                        <h1 className="text-4xl font-black tracking-tight text-black">Quotation Matrix</h1>
-                        <p className="text-black/70 font-bold">Multi-source flight comparison intelligence</p>
+                        <h1 className="text-4xl font-black tracking-tight text-white">Quotation Matrix</h1>
+                        <p className="text-white/70 font-bold">Multi-source flight comparison intelligence</p>
                     </div>
                 </motion.div>
             </header>
@@ -162,7 +162,7 @@ export default function CotacaoPage() {
                             <Button
                                 onClick={handleSearch}
                                 disabled={isSearching}
-                                className="w-full h-14 bg-primary hover:bg-primary-hover text-black font-extrabold text-lg mt-8 rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-95 group"
+                                className="w-full h-14 bg-primary hover:bg-primary-hover text-white font-extrabold text-lg mt-8 rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-95 group"
                             >
                                 {isSearching ? (
                                     <span className="material-symbols-outlined animate-spin mr-2">refresh</span>
@@ -228,8 +228,8 @@ export default function CotacaoPage() {
                                                 </div>
                                             ) : searchStatus[site.id] === 'error' ? (
                                                 <div className="flex items-center gap-2">
-                                                    <span className="material-symbols-outlined text-sm text-red-400">cancel</span>
-                                                    <span className="text-[10px] font-bold text-red-400 uppercase">Extraction Fault</span>
+                                                    <span className="material-symbols-outlined text-sm text-blue-400">cancel</span>
+                                                    <span className="text-[10px] font-bold text-blue-400 uppercase">Extraction Fault</span>
                                                 </div>
                                             ) : (
                                                 <span className="text-[10px] font-bold text-slate-600 uppercase">Waiting Protocol...</span>
@@ -292,7 +292,7 @@ export default function CotacaoPage() {
                                                 <td className="px-6 py-4">
                                                     <span className={cn(
                                                         "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
-                                                        res.success ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
+                                                        res.success ? "bg-emerald-500/10 text-emerald-400" : "bg-blue-500/10 text-blue-400"
                                                     )}>
                                                         {res.success ? "Optimised" : "Fault"}
                                                     </span>

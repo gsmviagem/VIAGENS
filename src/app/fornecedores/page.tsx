@@ -73,8 +73,8 @@ export default function FornecedoresPage() {
     if (loading && !data) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-                <div className="material-symbols-outlined text-black text-6xl animate-spin">refresh</div>
-                <p className="text-black/60 font-medium animate-pulse">Sincronizando com Base de Dados...</p>
+                <div className="material-symbols-outlined text-white text-6xl animate-spin">refresh</div>
+                <p className="text-white/60 font-medium animate-pulse">Sincronizando com Base de Dados...</p>
             </div>
         );
     }
@@ -85,11 +85,11 @@ export default function FornecedoresPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-1">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-black/10 rounded-xl border border-black/10 backdrop-blur-md">
-                        <span className="material-symbols-outlined text-black text-2xl font-bold">handshake</span>
+                        <span className="material-symbols-outlined text-white text-2xl font-bold">handshake</span>
                     </div>
                     <div className="leading-tight">
-                        <h1 className="text-2xl font-extrabold tracking-tight text-black uppercase">Supplier Analytics</h1>
-                        <p className="text-black/60 font-medium font-mono text-[11px] tracking-widest mt-0.5">
+                        <h1 className="text-2xl font-extrabold tracking-tight text-white uppercase">Supplier Analytics</h1>
+                        <p className="text-white/60 font-medium font-mono text-[11px] tracking-widest mt-0.5">
                             Análise Nativa de Saídas & Créditos
                         </p>
                     </div>
@@ -147,7 +147,7 @@ export default function FornecedoresPage() {
                             <Button 
                                 type="button"
                                 onClick={(e) => { e.preventDefault(); setPendingOnly(!pendingOnly); }}
-                                className={cn("w-full h-9 rounded-lg font-black text-[10px] transition-all", pendingOnly ? "bg-amber-500 hover:bg-amber-400 text-black shadow-[0_0_10px_rgba(245,158,11,0.3)]" : "bg-black/30 border border-white/5 text-white/50 hover:bg-white/10 hover:text-white")}
+                                className={cn("w-full h-9 rounded-lg font-black text-[10px] transition-all", pendingOnly ? "bg-amber-500 hover:bg-amber-400 text-white shadow-[0_0_10px_rgba(245,158,11,0.3)]" : "bg-black/30 border border-white/5 text-white/50 hover:bg-white/10 hover:text-white")}
                             >
                                 {pendingOnly ? "SÓ PENDENTES" : "TODOS"}
                             </Button>
@@ -200,8 +200,8 @@ export default function FornecedoresPage() {
                 {/* Suppliers List */}
                 <div className="lg:col-span-4 space-y-2">
                     <div className="flex items-center gap-1.5 mb-0.5 px-2">
-                        <span className="material-symbols-outlined text-black text-base">account_balance_wallet</span>
-                        <h2 className="font-bold text-black uppercase tracking-widest text-xs">Créditos e Saldos</h2>
+                        <span className="material-symbols-outlined text-white text-base">account_balance_wallet</span>
+                        <h2 className="font-bold text-white uppercase tracking-widest text-xs">Créditos e Saldos</h2>
                     </div>
                     <div className="bg-black/20 backdrop-blur-xl border border-white/10 p-1.5 rounded-[1rem] shadow-2xl">
                         <div className="space-y-1.5 min-h-[150px] max-h-[450px] overflow-y-auto pr-1 flex flex-col custom-scrollbar">
@@ -226,7 +226,7 @@ export default function FornecedoresPage() {
                                         </span>
                                         <Badge className={cn("text-[9px] font-black uppercase px-1.5 py-0 rounded", 
                                             s.saldoType === 'POSITIVE' ? 'bg-emerald-500/20 text-emerald-300' :
-                                            s.saldoType === 'NEGATIVE' ? 'bg-red-500/20 text-red-300' : 'bg-white/10 text-white/50'
+                                            s.saldoType === 'NEGATIVE' ? 'bg-blue-500/20 text-blue-300' : 'bg-white/10 text-white/50'
                                         )}>
                                             {s.saldoType === 'POSITIVE' ? 'CRÉDITO' : s.saldoType === 'NEGATIVE' ? 'DÍVIDA' : 'ZERADO'}
                                         </Badge>
@@ -238,7 +238,7 @@ export default function FornecedoresPage() {
                                         </div>
                                         <div className="bg-black/20 p-1 rounded-lg flex flex-col items-center">
                                             <span className="text-[9px] text-white/40 uppercase font-black mb-0">Devendo</span>
-                                            <span className="text-red-400 font-bold leading-tight">{s.debt}</span>
+                                            <span className="text-blue-400 font-bold leading-tight">{s.debt}</span>
                                         </div>
                                     </div>
                                     <div className="mt-1.5 text-center bg-white/5 border border-white/10 p-1 rounded-lg flex justify-between items-center px-2">
@@ -298,8 +298,8 @@ export default function FornecedoresPage() {
                     <div className="flex-grow flex flex-col space-y-1.5">
                         <div className="flex items-center justify-between gap-2 px-1">
                             <div className="flex items-center gap-1.5">
-                                <span className="material-symbols-outlined text-black text-base">payments</span>
-                                <h2 className="font-bold text-black uppercase tracking-widest text-xs">Registros</h2>
+                                <span className="material-symbols-outlined text-white text-base">payments</span>
+                                <h2 className="font-bold text-white uppercase tracking-widest text-xs">Registros</h2>
                             </div>
                             <Badge className="bg-black text-white hover:bg-black/80 font-black px-2 py-0 rounded text-[10px]">
                                 {data?.ledger?.length || 0} SAÍDAS
@@ -330,8 +330,8 @@ export default function FornecedoresPage() {
                                                         className={cn(
                                                             "text-[9px] font-black uppercase h-5 rounded px-1.5 flex items-center justify-center w-fit mx-auto",
                                                             row.issueStatus === 'PENDENTE' 
-                                                                ? "bg-amber-500 text-black border-none" 
-                                                                : "bg-emerald-500 text-black border-none"
+                                                                ? "bg-amber-500 text-white border-none" 
+                                                                : "bg-emerald-500 text-white border-none"
                                                         )}
                                                     >
                                                         {row.issueStatus}

@@ -164,10 +164,10 @@ export default function DashboardPage() {
             className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12"
           >
             <div className="flex flex-col gap-1">
-              <h1 className="text-4xl font-black text-black tracking-tight">
+              <h1 className="text-4xl font-black text-white tracking-tight">
                 Global Operations Hub
               </h1>
-              <p className="text-black/70 max-w-xl font-bold">
+              <p className="text-white/70 max-w-xl font-bold">
                 Monitoramento de frota SaaS em tempo real, controle de emissão autônomo e sincronização financeira.
               </p>
             </div>
@@ -224,8 +224,8 @@ export default function DashboardPage() {
               accentColor="accent-blue"
               headerExtra={
                 <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
-                  <span className="text-[10px] font-bold text-red-500 tracking-tighter uppercase">Live Feed</span>
+                  <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span>
+                  <span className="text-[10px] font-bold text-blue-500 tracking-tighter uppercase">Live Feed</span>
                 </div>
               }
             >

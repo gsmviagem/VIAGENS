@@ -34,11 +34,11 @@ export default function ConfiguracoesPage() {
                 className="flex flex-col md:flex-row md:items-center justify-between gap-6"
             >
                 <div className="flex flex-col gap-1">
-                    <h1 className="text-4xl font-black text-black tracking-tight">System Matrix</h1>
-                    <p className="text-black/70 max-w-xl font-bold">Configure parâmetros operacionais, credenciais de segurança e motores de automação.</p>
+                    <h1 className="text-4xl font-black text-white tracking-tight">System Matrix</h1>
+                    <p className="text-white/70 max-w-xl font-bold">Configure parâmetros operacionais, credenciais de segurança e motores de automação.</p>
                 </div>
                 <div className="flex gap-3">
-                    <Button variant="outline" className="glass-panel border-black/10 text-black/60 hover:bg-black/5 uppercase text-[10px] font-black tracking-widest">
+                    <Button variant="outline" className="glass-panel border-black/10 text-white/60 hover:bg-black/5 uppercase text-[10px] font-black tracking-widest">
                         <Fingerprint className="mr-2 h-4 w-4" /> Audit Logs
                     </Button>
                 </div>
@@ -173,8 +173,8 @@ export default function ConfiguracoesPage() {
                         className="glass-panel rounded-2xl p-8 border border-white/5 max-w-2xl bg-gradient-to-br from-white/5 to-transparent"
                     >
                         <div className="flex items-center gap-4 mb-8">
-                            <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30">
-                                <Shield className="text-red-500 w-6 h-6" />
+                            <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                                <Shield className="text-blue-500 w-6 h-6" />
                             </div>
                             <div>
                                 <h3 className="text-xl font-bold text-white leading-none">Credenciais de Segurança</h3>
@@ -193,7 +193,7 @@ export default function ConfiguracoesPage() {
                             }
                         }} className="space-y-6">
                             <div className="space-y-2 group">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-red-500 transition-colors">Nova Senha</Label>
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-blue-500 transition-colors">Nova Senha</Label>
                                 <Input
                                     type="password"
                                     name="password"
@@ -202,7 +202,7 @@ export default function ConfiguracoesPage() {
                                 />
                             </div>
                             <div className="space-y-2 group">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-red-500 transition-colors">Confirmar Nova Senha</Label>
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-blue-500 transition-colors">Confirmar Nova Senha</Label>
                                 <Input
                                     type="password"
                                     name="confirmPassword"
@@ -211,7 +211,7 @@ export default function ConfiguracoesPage() {
                                 />
                             </div>
                             <div className="pt-6 flex gap-4">
-                                <Button type="submit" className="bg-red-600 hover:bg-red-700 text-white font-black px-8 h-12 rounded-xl flex items-center gap-2 shadow-lg shadow-red-600/20 transition-all">
+                                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-black px-8 h-12 rounded-xl flex items-center gap-2 shadow-lg shadow-blue-600/20 transition-all">
                                     <Lock size={18} /> ALTERAR SENHA
                                 </Button>
                             </div>

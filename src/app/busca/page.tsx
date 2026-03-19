@@ -18,7 +18,7 @@ interface QuotationResult {
 
 const AIRLINE_COLORS: Record<string, string> = {
     Azul: 'border-sky-500/30 bg-sky-500/10 text-sky-400',
-    LATAM: 'border-red-500/30 bg-red-500/10 text-red-400',
+    LATAM: 'border-blue-500/30 bg-blue-500/10 text-blue-400',
     Smiles: 'border-orange-500/30 bg-orange-500/10 text-orange-400',
     BuscaIdeal: 'border-purple-500/30 bg-purple-500/10 text-purple-400',
 };

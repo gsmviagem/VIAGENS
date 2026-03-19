@@ -39,7 +39,7 @@ const AIRLINES: AirlineConfig[] = [
 const COLOR_MAP: Record<string, string> = {
     sky: 'text-sky-400 border-sky-500/30 bg-sky-500/10',
     orange: 'text-orange-400 border-orange-500/30 bg-orange-500/10',
-    red: 'text-red-400 border-red-500/30 bg-red-500/10',
+    red: 'text-blue-400 border-blue-500/30 bg-blue-500/10',
 };
 
 // ─── Airline Credential Card ──────────────────────────────────────────────────
@@ -158,7 +158,7 @@ function AirlineCard({
                                 />
                             </div>
                             <Button
-                                className="w-full h-9 bg-primary text-black font-black text-xs rounded-xl"
+                                className="w-full h-9 bg-primary text-white font-black text-xs rounded-xl"
                                 onClick={handleAdd}
                                 disabled={adding}
                             >
@@ -216,7 +216,7 @@ function AirlineCard({
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-7 w-7 p-0 text-slate-600 hover:text-red-400 rounded-lg"
+                                    className="h-7 w-7 p-0 text-slate-600 hover:text-blue-400 rounded-lg"
                                     onClick={() => onDeleteAccount(account.id)}
                                 >
                                     <span className="material-symbols-outlined text-sm">delete</span>
@@ -369,10 +369,10 @@ export default function AutoExtratorPage() {
                 className="flex flex-col md:flex-row md:items-center justify-between gap-6"
             >
                 <div className="flex flex-col gap-1">
-                    <h1 className="text-4xl font-black text-black tracking-tight">
+                    <h1 className="text-4xl font-black text-white tracking-tight">
                         Auto-Extrator Command
                     </h1>
-                    <p className="text-black/70 max-w-xl font-bold">
+                    <p className="text-white/70 max-w-xl font-bold">
                         Gerencie credenciais das companhias e execute extrações automáticas de emissões.
                     </p>
                 </div>
@@ -448,7 +448,7 @@ export default function AutoExtratorPage() {
                             >
                                 <span className="text-slate-600 shrink-0 select-none">[{log.time}]</span>
                                 <span className={cn(
-                                    log.level === 'error' ? 'text-red-400' :
+                                    log.level === 'error' ? 'text-blue-400' :
                                         log.level === 'success' ? 'text-green-400' :
                                             'text-slate-400'
                                 )}>

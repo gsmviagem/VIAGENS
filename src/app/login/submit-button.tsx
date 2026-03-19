@@ -22,7 +22,7 @@ export function SubmitButton({ children, className, variant, formAction }: Submi
             disabled={pending}
             formAction={formAction}
             className={cn(
-                "h-14 bg-red-700 hover:bg-red-800 text-white font-black text-lg rounded-2xl shadow-[0_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-y-[2px] transition-all flex items-center justify-center gap-3 w-full animate-in fade-in duration-500",
+                "h-14 bg-blue-700 hover:bg-blue-800 text-white font-black text-lg rounded-2xl shadow-[0_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-y-[2px] transition-all flex items-center justify-center gap-3 w-full animate-in fade-in duration-500",
                 className
             )}
             variant={variant}

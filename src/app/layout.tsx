@@ -31,7 +31,7 @@ export default async function RootLayout({
             <img 
               alt="Premium Background" 
               className="w-full h-full object-cover" 
-              src="/assets/images/wallpaper.jpg"
+              src="/bg-money.jpg"
             />
           </div>
 

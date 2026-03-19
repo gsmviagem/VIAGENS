@@ -15,41 +15,43 @@ export default async function InventarioPage() {
     const smilesEntries = smilesData || [];
     const azulEntries = azulData || [];
 
+    const gridLayout = "grid-cols-[2.5fr_2fr_1fr_1fr_1fr]";
+
     return (
         <div className="flex flex-col w-full h-[calc(100vh-80px)] overflow-hidden pt-4">
             
             <header className="mb-6 shrink-0">
                 <div className="flex items-center gap-4">
-                    <div className="p-3 bg-black/5 rounded-2xl border border-black/10">
-                        <span className="material-symbols-outlined text-black text-2xl font-bold">inventory</span>
+                    <div className="p-3 bg-black/40 backdrop-blur-md rounded-2xl border border-blue-900/40 shadow-[0_0_15px_rgba(30,58,138,0.3)]">
+                        <span className="material-symbols-outlined text-white text-2xl font-bold">inventory</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                        <h1 className="text-4xl font-black tracking-tight text-black">INVENTÁRIO HUB</h1>
-                        <p className="text-black/70 font-bold uppercase tracking-widest text-[10px]">Controle Geral de Contas e Milhas</p>
+                        <h1 className="text-4xl font-black tracking-tight text-white drop-shadow-lg">INVENTÁRIO HUB</h1>
+                        <p className="text-white/80 font-bold uppercase tracking-widest text-[10px] drop-shadow-md">CONTROLE GERAL DE CONTAS E MILHAS</p>
                     </div>
                 </div>
             </header>
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 flex-1 min-h-0 pb-6 overflow-hidden">
                 {/* LATAM Block */}
-                <div className="rounded-2xl border border-red-900/40 bg-black shadow-[0_0_20px_rgba(220,38,38,0.15)] flex flex-col h-full overflow-hidden">
-                    <div className="bg-gradient-to-r from-red-900 to-red-600 text-white font-black text-center py-3 uppercase tracking-widest text-sm shrink-0">
+                <div className="rounded-2xl border border-blue-900/40 bg-black/40 backdrop-blur-xl shadow-[0_0_20px_rgba(30,58,138,0.2)] flex flex-col h-full overflow-hidden">
+                    <div className="bg-gradient-to-r from-black via-blue-950/40 to-black text-white font-black text-center py-3 border-b border-blue-900/30 uppercase tracking-widest text-sm shrink-0">
                         LATAM
                     </div>
-                    <div className="grid grid-cols-5 text-center text-[10px] font-bold text-white uppercase bg-black/50 py-3 border-b border-red-900/40 shrink-0">
+                    <div className={`grid ${gridLayout} text-center text-[10px] font-bold text-white uppercase bg-black/60 py-3 border-b border-blue-900/40 shrink-0`}>
                         <div>NOME</div>
                         <div>CPF</div>
                         <div>SENHA</div>
                         <div>PREÇO</div>
                         <div>MILHAS</div>
                     </div>
-                    <div className="flex-1 overflow-y-auto divide-y divide-white/5 custom-scrollbar bg-black/90">
+                    <div className="flex-1 overflow-y-auto divide-y divide-white/10 custom-scrollbar bg-black/80">
                         {latamEntries.map((row, i) => (
-                            <div key={i} className="grid grid-cols-5 text-center text-xs text-white py-3 hover:bg-white/10 transition-colors items-center">
+                            <div key={i} className={`grid ${gridLayout} text-center text-xs text-white py-3 hover:bg-blue-900/20 transition-colors items-center`}>
                                 <div className="truncate px-2 font-medium" title={row[0]}>{row[0] || '-'}</div>
                                 <div className="truncate px-2 font-mono text-white/80" title={row[1]}>{row[1] || '-'}</div>
                                 <div className="truncate px-2 font-mono text-white/60" title={row[2]}>{row[2] || '-'}</div>
-                                <div className="truncate px-2 font-black text-red-400" title={row[3]}>{row[3] || '-'}</div>
+                                <div className="truncate px-2 font-black text-blue-400" title={row[3]}>{row[3] || '-'}</div>
                                 <div className="truncate px-2 font-black" title={row[4]}>{row[4] || '-'}</div>
                             </div>
                         ))}
@@ -60,24 +62,24 @@ export default async function InventarioPage() {
                 </div>
 
                 {/* SMILES Block */}
-                <div className="rounded-2xl border border-orange-900/40 bg-black shadow-[0_0_20px_rgba(249,115,22,0.15)] flex flex-col h-full overflow-hidden">
-                    <div className="bg-gradient-to-r from-orange-600 to-orange-500 text-white font-black text-center py-3 uppercase tracking-widest text-sm shrink-0">
+                <div className="rounded-2xl border border-blue-900/40 bg-black/40 backdrop-blur-xl shadow-[0_0_20px_rgba(30,58,138,0.2)] flex flex-col h-full overflow-hidden">
+                    <div className="bg-gradient-to-r from-black via-blue-950/40 to-black text-white font-black text-center py-3 border-b border-blue-900/30 uppercase tracking-widest text-sm shrink-0">
                         SMILES
                     </div>
-                    <div className="grid grid-cols-5 text-center text-[10px] font-bold text-white uppercase bg-black/50 py-3 border-b border-orange-900/40 shrink-0">
+                    <div className={`grid ${gridLayout} text-center text-[10px] font-bold text-white uppercase bg-black/60 py-3 border-b border-blue-900/40 shrink-0`}>
                         <div>NOME</div>
                         <div>CPF</div>
                         <div>SENHA</div>
                         <div>PREÇO</div>
                         <div>MILHAS</div>
                     </div>
-                    <div className="flex-1 overflow-y-auto divide-y divide-white/5 custom-scrollbar bg-black/90">
+                    <div className="flex-1 overflow-y-auto divide-y divide-white/10 custom-scrollbar bg-black/80">
                         {smilesEntries.map((row, i) => (
-                            <div key={i} className="grid grid-cols-5 text-center text-xs text-white py-3 hover:bg-white/10 transition-colors items-center">
+                            <div key={i} className={`grid ${gridLayout} text-center text-xs text-white py-3 hover:bg-blue-900/20 transition-colors items-center`}>
                                 <div className="truncate px-2 font-medium" title={row[0]}>{row[0] || '-'}</div>
                                 <div className="truncate px-2 font-mono text-white/80" title={row[1]}>{row[1] || '-'}</div>
                                 <div className="truncate px-2 font-mono text-white/60" title={row[2]}>{row[2] || '-'}</div>
-                                <div className="truncate px-2 font-black text-orange-400" title={row[3]}>{row[3] || '-'}</div>
+                                <div className="truncate px-2 font-black text-blue-400" title={row[3]}>{row[3] || '-'}</div>
                                 <div className="truncate px-2 font-black" title={row[4]}>{row[4] || '-'}</div>
                             </div>
                         ))}
@@ -88,20 +90,20 @@ export default async function InventarioPage() {
                 </div>
 
                 {/* AZUL Block */}
-                <div className="rounded-2xl border border-blue-900/40 bg-black shadow-[0_0_20px_rgba(59,130,246,0.15)] flex flex-col h-full overflow-hidden">
-                    <div className="bg-gradient-to-r from-blue-700 to-blue-500 text-white font-black text-center py-3 uppercase tracking-widest text-sm shrink-0">
+                <div className="rounded-2xl border border-blue-900/40 bg-black/40 backdrop-blur-xl shadow-[0_0_20px_rgba(30,58,138,0.2)] flex flex-col h-full overflow-hidden">
+                    <div className="bg-gradient-to-r from-black via-blue-950/40 to-black text-white font-black text-center py-3 border-b border-blue-900/30 uppercase tracking-widest text-sm shrink-0">
                         AZUL
                     </div>
-                    <div className="grid grid-cols-5 text-center text-[10px] font-bold text-white uppercase bg-black/50 py-3 border-b border-blue-900/40 shrink-0">
+                    <div className={`grid ${gridLayout} text-center text-[10px] font-bold text-white uppercase bg-black/60 py-3 border-b border-blue-900/40 shrink-0`}>
                         <div>NOME</div>
                         <div>CPF</div>
                         <div>SENHA</div>
                         <div>PREÇO</div>
                         <div>MILHAS</div>
                     </div>
-                    <div className="flex-1 overflow-y-auto divide-y divide-white/5 custom-scrollbar bg-black/90">
+                    <div className="flex-1 overflow-y-auto divide-y divide-white/10 custom-scrollbar bg-black/80">
                         {azulEntries.map((row, i) => (
-                            <div key={i} className="grid grid-cols-5 text-center text-xs text-white py-3 hover:bg-white/10 transition-colors items-center">
+                            <div key={i} className={`grid ${gridLayout} text-center text-xs text-white py-3 hover:bg-blue-900/20 transition-colors items-center`}>
                                 <div className="truncate px-2 font-medium" title={row[0]}>{row[0] || '-'}</div>
                                 <div className="truncate px-2 font-mono text-white/80" title={row[1]}>{row[1] || '-'}</div>
                                 <div className="truncate px-2 font-mono text-white/60" title={row[2]}>{row[2] || '-'}</div>
@@ -128,7 +130,7 @@ export default async function InventarioPage() {
                     border-radius: 10px;
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: rgba(255,255,255,0.2);
+                    background: rgba(30,58,138,0.5);
                 }
             `}} />
         </div>

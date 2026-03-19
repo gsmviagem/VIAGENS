@@ -70,14 +70,14 @@ export default function EmissoesPage() {
                 className="flex flex-col md:flex-row md:items-center justify-between gap-6"
             >
                 <div className="flex flex-col gap-1">
-                    <h1 className="text-4xl font-black text-black tracking-tight">Operational Ledger</h1>
-                    <p className="text-black/70 max-w-xl font-bold">Histórico centralizado de todas as emissões capturadas via auto-extração ou busca manual.</p>
+                    <h1 className="text-4xl font-black text-white tracking-tight">Operational Ledger</h1>
+                    <p className="text-white/70 max-w-xl font-bold">Histórico centralizado de todas as emissões capturadas via auto-extração ou busca manual.</p>
                 </div>
                 <div className="flex gap-3">
                     <Button
                         onClick={handleExport}
                         disabled={data.length === 0}
-                        className="glass-panel border-black/10 text-black/60 hover:bg-black/5 uppercase text-[10px] font-black tracking-widest px-6 disabled:opacity-50"
+                        className="glass-panel border-black/10 text-white/60 hover:bg-black/5 uppercase text-[10px] font-black tracking-widest px-6 disabled:opacity-50"
                     >
                         <FileDown className="mr-2 h-4 w-4 text-primary" /> Export Excel
                     </Button>

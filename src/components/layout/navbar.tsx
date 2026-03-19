@@ -35,9 +35,9 @@ export function Navbar() {
                         className="flex items-center gap-3"
                     >
                         <div className="size-10 bg-black/10 rounded-xl flex items-center justify-center border border-black/20">
-                            <span className="material-symbols-outlined text-black text-2xl">rocket_launch</span>
+                            <span className="material-symbols-outlined text-white text-2xl">rocket_launch</span>
                         </div>
-                        <Link href="/" className="text-xl font-black tracking-tighter text-black">
+                        <Link href="/" className="text-xl font-black tracking-tighter text-white">
                             GSMVIAGEM
                         </Link>
                     </motion.div>
@@ -50,8 +50,8 @@ export function Navbar() {
                                 className={cn(
                                     "text-sm font-extrabold flex items-center gap-2 pb-1 border-b-2 transition-all",
                                     pathname === item.href
-                                        ? 'text-black border-black'
-                                        : 'text-black/60 border-transparent hover:text-black'
+                                        ? 'text-white border-black'
+                                        : 'text-white/60 border-transparent hover:text-white'
                                 )}
                             >
                                 <span className="material-symbols-outlined text-[18px]">{item.icon}</span> {item.label}
@@ -62,27 +62,27 @@ export function Navbar() {
     
                 <div className="flex items-center gap-4">
                     <div className="hidden lg:flex items-center bg-black/5 border border-black/10 rounded-lg px-3 py-1.5 focus-within:border-black/30 transition-all">
-                        <span className="material-symbols-outlined text-black/40 text-lg">search</span>
+                        <span className="material-symbols-outlined text-white/40 text-lg">search</span>
                         <input
-                            className="bg-transparent border-none focus:outline-none text-sm w-48 text-black ml-2 placeholder:text-black/30"
+                            className="bg-transparent border-none focus:outline-none text-sm w-48 text-white ml-2 placeholder:text-white/30"
                             placeholder="Quick find commands..."
                             type="text"
                         />
-                        <span className="text-[10px] bg-black/10 px-1.5 py-0.5 rounded text-black/50 ml-2 font-bold">⌘K</span>
+                        <span className="text-[10px] bg-black/10 px-1.5 py-0.5 rounded text-white/50 ml-2 font-bold">⌘K</span>
                     </div>
     
                     <div className="flex items-center gap-2">
                         <button className="size-10 rounded-lg bg-black/5 flex items-center justify-center hover:bg-black/10 transition-colors relative border border-black/5">
-                            <span className="material-symbols-outlined text-black/70 text-xl">notifications</span>
-                            <span className="absolute top-2.5 right-2.5 size-2 bg-red-600 rounded-full ring-2 ring-white/10"></span>
+                            <span className="material-symbols-outlined text-white/70 text-xl">notifications</span>
+                            <span className="absolute top-2.5 right-2.5 size-2 bg-blue-600 rounded-full ring-2 ring-white/10"></span>
                         </button>
     
                         <div className="h-8 w-[1px] bg-black/10 mx-1 hidden sm:block"></div>
     
                         <div className="flex items-center gap-3 pl-2 group cursor-pointer">
                             <div className="text-right hidden sm:block">
-                                <p className="text-xs font-black text-black">Alex Volkov</p>
-                                <p className="text-[10px] text-black/60 uppercase font-black tracking-tighter">System Admin</p>
+                                <p className="text-xs font-black text-white">Alex Volkov</p>
+                                <p className="text-[10px] text-white/60 uppercase font-black tracking-tighter">System Admin</p>
                             </div>
                             <div className="w-10 h-10 rounded-full border-2 border-black/20 p-0.5 overflow-hidden ring-offset-2 ring-offset-transparent group-hover:ring-2 ring-black/30 transition-all">
                                 <img
@@ -92,7 +92,7 @@ export function Navbar() {
                                 />
                             </div>
                             <form action={logout}>
-                                <Button variant="ghost" size="icon" className="text-black/40 hover:text-red-600 ml-1">
+                                <Button variant="ghost" size="icon" className="text-white/40 hover:text-blue-600 ml-1">
                                     <span className="material-symbols-outlined">logout</span>
                                 </Button>
                             </form>
@@ -101,7 +101,7 @@ export function Navbar() {
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="lg:hidden text-black"
+                            className="lg:hidden text-white"
                             onClick={toggleMobileMenu}
                         >
                             {isMobileMenuOpen ? <span className="material-symbols-outlined text-3xl">close</span> : <span className="material-symbols-outlined text-3xl">menu</span>}
@@ -139,7 +139,7 @@ export function Navbar() {
 
                         <div className="mt-8 pt-8 border-t border-white/5">
                             <form action={logout} onClick={() => setIsMobileMenuOpen(false)}>
-                                <button className="w-full flex items-center gap-4 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 font-bold text-lg">
+                                <button className="w-full flex items-center gap-4 p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-500 font-bold text-lg">
                                     <span className="material-symbols-outlined text-2xl">logout</span> Sair da Sessão
                                 </button>
                             </form>

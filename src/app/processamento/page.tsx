@@ -160,7 +160,7 @@ DADOS DO PASSAGEIRO
         setTimeout(() => setIsCopying(false), 2000);
     };
 
-    const redButtonStyle = "bg-red-700 hover:bg-red-800 text-white font-black uppercase tracking-widest border-none shadow-[0_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-y-[2px] transition-all";
+    const redButtonStyle = "bg-blue-700 hover:bg-blue-800 text-white font-black uppercase tracking-widest border-none shadow-[0_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-y-[2px] transition-all";
     const glassCardStyle = "bg-slate-950/40 backdrop-blur-3xl p-6 rounded-[32px] border border-white/10 h-full flex flex-col gap-6 shadow-2xl overflow-hidden";
 
     return (
@@ -172,11 +172,11 @@ DADOS DO PASSAGEIRO
             >
                 <div className="flex items-center gap-4">
                     <div className="size-10 bg-black/40 rounded-xl flex items-center justify-center border border-white/10 shadow-lg">
-                        <BookIcon size={24} className="text-red-600" />
+                        <BookIcon size={24} className="text-blue-600" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black text-black tracking-tight leading-none">Book</h1>
-                        <p className="text-black/60 font-bold text-xs">Protocolos de emissão e atalhos de contingência.</p>
+                        <h1 className="text-3xl font-black text-white tracking-tight leading-none">Book</h1>
+                        <p className="text-white/60 font-bold text-xs">Protocolos de emissão e atalhos de contingência.</p>
                     </div>
                 </div>
             </motion.div>
@@ -190,8 +190,8 @@ DADOS DO PASSAGEIRO
                     className={glassCardStyle}
                 >
                     <div className="flex items-center gap-3 shrink-0">
-                        <div className="w-9 h-9 rounded-xl bg-red-600/10 border border-red-600/20 flex items-center justify-center">
-                            <Terminal size={18} className="text-red-600" />
+                        <div className="w-9 h-9 rounded-xl bg-blue-600/10 border border-blue-600/20 flex items-center justify-center">
+                            <Terminal size={18} className="text-blue-600" />
                         </div>
                         <h3 className="font-black text-base text-white uppercase tracking-tighter">Mensagem Bruta</h3>
                     </div>
@@ -214,7 +214,7 @@ DADOS DO PASSAGEIRO
                         </Button>
                         <Button
                             onClick={() => handleProcess('simple')}
-                            className={`h-14 rounded-2xl text-[10px] bg-red-900/40 hover:bg-red-900/60 text-white font-black uppercase tracking-widest border-none shadow-[0_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-y-[2px] transition-all`}
+                            className={`h-14 rounded-2xl text-[10px] bg-blue-900/40 hover:bg-blue-900/60 text-white font-black uppercase tracking-widest border-none shadow-[0_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-y-[2px] transition-all`}
                         >
                             <FileText className="mr-2 h-4 w-4" /> SIMPLIFICADO
                         </Button>
@@ -230,8 +230,8 @@ DADOS DO PASSAGEIRO
                 >
                     <div className="flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-red-600/10 border border-red-600/20 flex items-center justify-center">
-                                <LayoutTemplate size={18} className="text-red-600" />
+                            <div className="w-9 h-9 rounded-xl bg-blue-600/10 border border-blue-600/20 flex items-center justify-center">
+                                <LayoutTemplate size={18} className="text-blue-600" />
                             </div>
                             <h3 className="font-black text-base text-white uppercase tracking-tighter">Resultado</h3>
                         </div>
@@ -239,7 +239,7 @@ DADOS DO PASSAGEIRO
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-[9px] font-black text-red-500 hover:text-red-400 uppercase tracking-widest bg-red-600/5 hover:bg-red-600/10 h-8"
+                                className="text-[9px] font-black text-blue-500 hover:text-blue-400 uppercase tracking-widest bg-blue-600/5 hover:bg-blue-600/10 h-8"
                                 onClick={handleCopy}
                             >
                                 {isCopying ? <Check className="w-3.5 h-3.5 mr-2" /> : <Copy className="w-3.5 h-3.5 mr-2" />}
@@ -264,14 +264,14 @@ DADOS DO PASSAGEIRO
                     {result && (
                         <div className="grid grid-cols-2 gap-3 shrink-0">
                             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-3 overflow-hidden">
-                                <Users size={16} className="text-red-600 shrink-0" />
+                                <Users size={16} className="text-blue-600 shrink-0" />
                                 <div className="text-[9px] font-black text-slate-500 uppercase tracking-tighter truncate">
                                     <span className="block text-white">PASSAGEIROS</span>
                                     {result.passengers.length} ({result.adults}A, {result.children}C, {result.infants}I)
                                 </div>
                             </div>
                             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-3 overflow-hidden">
-                                <Plane size={16} className="text-red-600 shrink-0" />
+                                <Plane size={16} className="text-blue-600 shrink-0" />
                                 <div className="text-[9px] font-black text-slate-500 uppercase tracking-tighter truncate">
                                     <span className="block text-white">ROTA</span>
                                     {result.origin || 'N/A'} → {result.destination || 'N/A'}
@@ -293,7 +293,7 @@ DADOS DO PASSAGEIRO
                             onClick={() => setActiveSection('contas')}
                             className={`flex-1 rounded-xl h-11 font-black text-[10px] uppercase tracking-widest transition-all ${
                                 activeSection === 'contas' 
-                                ? 'bg-red-700 text-white shadow-[0_4px_0_0_rgba(0,0,0,1)]' 
+                                ? 'bg-blue-700 text-white shadow-[0_4px_0_0_rgba(0,0,0,1)]' 
                                 : 'bg-white/5 text-slate-400 hover:bg-white/10'
                             }`}
                         >
@@ -303,7 +303,7 @@ DADOS DO PASSAGEIRO
                             onClick={() => setActiveSection('pagamentos')}
                             className={`flex-1 rounded-xl h-11 font-black text-[10px] uppercase tracking-widest transition-all ${
                                 activeSection === 'pagamentos' 
-                                ? 'bg-red-700 text-white shadow-[0_4px_0_0_rgba(0,0,0,1)]' 
+                                ? 'bg-blue-700 text-white shadow-[0_4px_0_0_rgba(0,0,0,1)]' 
                                 : 'bg-white/5 text-slate-400 hover:bg-white/10'
                             }`}
                         >
@@ -321,10 +321,10 @@ DADOS DO PASSAGEIRO
                             (activeSection === 'contas' ? contas : pagamentos).map((item) => (
                                 <div 
                                     key={item.id} 
-                                    className="group p-3.5 rounded-xl bg-white/5 border border-white/5 hover:border-red-600/30 transition-all flex items-center justify-between"
+                                    className="group p-3.5 rounded-xl bg-white/5 border border-white/5 hover:border-blue-600/30 transition-all flex items-center justify-between"
                                 >
                                     <div className="flex-1 min-w-0 pr-3">
-                                        <p className="text-red-500 font-black text-[9px] uppercase tracking-wider mb-1 opacity-80 italic">
+                                        <p className="text-blue-500 font-black text-[9px] uppercase tracking-wider mb-1 opacity-80 italic">
                                             {item.label}
                                         </p>
                                         <p className="text-slate-200 text-[11px] font-mono truncate leading-tight">
@@ -336,7 +336,7 @@ DADOS DO PASSAGEIRO
                                             size="icon"
                                             variant="ghost"
                                             onClick={() => copyShortcut(item.text)}
-                                            className="size-8 rounded-lg bg-white/5 hover:bg-red-600/20 text-white transition-all active:scale-90"
+                                            className="size-8 rounded-lg bg-white/5 hover:bg-blue-600/20 text-white transition-all active:scale-90"
                                         >
                                             <Copy size={14} />
                                         </Button>
@@ -344,7 +344,7 @@ DADOS DO PASSAGEIRO
                                             size="icon"
                                             variant="ghost"
                                             onClick={() => deleteShortcut(activeSection, item.id)}
-                                            className="size-8 rounded-lg bg-red-900/10 hover:bg-red-900/40 text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                                            className="size-8 rounded-lg bg-blue-900/10 hover:bg-blue-900/40 text-blue-500 opacity-0 group-hover:opacity-100 transition-all"
                                         >
                                             <Trash2 size={14} />
                                         </Button>
