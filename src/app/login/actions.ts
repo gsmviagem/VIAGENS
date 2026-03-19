@@ -5,15 +5,49 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 
 export async function login(formData: FormData) {
-    // Artificial bypass: just redirect to dashboard
+    const supabase = await createClient()
+    
+    // Get form data
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+
+    if (!email || !password) {
+        redirect('/login?error=Seeding data missing')
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+    })
+
+    if (error) {
+        redirect(`/login?error=${error.message}`)
+    }
+
     revalidatePath('/', 'layout')
     redirect('/')
 }
 
 export async function signup(formData: FormData) {
-    // Artificial bypass: just redirect to dashboard
-    revalidatePath('/', 'layout')
-    redirect('/')
+    const supabase = await createClient()
+    
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+
+    if (!email || !password) {
+        redirect('/login?error=Seeding data missing')
+    }
+
+    const { error } = await supabase.auth.signUp({
+        email,
+        password,
+    })
+
+    if (error) {
+        redirect(`/login?error=${error.message}`)
+    }
+
+    redirect('/login?message=Verifique seu email para confirmar o registro')
 }
 
 export async function logout() {

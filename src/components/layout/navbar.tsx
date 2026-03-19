@@ -15,6 +15,7 @@ const navItems = [
     { href: '/emissoes', label: 'Financials', icon: 'payments' },
     { href: '/fornecedores', label: 'Suppliers', icon: 'handshake' },
     { href: '/processamento', label: 'Book', icon: 'auto_stories' },
+    { href: '/inventario', label: 'Inventário', icon: 'inventory' },
     { href: '/configuracoes', label: 'Settings', icon: 'settings' },
 ];
 

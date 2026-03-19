@@ -13,9 +13,11 @@ import {
     Fingerprint,
     Mail,
     Zap,
-    Globe
+    Globe,
+    Lock
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -161,6 +163,59 @@ export default function ConfiguracoesPage() {
                                 </Button>
                             </div>
                         </div>
+                    </motion.div>
+                </TabsContent>
+
+                <TabsContent value="seguranca">
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="glass-panel rounded-2xl p-8 border border-white/5 max-w-2xl bg-gradient-to-br from-white/5 to-transparent"
+                    >
+                        <div className="flex items-center gap-4 mb-8">
+                            <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30">
+                                <Shield className="text-red-500 w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-white leading-none">Credenciais de Segurança</h3>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-2">Update your authentication protocol</p>
+                            </div>
+                        </div>
+
+                        <form action={async (formData) => {
+                            const { changePassword } = await import('./actions');
+                            const res = await changePassword(formData);
+                            if (res?.error) {
+                                toast.error(res.error);
+                            } else if (res?.success) {
+                                toast.success(res.success);
+                                // Optional: reset form using target from event if we had it, but this is a server action
+                            }
+                        }} className="space-y-6">
+                            <div className="space-y-2 group">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-red-500 transition-colors">Nova Senha</Label>
+                                <Input
+                                    type="password"
+                                    name="password"
+                                    required
+                                    className="h-12 bg-white/5 border-white/10 text-white focus-visible:ring-red-500 rounded-xl"
+                                />
+                            </div>
+                            <div className="space-y-2 group">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-red-500 transition-colors">Confirmar Nova Senha</Label>
+                                <Input
+                                    type="password"
+                                    name="confirmPassword"
+                                    required
+                                    className="h-12 bg-white/5 border-white/10 text-white focus-visible:ring-red-500 rounded-xl"
+                                />
+                            </div>
+                            <div className="pt-6 flex gap-4">
+                                <Button type="submit" className="bg-red-600 hover:bg-red-700 text-white font-black px-8 h-12 rounded-xl flex items-center gap-2 shadow-lg shadow-red-600/20 transition-all">
+                                    <Lock size={18} /> ALTERAR SENHA
+                                </Button>
+                            </div>
+                        </form>
                     </motion.div>
                 </TabsContent>
 
