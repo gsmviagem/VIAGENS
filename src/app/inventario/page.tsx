@@ -18,121 +18,109 @@ export default async function InventarioPage() {
     const gridLayout = "grid-cols-[2.5fr_2fr_1fr_1fr_1fr]";
 
     return (
-        <div className="flex flex-col w-full h-[calc(100vh-80px)] overflow-hidden pt-4">
+        <div className="flex flex-col w-full h-[calc(100vh-80px)] overflow-hidden pt-4 text-[#e5e2e1] font-['Inter']">
             
-            <header className="mb-6 shrink-0">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-black/40 backdrop-blur-md rounded-2xl border border-blue-900/40 shadow-[0_0_15px_rgba(30,58,138,0.3)]">
-                        <span className="material-symbols-outlined text-white text-2xl font-bold">inventory</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <h1 className="text-4xl font-black tracking-tight text-white drop-shadow-lg">INVENTÁRIO HUB</h1>
-                        <p className="text-white/80 font-bold uppercase tracking-widest text-[10px] drop-shadow-md">CONTROLE GERAL DE CONTAS E MILHAS</p>
+            <header className="mb-8 shrink-0 flex flex-col md:flex-row justify-between items-end gap-6">
+                <div className="space-y-1">
+                    <h1 className="text-4xl font-bold tracking-[0.05em] text-white">Asset Inventory</h1>
+                    <p className="text-outline font-light tracking-wide max-w-md">Global control of integrated accounts and active mileage balances.</p>
+                </div>
+                <div className="flex gap-4">
+                    <div className="text-right">
+                        <span className="block font-['Inter'] tracking-[0.1em] uppercase text-[10px] font-bold text-secondary">Data Synchronization</span>
+                        <span className="text-sm font-medium flex items-center justify-end gap-2 text-white">
+                            <span className="w-1.5 h-1.5 bg-secondary rounded-full"></span> 
+                            Real-Time
+                        </span>
                     </div>
                 </div>
             </header>
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 flex-1 min-h-0 pb-6 overflow-hidden">
                 {/* LATAM Block */}
-                <div className="rounded-2xl border border-blue-900/40 bg-black/40 backdrop-blur-xl shadow-[0_0_20px_rgba(30,58,138,0.2)] flex flex-col h-full overflow-hidden">
-                    <div className="bg-gradient-to-r from-black via-blue-950/40 to-black text-white font-black text-center py-3 border-b border-blue-900/30 uppercase tracking-widest text-sm shrink-0">
+                <div className="glass-panel flex flex-col h-full overflow-hidden">
+                    <div className="titanium-gradient text-white font-['Inter'] font-bold text-center py-4 border-b border-outline-variant/30 uppercase tracking-[0.1em] text-[11px] shrink-0">
                         LATAM
                     </div>
-                    <div className={`grid ${gridLayout} text-center text-[10px] font-bold text-white uppercase bg-black/60 py-3 border-b border-blue-900/40 shrink-0`}>
+                    <div className={`grid ${gridLayout} text-center text-[10px] font-bold text-outline uppercase bg-surface-container-highest/20 py-3 border-b border-outline-variant/30 shrink-0 tracking-[0.1em]`}>
                         <div>NOME</div>
                         <div>CPF</div>
                         <div>SENHA</div>
                         <div>PREÇO</div>
                         <div>MILHAS</div>
                     </div>
-                    <div className="flex-1 overflow-y-auto divide-y divide-white/10 custom-scrollbar bg-black/80">
+                    <div className="flex-1 overflow-y-auto divide-y divide-white/5 custom-scrollbar bg-[#0e0e0e]/40">
                         {latamEntries.map((row, i) => (
-                            <div key={i} className={`grid ${gridLayout} text-center text-xs text-white py-3 hover:bg-blue-900/20 transition-colors items-center`}>
+                            <div key={i} className={`grid ${gridLayout} text-center text-[11px] text-white py-3 hover:bg-white/5 transition-colors items-center px-1`}>
                                 <div className="truncate px-2 font-medium" title={row[0]}>{row[0] || '-'}</div>
-                                <div className="truncate px-2 font-mono text-white/80" title={row[1]}>{row[1] || '-'}</div>
-                                <div className="truncate px-2 font-mono text-white/60" title={row[2]}>{row[2] || '-'}</div>
-                                <div className="truncate px-2 font-black text-blue-400" title={row[3]}>{row[3] || '-'}</div>
-                                <div className="truncate px-2 font-black" title={row[4]}>{row[4] || '-'}</div>
+                                <div className="truncate px-2 font-mono text-outline" title={row[1]}>{row[1] || '-'}</div>
+                                <div className="truncate px-2 font-mono text-outline/60" title={row[2]}>{row[2] || '-'}</div>
+                                <div className="truncate px-2 font-medium tracking-tight text-secondary" title={row[3]}>{row[3] || '-'}</div>
+                                <div className="truncate px-2 font-bold tracking-tight" title={row[4]}>{row[4] || '-'}</div>
                             </div>
                         ))}
                         {latamEntries.length === 0 && (
-                            <div className="text-center py-12 text-white/40 text-xs font-bold w-full col-span-5">Nenhum dado encontrado</div>
+                            <div className="text-center py-12 text-outline/50 text-xs font-bold w-full col-span-5 uppercase tracking-widest">NO DATA AVAILABLE</div>
                         )}
                     </div>
                 </div>
 
                 {/* SMILES Block */}
-                <div className="rounded-2xl border border-blue-900/40 bg-black/40 backdrop-blur-xl shadow-[0_0_20px_rgba(30,58,138,0.2)] flex flex-col h-full overflow-hidden">
-                    <div className="bg-gradient-to-r from-black via-blue-950/40 to-black text-white font-black text-center py-3 border-b border-blue-900/30 uppercase tracking-widest text-sm shrink-0">
+                <div className="glass-panel flex flex-col h-full overflow-hidden">
+                    <div className="titanium-gradient text-white font-['Inter'] font-bold text-center py-4 border-b border-outline-variant/30 uppercase tracking-[0.1em] text-[11px] shrink-0">
                         SMILES
                     </div>
-                    <div className={`grid ${gridLayout} text-center text-[10px] font-bold text-white uppercase bg-black/60 py-3 border-b border-blue-900/40 shrink-0`}>
+                    <div className={`grid ${gridLayout} text-center text-[10px] font-bold text-outline uppercase bg-surface-container-highest/20 py-3 border-b border-outline-variant/30 shrink-0 tracking-[0.1em]`}>
                         <div>NOME</div>
                         <div>CPF</div>
                         <div>SENHA</div>
                         <div>PREÇO</div>
                         <div>MILHAS</div>
                     </div>
-                    <div className="flex-1 overflow-y-auto divide-y divide-white/10 custom-scrollbar bg-black/80">
+                    <div className="flex-1 overflow-y-auto divide-y divide-white/5 custom-scrollbar bg-[#0e0e0e]/40">
                         {smilesEntries.map((row, i) => (
-                            <div key={i} className={`grid ${gridLayout} text-center text-xs text-white py-3 hover:bg-blue-900/20 transition-colors items-center`}>
+                            <div key={i} className={`grid ${gridLayout} text-center text-[11px] text-white py-3 hover:bg-white/5 transition-colors items-center px-1`}>
                                 <div className="truncate px-2 font-medium" title={row[0]}>{row[0] || '-'}</div>
-                                <div className="truncate px-2 font-mono text-white/80" title={row[1]}>{row[1] || '-'}</div>
-                                <div className="truncate px-2 font-mono text-white/60" title={row[2]}>{row[2] || '-'}</div>
-                                <div className="truncate px-2 font-black text-blue-400" title={row[3]}>{row[3] || '-'}</div>
-                                <div className="truncate px-2 font-black" title={row[4]}>{row[4] || '-'}</div>
+                                <div className="truncate px-2 font-mono text-outline" title={row[1]}>{row[1] || '-'}</div>
+                                <div className="truncate px-2 font-mono text-outline/60" title={row[2]}>{row[2] || '-'}</div>
+                                <div className="truncate px-2 font-medium tracking-tight text-secondary" title={row[3]}>{row[3] || '-'}</div>
+                                <div className="truncate px-2 font-bold tracking-tight" title={row[4]}>{row[4] || '-'}</div>
                             </div>
                         ))}
                         {smilesEntries.length === 0 && (
-                            <div className="text-center py-12 text-white/40 text-xs font-bold w-full col-span-5">Nenhum dado encontrado</div>
+                            <div className="text-center py-12 text-outline/50 text-xs font-bold w-full col-span-5 uppercase tracking-widest">NO DATA AVAILABLE</div>
                         )}
                     </div>
                 </div>
 
                 {/* AZUL Block */}
-                <div className="rounded-2xl border border-blue-900/40 bg-black/40 backdrop-blur-xl shadow-[0_0_20px_rgba(30,58,138,0.2)] flex flex-col h-full overflow-hidden">
-                    <div className="bg-gradient-to-r from-black via-blue-950/40 to-black text-white font-black text-center py-3 border-b border-blue-900/30 uppercase tracking-widest text-sm shrink-0">
+                <div className="glass-panel flex flex-col h-full overflow-hidden">
+                    <div className="titanium-gradient text-white font-['Inter'] font-bold text-center py-4 border-b border-outline-variant/30 uppercase tracking-[0.1em] text-[11px] shrink-0">
                         AZUL
                     </div>
-                    <div className={`grid ${gridLayout} text-center text-[10px] font-bold text-white uppercase bg-black/60 py-3 border-b border-blue-900/40 shrink-0`}>
+                    <div className={`grid ${gridLayout} text-center text-[10px] font-bold text-outline uppercase bg-surface-container-highest/20 py-3 border-b border-outline-variant/30 shrink-0 tracking-[0.1em]`}>
                         <div>NOME</div>
                         <div>CPF</div>
                         <div>SENHA</div>
                         <div>PREÇO</div>
                         <div>MILHAS</div>
                     </div>
-                    <div className="flex-1 overflow-y-auto divide-y divide-white/10 custom-scrollbar bg-black/80">
+                    <div className="flex-1 overflow-y-auto divide-y divide-white/5 custom-scrollbar bg-[#0e0e0e]/40">
                         {azulEntries.map((row, i) => (
-                            <div key={i} className={`grid ${gridLayout} text-center text-xs text-white py-3 hover:bg-blue-900/20 transition-colors items-center`}>
+                            <div key={i} className={`grid ${gridLayout} text-center text-[11px] text-white py-3 hover:bg-white/5 transition-colors items-center px-1`}>
                                 <div className="truncate px-2 font-medium" title={row[0]}>{row[0] || '-'}</div>
-                                <div className="truncate px-2 font-mono text-white/80" title={row[1]}>{row[1] || '-'}</div>
-                                <div className="truncate px-2 font-mono text-white/60" title={row[2]}>{row[2] || '-'}</div>
-                                <div className="truncate px-2 font-black text-blue-400" title={row[3]}>{row[3] || '-'}</div>
-                                <div className="truncate px-2 font-black" title={row[4]}>{row[4] || '-'}</div>
+                                <div className="truncate px-2 font-mono text-outline" title={row[1]}>{row[1] || '-'}</div>
+                                <div className="truncate px-2 font-mono text-outline/60" title={row[2]}>{row[2] || '-'}</div>
+                                <div className="truncate px-2 font-medium tracking-tight text-secondary" title={row[3]}>{row[3] || '-'}</div>
+                                <div className="truncate px-2 font-bold tracking-tight" title={row[4]}>{row[4] || '-'}</div>
                             </div>
                         ))}
                         {azulEntries.length === 0 && (
-                            <div className="text-center py-12 text-white/40 text-xs font-bold w-full col-span-5">Nenhum dado encontrado</div>
+                            <div className="text-center py-12 text-outline/50 text-xs font-bold w-full col-span-5 uppercase tracking-widest">NO DATA AVAILABLE</div>
                         )}
                     </div>
                 </div>
             </div>
-            
-            <style dangerouslySetInnerHTML={{__html: `
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 6px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: rgba(0,0,0,0.2);
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: rgba(255,255,255,0.1);
-                    border-radius: 10px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: rgba(30,58,138,0.5);
-                }
-            `}} />
         </div>
     );
 }

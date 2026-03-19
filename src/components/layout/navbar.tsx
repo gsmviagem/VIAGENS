@@ -5,18 +5,17 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { logout } from '@/app/login/actions';
 
 const navItems = [
-    { href: '/', label: 'Dashboard', icon: 'grid_view' },
+    { href: '/', label: 'Overview', icon: 'dashboard' },
     { href: '/cotacao', label: 'Quoting', icon: 'search' },
-    { href: '/auto-extrator', label: 'Automations', icon: 'precision_manufacturing' },
+    { href: '/processamento', label: 'Book', icon: 'auto_stories' },
+    { href: '/inventario', label: 'Inventory', icon: 'inventory' },
     { href: '/emissoes', label: 'Financials', icon: 'payments' },
     { href: '/fornecedores', label: 'Suppliers', icon: 'handshake' },
-    { href: '/processamento', label: 'Book', icon: 'auto_stories' },
-    { href: '/inventario', label: 'Inventário', icon: 'inventory' },
-    { href: '/configuracoes', label: 'Settings', icon: 'settings' },
+    { href: '/auto-extrator', label: 'Automations', icon: 'precision_manufacturing' },
+    { href: '/configuracoes', label: 'Settings', icon: 'settings' }
 ];
 
 export function Navbar() {
@@ -27,88 +26,39 @@ export function Navbar() {
 
     return (
         <>
-            <header className="fixed top-0 left-0 right-0 z-[100] px-6 py-6 flex items-center justify-between bg-transparent border-none">
-                <div className="flex items-center gap-10">
-                    <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="flex items-center gap-3"
-                    >
-                        <div className="size-10 bg-black/10 rounded-xl flex items-center justify-center border border-black/20">
-                            <span className="material-symbols-outlined text-white text-2xl">rocket_launch</span>
-                        </div>
-                        <Link href="/" className="text-xl font-black tracking-tighter text-white">
-                            GSMVIAGEM
-                        </Link>
-                    </motion.div>
-    
-                    <nav className="hidden lg:flex items-center gap-6">
-                        {navItems.map((item) => (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={cn(
-                                    "text-sm font-extrabold flex items-center gap-2 pb-1 border-b-2 transition-all",
-                                    pathname === item.href
-                                        ? 'text-white border-black'
-                                        : 'text-white/60 border-transparent hover:text-white'
-                                )}
-                            >
-                                <span className="material-symbols-outlined text-[18px]">{item.icon}</span> {item.label}
-                            </Link>
-                        ))}
-                    </nav>
+            <nav className="fixed top-0 w-full z-50 bg-[#131313]/90 backdrop-blur-xl border-b border-[#474747]/30 shadow-[0_40px_40px_rgba(0,0,0,0.08)] flex justify-between items-center px-8 h-16">
+                <div className="flex items-center gap-8">
+                    <Link href="/" className="text-xl font-black tracking-[0.1em] text-white">CHRONOS</Link>
+                    
+                    {/* Horizontal Quick Links for Desktop */}
+                    <div className="hidden lg:flex gap-6">
+                        <Link href="/" className={cn("font-['Inter'] tracking-[0.05em] uppercase text-[12px] font-medium pb-1 active:scale-95 transition-transform", pathname === '/' ? 'text-white border-b border-white' : 'text-[#c8c6c5] hover:text-white transition-colors hover:bg-white/5')}>Dashboard</Link>
+                        <Link href="/inventario" className={cn("font-['Inter'] tracking-[0.05em] uppercase text-[12px] font-medium pb-1 active:scale-95 transition-transform", pathname === '/inventario' ? 'text-white border-b border-white' : 'text-[#c8c6c5] hover:text-white transition-colors hover:bg-white/5')}>Assets</Link>
+                        <Link href="/fornecedores" className={cn("font-['Inter'] tracking-[0.05em] uppercase text-[12px] font-medium pb-1 active:scale-95 transition-transform", pathname === '/fornecedores' ? 'text-white border-b border-white' : 'text-[#c8c6c5] hover:text-white transition-colors hover:bg-white/5')}>Network</Link>
+                        <Link href="/cotacao" className={cn("font-['Inter'] tracking-[0.05em] uppercase text-[12px] font-medium pb-1 active:scale-95 transition-transform", pathname === '/cotacao' ? 'text-white border-b border-white' : 'text-[#c8c6c5] hover:text-white transition-colors hover:bg-white/5')}>Market</Link>
+                    </div>
                 </div>
-    
+
                 <div className="flex items-center gap-4">
-                    <div className="hidden lg:flex items-center bg-black/5 border border-black/10 rounded-lg px-3 py-1.5 focus-within:border-black/30 transition-all">
-                        <span className="material-symbols-outlined text-white/40 text-lg">search</span>
-                        <input
-                            className="bg-transparent border-none focus:outline-none text-sm w-48 text-white ml-2 placeholder:text-white/30"
-                            placeholder="Quick find commands..."
-                            type="text"
-                        />
-                        <span className="text-[10px] bg-black/10 px-1.5 py-0.5 rounded text-white/50 ml-2 font-bold">⌘K</span>
+                    <button className="hidden sm:block p-2 hover:bg-white/5 rounded-full transition-all active:scale-95">
+                        <span className="material-symbols-outlined text-white">notifications</span>
+                    </button>
+                    <Link href="/configuracoes" className="hidden lg:block p-2 hover:bg-white/5 rounded-full transition-all active:scale-95">
+                        <span className="material-symbols-outlined text-white">settings</span>
+                    </Link>
+                    
+                    <div className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30 hidden sm:block">
+                        <img alt="User Profile" className="w-full h-full object-cover" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" />
                     </div>
-    
-                    <div className="flex items-center gap-2">
-                        <button className="size-10 rounded-lg bg-black/5 flex items-center justify-center hover:bg-black/10 transition-colors relative border border-black/5">
-                            <span className="material-symbols-outlined text-white/70 text-xl">notifications</span>
-                            <span className="absolute top-2.5 right-2.5 size-2 bg-blue-600 rounded-full ring-2 ring-white/10"></span>
-                        </button>
-    
-                        <div className="h-8 w-[1px] bg-black/10 mx-1 hidden sm:block"></div>
-    
-                        <div className="flex items-center gap-3 pl-2 group cursor-pointer">
-                            <div className="text-right hidden sm:block">
-                                <p className="text-xs font-black text-white">Alex Volkov</p>
-                                <p className="text-[10px] text-white/60 uppercase font-black tracking-tighter">System Admin</p>
-                            </div>
-                            <div className="w-10 h-10 rounded-full border-2 border-black/20 p-0.5 overflow-hidden ring-offset-2 ring-offset-transparent group-hover:ring-2 ring-black/30 transition-all">
-                                <img
-                                    alt="User Avatar"
-                                    className="w-full h-full rounded-full object-cover"
-                                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                                />
-                            </div>
-                            <form action={logout}>
-                                <Button variant="ghost" size="icon" className="text-white/40 hover:text-blue-600 ml-1">
-                                    <span className="material-symbols-outlined">logout</span>
-                                </Button>
-                            </form>
-                        </div>
-    
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="lg:hidden text-white"
-                            onClick={toggleMobileMenu}
-                        >
-                            {isMobileMenuOpen ? <span className="material-symbols-outlined text-3xl">close</span> : <span className="material-symbols-outlined text-3xl">menu</span>}
-                        </Button>
-                    </div>
+
+                    <button
+                        className="lg:hidden p-2 hover:bg-white/5 rounded-full transition-all active:scale-95"
+                        onClick={toggleMobileMenu}
+                    >
+                        {isMobileMenuOpen ? <span className="material-symbols-outlined text-white">close</span> : <span className="material-symbols-outlined text-white">menu</span>}
+                    </button>
                 </div>
-            </header>
+            </nav>
 
             {/* Mobile Menu Overlay */}
             <AnimatePresence>
@@ -117,30 +67,30 @@ export function Navbar() {
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
-                        className="fixed inset-0 z-[90] lg:hidden bg-background-dark/95 backdrop-blur-2xl pt-24 px-6"
+                        className="fixed inset-0 z-[40] lg:hidden bg-[#0e0e0e]/95 backdrop-blur-2xl pt-24 px-6 overflow-y-auto"
                     >
-                        <nav className="flex flex-col gap-4">
+                        <nav className="flex flex-col gap-2">
                             {navItems.map((item) => (
                                 <Link
                                     key={item.href}
                                     href={item.href}
                                     onClick={() => setIsMobileMenuOpen(false)}
                                     className={cn(
-                                        "flex items-center gap-4 p-4 rounded-2xl text-lg font-bold transition-all border",
+                                        "flex items-center gap-4 p-4 text-[12px] tracking-[0.1em] font-bold uppercase transition-all",
                                         pathname === item.href
-                                            ? 'bg-primary/10 border-primary/20 text-primary'
-                                            : 'bg-white/5 border-white/5 text-slate-400'
+                                            ? 'text-white border-l-2 border-white bg-white/5'
+                                            : 'text-[#c8c6c5] hover:bg-white/5 hover:text-white'
                                     )}
                                 >
-                                    <span className="material-symbols-outlined text-2xl">{item.icon}</span> {item.label}
+                                    <span className="material-symbols-outlined text-[18px]">{item.icon}</span> {item.label}
                                 </Link>
                             ))}
                         </nav>
 
                         <div className="mt-8 pt-8 border-t border-white/5">
                             <form action={logout} onClick={() => setIsMobileMenuOpen(false)}>
-                                <button className="w-full flex items-center gap-4 p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-500 font-bold text-lg">
-                                    <span className="material-symbols-outlined text-2xl">logout</span> Sair da Sessão
+                                <button className="w-full flex items-center justify-center gap-4 p-4 rounded-sm bg-white/5 border border-white/10 text-white font-bold text-[10px] tracking-widest uppercase hover:bg-white/10">
+                                    <span className="material-symbols-outlined text-[18px]">logout</span> Disconnect Session
                                 </button>
                             </form>
                         </div>
