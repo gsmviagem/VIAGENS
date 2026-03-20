@@ -15,12 +15,12 @@ export default async function InventarioPage() {
     const smilesEntries = smilesData || [];
     const azulEntries = azulData || [];
 
-    const gridLayout = "grid-cols-[2.5fr_2fr_1fr_1fr_1fr]";
+    const gridLayout = "grid-cols-[2fr_1.5fr_2fr_1fr_1.5fr]";
 
     return (
-        <div className="flex flex-col w-full h-[calc(100vh-80px)] overflow-hidden pt-4 text-[#e5e2e1] font-['Inter']">
+        <div className="flex flex-col w-full h-[calc(100vh-11rem)] pt-2 text-[#e5e2e1] font-['Inter']">
             
-            <header className="mb-8 shrink-0 flex flex-col md:flex-row justify-between items-end gap-6">
+            <header className="mb-6 shrink-0 flex flex-col md:flex-row justify-between items-end gap-6">
                 <div className="space-y-1">
                     <h1 className="text-4xl font-bold tracking-[0.05em] text-white">Asset Inventory</h1>
                     <p className="text-outline font-light tracking-wide max-w-md">Global control of integrated accounts and active mileage balances.</p>
@@ -36,7 +36,7 @@ export default async function InventarioPage() {
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 flex-1 min-h-0 pb-6 overflow-hidden">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 flex-1 min-h-0 overflow-hidden">
                 {/* LATAM Block */}
                 <div className="glass-panel flex flex-col h-full overflow-hidden">
                     <div className="titanium-gradient text-white font-['Inter'] font-bold text-center py-4 border-b border-outline-variant/30 uppercase tracking-[0.1em] text-[11px] shrink-0">

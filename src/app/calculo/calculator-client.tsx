@@ -6,16 +6,16 @@ interface FlightRow {
     id: string;
     product: string;
     route: string;
-    milesOutbound: number;
-    milesInbound: number;
-    paxCount: number;
-    totalTaxes: number;
+    milesOutbound: number | string;
+    milesInbound: number | string;
+    paxCount: number | string;
+    totalTaxes: number | string;
 }
 
 interface AzulRoute {
     id: string;
     route: string;
-    price: number;
+    price: number | string;
 }
 
 export default function CalculatorClient({ initialDolar }: { initialDolar: number }) {
@@ -32,11 +32,11 @@ export default function CalculatorClient({ initialDolar }: { initialDolar: numbe
     ]);
 
     const [rows, setRows] = useState<FlightRow[]>([
-        { id: '1', product: '', route: '', milesOutbound: 0, milesInbound: 0, paxCount: 1, totalTaxes: 0 }
+        { id: '1', product: '', route: '', milesOutbound: '', milesInbound: '', paxCount: 1, totalTaxes: '' }
     ]);
 
     const addRow = () => {
-        setRows([...rows, { id: Math.random().toString(36).substring(7), product: '', route: '', milesOutbound: 0, milesInbound: 0, paxCount: 1, totalTaxes: 0 }]);
+        setRows([...rows, { id: Math.random().toString(36).substring(7), product: '', route: '', milesOutbound: '', milesInbound: '', paxCount: 1, totalTaxes: '' }]);
     };
 
     const removeRow = (id: string) => {
@@ -53,7 +53,7 @@ export default function CalculatorClient({ initialDolar }: { initialDolar: numbe
     };
 
     const addAzulRoute = () => {
-        setAzulRoutes([...azulRoutes, { id: Math.random().toString(36).substring(7), route: '', price: 0 }]);
+        setAzulRoutes([...azulRoutes, { id: Math.random().toString(36).substring(7), route: '', price: '' }]);
     };
 
     const updateAzulRoute = (id: string, field: keyof AzulRoute, value: string | number) => {
@@ -72,33 +72,39 @@ export default function CalculatorClient({ initialDolar }: { initialDolar: numbe
     // Calculate totals
     const calculatedRows = useMemo(() => {
         return rows.map(row => {
-            const totalMilesPerPax = (Number(row.milesOutbound) || 0) + (Number(row.milesInbound) || 0);
-            const appliedRate = totalMilesPerPax <= 50000 ? rateUpTo50k : rateOver50k;
+            const milesOut = Number(row.milesOutbound) || 0;
+            const milesIn = Number(row.milesInbound) || 0;
             const paxCount = Number(row.paxCount) || 1;
+            const taxesCostUSD = Number(row.totalTaxes) || 0;
+            
+            const totalMilesPerPax = milesOut + milesIn;
+            // Handle if user typed 11.4 instead of 11400 natively
+            const milheiros = totalMilesPerPax > 1000 ? totalMilesPerPax / 1000 : totalMilesPerPax;
+            
+            const appliedRate = milheiros <= 50 ? rateUpTo50k : rateOver50k;
             
             const isAzul = (row.product || '').toLowerCase().includes('azul');
             const matchedAzulRoute = isAzul 
                 ? azulRoutes.find(r => r.route.trim().toUpperCase() === (row.route || '').trim().toUpperCase()) 
                 : null;
             
-            let costOfMiles = 0;
+            let costOfMilesBRL = 0;
             if (matchedAzulRoute) {
-                // Predefined Route rule: Fixed Price * pax
-                costOfMiles = matchedAzulRoute.price * paxCount;
+                // Fixed Price by route implies it is already in BRL usually
+                costOfMilesBRL = Number(matchedAzulRoute.price) * paxCount;
             } else {
-                // Normal MIles rule: (Total Miles / 1000) * Rate * pax
-                costOfMiles = (totalMilesPerPax / 1000) * appliedRate * paxCount;
+                costOfMilesBRL = milheiros * appliedRate * paxCount;
             }
             
-            // Taxes assumed in USD (Taxas Tot. ($))
-            const taxesCostBRL = (Number(row.totalTaxes) || 0) * dolar; 
+            const safeDolar = dolar > 0 ? dolar : 1;
+            const costOfMilesUSD = costOfMilesBRL / safeDolar;
             
-            const totalCostBRL = costOfMiles + taxesCostBRL;
-            const totalCostUSD = dolar > 0 ? totalCostBRL / dolar : 0;
+            const totalCostUSD = costOfMilesUSD + taxesCostUSD;
+            const totalCostBRL = totalCostUSD * safeDolar;
             
             return {
                 ...row,
-                totalMilesPerPax,
+                milheiros,
                 appliedRate,
                 totalCostBRL,
                 totalCostUSD,
@@ -124,7 +130,7 @@ export default function CalculatorClient({ initialDolar }: { initialDolar: numbe
                             <input 
                                 type="number" 
                                 step="0.01"
-                                value={dolar}
+                                value={dolar === 0 ? '' : dolar}
                                 onChange={(e) => setDolar(parseFloat(e.target.value) || 0)}
                                 className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg py-2 pl-9 pr-4 text-white focus:outline-none focus:border-white/30 transition-colors"
                             />
@@ -138,7 +144,7 @@ export default function CalculatorClient({ initialDolar }: { initialDolar: numbe
                             <input 
                                 type="number" 
                                 step="0.01"
-                                value={rateUpTo50k}
+                                value={rateUpTo50k === 0 ? '' : rateUpTo50k}
                                 onChange={(e) => setRateUpTo50k(parseFloat(e.target.value) || 0)}
                                 className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg py-2 pl-9 pr-4 text-white focus:outline-none focus:border-white/30 transition-colors"
                             />
@@ -152,7 +158,7 @@ export default function CalculatorClient({ initialDolar }: { initialDolar: numbe
                             <input 
                                 type="number" 
                                 step="0.01"
-                                value={rateOver50k}
+                                value={rateOver50k === 0 ? '' : rateOver50k}
                                 onChange={(e) => setRateOver50k(parseFloat(e.target.value) || 0)}
                                 className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg py-2 pl-9 pr-4 text-white focus:outline-none focus:border-white/30 transition-colors"
                             />
@@ -220,7 +226,7 @@ export default function CalculatorClient({ initialDolar }: { initialDolar: numbe
                                 <th className="py-3 px-4 text-[10px] font-bold text-[#a19f9d] uppercase tracking-wider">Milhas Volta</th>
                                 <th className="py-3 px-4 text-[10px] font-bold text-[#a19f9d] uppercase tracking-wider">Pax</th>
                                 <th className="py-3 px-4 text-[10px] font-bold text-[#a19f9d] uppercase tracking-wider min-w-[120px]">Taxas Tot. ($)</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-[#a19f9d] uppercase tracking-wider text-right min-w-[140px]">Custo Total</th>
+                                <th className="py-3 px-4 text-[10px] font-bold text-[#a19f9d] uppercase tracking-wider text-right min-w-[140px]">Custo Total ($)</th>
                                 <th className="py-3 px-2 w-10"></th>
                             </tr>
                         </thead>
@@ -248,16 +254,16 @@ export default function CalculatorClient({ initialDolar }: { initialDolar: numbe
                                     <td className="py-3 px-4">
                                         <input 
                                             type="number" 
-                                            value={row.milesOutbound === 0 ? '' : row.milesOutbound} 
-                                            onChange={(e) => updateRow(row.id, 'milesOutbound', parseInt(e.target.value) || 0)}
+                                            value={row.milesOutbound} 
+                                            onChange={(e) => updateRow(row.id, 'milesOutbound', parseFloat(e.target.value) || '')}
                                             className="w-full bg-transparent border border-transparent focus:border-white/10 rounded px-2 py-1.5 text-sm text-white focus:outline-none focus:bg-[#1a1a1a] transition-colors"
                                         />
                                     </td>
                                     <td className="py-3 px-4">
                                         <input 
                                             type="number" 
-                                            value={row.milesInbound === 0 ? '' : row.milesInbound} 
-                                            onChange={(e) => updateRow(row.id, 'milesInbound', parseInt(e.target.value) || 0)}
+                                            value={row.milesInbound} 
+                                            onChange={(e) => updateRow(row.id, 'milesInbound', parseFloat(e.target.value) || '')}
                                             className="w-full bg-transparent border border-transparent focus:border-white/10 rounded px-2 py-1.5 text-sm text-white focus:outline-none focus:bg-[#1a1a1a] transition-colors"
                                         />
                                     </td>
@@ -265,7 +271,7 @@ export default function CalculatorClient({ initialDolar }: { initialDolar: numbe
                                         <input 
                                             type="number" 
                                             min="1"
-                                            value={row.paxCount === 0 ? '' : row.paxCount} 
+                                            value={row.paxCount} 
                                             onChange={(e) => updateRow(row.id, 'paxCount', parseInt(e.target.value) || 1)}
                                             className="w-16 bg-transparent border border-transparent focus:border-white/10 rounded px-2 py-1.5 text-sm text-white focus:outline-none focus:bg-[#1a1a1a] transition-colors"
                                         />
@@ -276,19 +282,19 @@ export default function CalculatorClient({ initialDolar }: { initialDolar: numbe
                                             <input 
                                                 type="number" 
                                                 step="0.01"
-                                                value={row.totalTaxes === 0 ? '' : row.totalTaxes} 
-                                                onChange={(e) => updateRow(row.id, 'totalTaxes', parseFloat(e.target.value) || 0)}
+                                                value={row.totalTaxes} 
+                                                onChange={(e) => updateRow(row.id, 'totalTaxes', parseFloat(e.target.value) || '')}
                                                 className="w-full bg-transparent border border-transparent focus:border-white/10 rounded py-1.5 pl-6 pr-2 text-sm text-white focus:outline-none focus:bg-[#1a1a1a] transition-colors"
                                             />
                                         </div>
                                     </td>
                                     <td className="py-3 px-4 text-right">
                                         <div className="flex flex-col items-end">
-                                            <span className="font-bold text-white whitespace-nowrap">
-                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(row.totalCostBRL)}
-                                            </span>
-                                            <span className="text-[11px] text-[#22c55e] font-semibold whitespace-nowrap mt-0.5">
+                                            <span className="font-bold text-[#22c55e] whitespace-nowrap text-base">
                                                 {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(row.totalCostUSD)}
+                                            </span>
+                                            <span className="text-[11px] text-white font-medium whitespace-nowrap mt-0.5 opacity-80">
+                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(row.totalCostBRL)}
                                             </span>
                                             <span className="text-[9px] text-[#a19f9d] mt-1 font-medium tracking-wide">
                                                 {row.isAzulMatched 
