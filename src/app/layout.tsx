@@ -45,7 +45,7 @@ export default async function RootLayout({
           </div>
           <Sidebar />
 
-          <main className="flex-1 relative z-10 lg:ml-64 pt-24 px-8 pb-12 min-h-screen">
+          <main className="flex-1 relative z-10 pt-32 px-8 pb-12 min-h-screen">
             <div className="w-full max-w-[1600px] mx-auto">
               {children}
             </div>
