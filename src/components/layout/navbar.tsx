@@ -15,6 +15,7 @@ const navItems = [
     { href: '/emissoes', label: 'Financials', icon: 'payments' },
     { href: '/fornecedores', label: 'Suppliers', icon: 'handshake' },
     { href: '/auto-extrator', label: 'Automations', icon: 'precision_manufacturing' },
+    { href: '/calculo', label: 'Calculator', icon: 'calculate' },
     { href: '/configuracoes', label: 'Settings', icon: 'settings' }
 ];
 
@@ -30,12 +31,23 @@ export function Navbar() {
                 <div className="flex items-center gap-8">
                     <Link href="/" className="text-xl font-black tracking-[0.1em] text-white">CHRONOS</Link>
                     
-                    {/* Horizontal Quick Links for Desktop */}
-                    <div className="hidden lg:flex gap-6">
-                        <Link href="/" className={cn("font-['Inter'] tracking-[0.05em] uppercase text-[12px] font-medium pb-1 active:scale-95 transition-transform", pathname === '/' ? 'text-white border-b border-white' : 'text-[#c8c6c5] hover:text-white transition-colors hover:bg-white/5')}>Dashboard</Link>
-                        <Link href="/inventario" className={cn("font-['Inter'] tracking-[0.05em] uppercase text-[12px] font-medium pb-1 active:scale-95 transition-transform", pathname === '/inventario' ? 'text-white border-b border-white' : 'text-[#c8c6c5] hover:text-white transition-colors hover:bg-white/5')}>Assets</Link>
-                        <Link href="/fornecedores" className={cn("font-['Inter'] tracking-[0.05em] uppercase text-[12px] font-medium pb-1 active:scale-95 transition-transform", pathname === '/fornecedores' ? 'text-white border-b border-white' : 'text-[#c8c6c5] hover:text-white transition-colors hover:bg-white/5')}>Network</Link>
-                        <Link href="/cotacao" className={cn("font-['Inter'] tracking-[0.05em] uppercase text-[12px] font-medium pb-1 active:scale-95 transition-transform", pathname === '/cotacao' ? 'text-white border-b border-white' : 'text-[#c8c6c5] hover:text-white transition-colors hover:bg-white/5')}>Market</Link>
+                    {/* Horizontal Navigation Links for Desktop */}
+                    <div className="hidden lg:flex gap-1 overflow-x-auto custom-scrollbar">
+                        {navItems.map((item) => (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={cn(
+                                    "font-['Inter'] tracking-[0.05em] uppercase text-[11px] font-bold px-3 py-1.5 rounded-md active:scale-95 transition-all whitespace-nowrap flex items-center gap-1.5",
+                                    pathname === item.href 
+                                        ? 'text-white bg-white/10' 
+                                        : 'text-[#c8c6c5] hover:text-white hover:bg-white/5 transition-colors'
+                                )}
+                            >
+                                <span className="material-symbols-outlined text-[14px]">{item.icon}</span>
+                                {item.label}
+                            </Link>
+                        ))}
                     </div>
                 </div>
 

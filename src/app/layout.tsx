@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
-import { Sidebar } from "@/components/layout/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { createClient } from "@/utils/supabase/server";
 
@@ -43,9 +42,9 @@ export default async function RootLayout({
           <div className="relative z-50">
             <Navbar />
           </div>
-          <Sidebar />
 
-          <main className="flex-1 relative z-10 pt-32 px-8 pb-12 min-h-screen">
+
+          <main className="flex-1 relative z-10 pt-20 px-8 pb-12 min-h-screen">
             <div className="w-full max-w-[1600px] mx-auto">
               {children}
             </div>
