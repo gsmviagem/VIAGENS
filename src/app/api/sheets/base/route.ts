@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
                 // Parse numeric columns
                 const numPax = parseInt(row[4]) || 0; // F(4)
                 const pricePerMile = parseCurrency(row[9]); // K(9)
-                const quantMiles = parseCurrency(row[10]); // L(10)
+                const quantMiles = Math.round(parseCurrency(row[10])); // L(10)
                 const taxBrl = parseCurrency(row[14]); // P(14)
                 const taxUsd = parseCurrency(row[15]); // Q(15)
                 const clientPaid = parseCurrency(row[18]); // T(18)
@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
                     if (!productData[rowProduct]) productData[rowProduct] = { revenue: 0, sales: 0, miles: 0 };
                     productData[rowProduct].revenue += revenue;
                     productData[rowProduct].sales += 1;
-                    productData[rowProduct].miles += quantMiles;
+                    productData[rowProduct].miles = Math.round(productData[rowProduct].miles + quantMiles);
                 }
 
                 // 6. Aggregate Route
@@ -182,13 +182,18 @@ export async function POST(req: NextRequest) {
             .sort((a, b) => b.revenueVal - a.revenueVal);
 
         const monthlyList = Object.keys(monthlyData)
-            .map(mes => ({
-                mesAno: mes,
-                revenueVal: monthlyData[mes].revenue,
-                revenue: formatCurrencyUSD(monthlyData[mes].revenue),
-                sales: monthlyData[mes].sales
-            }))
-            .sort((a, b) => a.mesAno.localeCompare(b.mesAno)); // Sort chronological if format is YYYY-MM
+            .map(mes => {
+                // Parse YYYY-M or YYYY-MM to sortable value
+                const [year, month] = mes.split('-').map(Number);
+                return {
+                    mesAno: mes,
+                    sortKey: year * 100 + month,
+                    revenueVal: monthlyData[mes].revenue,
+                    revenue: formatCurrencyUSD(monthlyData[mes].revenue),
+                    sales: monthlyData[mes].sales
+                };
+            })
+            .sort((a, b) => a.sortKey - b.sortKey);
             
         const productList = Object.keys(productData)
             .map(prod => ({

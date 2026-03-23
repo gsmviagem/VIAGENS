@@ -21,6 +21,7 @@ export default function FinancialsPage() {
 
     const [uniqueSalesmen, setUniqueSalesmen] = useState<string[]>([]);
     const [uniqueProducts, setUniqueProducts] = useState<string[]>([]);
+    const [lastSync, setLastSync] = useState<string>('');
 
     const fetchData = async () => {
         setLoading(true);
@@ -42,6 +43,7 @@ export default function FinancialsPage() {
             
             if (json.success) {
                 setData(json.data);
+                setLastSync(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
                 if (uniqueSalesmen.length === 0 && json.data.options) {
                     setUniqueSalesmen(json.data.options.salesmen || []);
                     setUniqueProducts(json.data.options.products || []);
@@ -90,6 +92,7 @@ export default function FinancialsPage() {
                         </h1>
                         <p className="text-white/60 font-medium font-mono text-[11px] tracking-widest mt-0.5">
                             Real-time Analytics da Aba BASE
+                            {lastSync && <span className="ml-3 text-emerald-400/80">● Sync {lastSync}</span>}
                         </p>
                     </div>
                 </div>
@@ -353,7 +356,7 @@ export default function FinancialsPage() {
                                         {data?.products?.slice(0,10).map((p: any, i: number) => (
                                             <tr key={i} className="hover:bg-white/5 transition-colors">
                                                 <td className="py-1.5 text-white/80 font-bold uppercase text-[10px]">{p.name || "N/A"}</td>
-                                                <td className="py-1.5 text-white/60 font-mono">{p.milesVal}</td>
+                                                <td className="py-1.5 text-white/60 font-mono">{(p.milesVal || 0).toLocaleString('pt-BR')}</td>
                                                 <td className="py-1.5 text-emerald-400 font-bold text-right">{p.revenue}</td>
                                             </tr>
                                         ))}
