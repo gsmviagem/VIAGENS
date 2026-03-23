@@ -7,11 +7,12 @@ import { logout } from '@/app/login/actions';
 
 const navItems = [
     { href: '/', label: 'Overview', icon: 'dashboard' },
+    { href: '/dashboard', label: 'Financials (BASE)', icon: 'query_stats' },
+    { href: '/emissoes', label: 'Financials', icon: 'payments' },
+    { href: '/inventario', label: 'Inventory (SAÍDAS)', icon: 'inventory' },
+    { href: '/fornecedores', label: 'Suppliers', icon: 'handshake' },
     { href: '/cotacao', label: 'Quoting', icon: 'search' },
     { href: '/processamento', label: 'Book', icon: 'auto_stories' },
-    { href: '/inventario', label: 'Inventory', icon: 'inventory' },
-    { href: '/emissoes', label: 'Financials', icon: 'payments' },
-    { href: '/fornecedores', label: 'Suppliers', icon: 'handshake' },
     { href: '/auto-extrator', label: 'Automations', icon: 'precision_manufacturing' },
     { href: '/calculo', label: 'Calculator', icon: 'calculate' },
 ];
