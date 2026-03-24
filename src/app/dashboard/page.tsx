@@ -403,48 +403,8 @@ export default function FinancialsPage() {
                         </div>
                     </div>
 
-                    {/* Últimas Vendas (Ledger) */}
-                    <div className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-[1rem] shadow-2xl flex-grow flex flex-col overflow-hidden h-full max-h-[204px]">
-                        <div className="px-3 pt-3 pb-2 flex items-center justify-between border-b border-white/5">
-                            <h2 className="font-bold text-white uppercase tracking-widest text-[11px] flex items-center gap-1.5">
-                                <span className="material-symbols-outlined text-sm">receipt_long</span> Últimas Emissões (Base)
-                            </h2>
-                            <Badge className="bg-white/5 text-white/50 hover:bg-white/10 font-mono px-1.5 py-0 rounded text-[9px]">
-                                ÚLTIMOS {data?.ledger?.length || 0}
-                            </Badge>
-                        </div>
-                        <div className="overflow-x-auto flex-grow custom-scrollbar">
-                            <table className="w-full text-left text-[11px]">
-                                <thead>
-                                    <tr className="border-b border-white/5 text-[9px] uppercase tracking-widest text-white/50 bg-black/30 sticky top-0 z-10 backdrop-blur-md">
-                                        <th className="px-3 py-2 font-black">Data</th>
-                                        <th className="px-3 py-2 font-black">LOC</th>
-                                        <th className="px-3 py-2 font-black">Vendedor</th>
-                                        <th className="px-3 py-2 font-black">Cliente</th>
-                                        <th className="px-3 py-2 font-black text-right">Revenue</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-white/5 font-medium">
-                                    {data?.ledger?.map((row: any, i: number) => (
-                                        <tr key={i} className="hover:bg-white/5 transition-colors group">
-                                            <td className="px-3 py-1.5 text-white/60 font-mono whitespace-nowrap">{row.date}</td>
-                                            <td className="px-3 py-1.5 text-white font-black group-hover:text-emerald-300 transition-colors whitespace-nowrap">{row.loc}</td>
-                                            <td className="px-3 py-1.5 text-white/80 text-[10px] uppercase">{row.salesman}</td>
-                                            <td className="px-3 py-1.5 text-white/60 text-[10px] uppercase truncate max-w-[120px]">{row.client}</td>
-                                            <td className="px-3 py-1.5 text-right text-emerald-400 font-black whitespace-nowrap">{row.revenue !== "$0.00" ? row.revenue : '-'}</td>
-                                        </tr>
-                                    ))}
-                                    {data?.ledger?.length === 0 && (
-                                        <tr>
-                                            <td colSpan={5} className="text-center py-6 text-white/30 font-mono text-[11px]">Sem resultados.</td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
                 </div>
+
             </div>
         </div>
     );
