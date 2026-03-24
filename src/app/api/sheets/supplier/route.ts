@@ -41,20 +41,26 @@ export async function POST(req: NextRequest) {
             throw new Error('Falha ao ler dados da planilha SAÍDAS.');
         }
 
-        // Fetch BASE data for accurate Quant. Miles, Price p/mile mapping
-        const baseData = await sheetsService.readSheetData('BASE!G:K');
-        const baseMilesMap: Record<string, { price: string, miles: string }> = {};
+        // Fetch BASE data for accurate Quant. Miles, Price p/mile mapping, and payment statuses
+        const baseData = await sheetsService.readSheetData('BASE!H:Z');
+        const baseMap: Record<string, { price: string, miles: string, paidMiles: boolean, paidTaxes: boolean, paidServ: boolean }> = {};
 
         if (baseData) {
+            // H=0 (PNR) -> Z=18 (Supplier status)
+            // K(Price p/mile) = 3, L(Quant. Miles) = 4
+            // X(Emissão) = 16, Y(Taxas) = 17, Z(Supplier/Serviço) = 18
             for (let i = 1; i < baseData.length; i++) {
                 const row = baseData[i];
                 if (!row) continue;
-                // PNR mapping: G=0(PNR), J=3(Price), K=4(Miles)
+                
                 const pnr = (row[0] || '').trim().toUpperCase();
                 if (pnr) {
-                    baseMilesMap[pnr] = {
-                        price: row[3] || '0', // Col J
-                        miles: row[4] || '0'  // Col K
+                    baseMap[pnr] = {
+                        price: row[3] || '0', 
+                        miles: row[4] || '0',
+                        paidMiles: (row[16] || '').trim() !== '',
+                        paidTaxes: (row[17] || '').trim() !== '',
+                        paidServ: (row[18] || '').trim() !== ''
                     };
                 }
             }
@@ -66,24 +72,21 @@ export async function POST(req: NextRequest) {
         const creditData = await sheetsService.readSheetData('SUPPLIER!Z:AE');
         
         if (creditData) {
-            // Skip headers (row 0 or 1 usually, let's start at 1 to be safe if 0 is empty)
             for (let i = 1; i < creditData.length; i++) {
                 const row = creditData[i];
                 if (!row) continue;
                 
                 const creditSupplier = (row[0] || '').trim().toUpperCase();
-                const creditVal = parseCurrency(row[1]); // AA (1)
-                const creditSituacao = (row[3] || '').trim().toUpperCase(); // AC (3)
-                const creditPago = (row[5] || '').trim().toUpperCase(); // AE (5)
+                const creditVal = parseCurrency(row[1]); 
+                const creditSituacao = (row[3] || '').trim().toUpperCase(); 
+                const creditPago = (row[5] || '').trim().toUpperCase(); 
 
-                // ONLY count if AC=OK AND AE=PAGO
                 if (creditSupplier && creditVal > 0 && creditSituacao === 'OK' && creditPago === 'PAGO') {
                     manualCredits[creditSupplier] = (manualCredits[creditSupplier] || 0) + creditVal;
                 }
             }
         }
 
-        // Fetch ignore list separately from column AI
         const ignoreNames = new Set<string>();
         const ignoreData = await sheetsService.readSheetData('SUPPLIER!AI:AI');
         if (ignoreData) {
@@ -110,16 +113,22 @@ export async function POST(req: NextRequest) {
 
         for (let i = 2; i < rawData.length; i++) {
             const row = rawData[i];
-            if (!row || !row[0] || row[0].trim() === '') continue; // Skip if no Date
+            if (!row || !row[0] || row[0].trim() === '') continue; 
 
             const dateStr = row[0];
             let rowDate = parseDateStr(dateStr);
 
             const rowLoc = (row[2] || '').trim().toUpperCase();
             
-            const baseInfo = baseMilesMap[rowLoc];
+            const baseInfo = baseMap[rowLoc];
             const valMilesPrice = baseInfo ? baseInfo.price : (row[4] || '0');
             const valMilesQty = baseInfo ? baseInfo.miles : (row[5] || '0');
+
+            // NEW STATUS LOGIC: Determine from BASE sheet instead of SAÍDAS
+            // Default to NOT PAID (false) if baseInfo undefined, meaning we OWE it (pending)
+            const isMilesPaid = baseInfo ? baseInfo.paidMiles : false;
+            const isTaxesPaid = baseInfo ? baseInfo.paidTaxes : false;
+            const isRepPaid   = baseInfo ? baseInfo.paidServ : false;
 
             const rowSupplierMiles = (row[6] || '').trim().toUpperCase();
             const valMiles = parseCurrency(row[7]);
@@ -131,24 +140,20 @@ export async function POST(req: NextRequest) {
             const product = row[3] || '';
             const totalStr = row[12] || '0';
 
-            const statusMiles = (row[15] || '').trim(); // Q
-            const statusTax = (row[16] || '').trim(); // R
-            const statusRep = (row[17] || '').trim(); // S
-
-            // Accumulate Debts
-            if (statusMiles === '') {
+            // Accumulate Debts - Only add to debt if it's NOT paid yet
+            if (!isMilesPaid) {
                 if (rowSupplierMiles) supplierDebts[rowSupplierMiles] = (supplierDebts[rowSupplierMiles] || 0) + valMiles;
             }
-            if (statusTax === '') {
+            if (!isTaxesPaid) {
                 if (rowSupplierTax) supplierDebts[rowSupplierTax] = (supplierDebts[rowSupplierTax] || 0) + valTax;
             }
-            if (statusRep === '') {
+            if (!isRepPaid) {
                 if (rowSupplierRep) supplierDebts[rowSupplierRep] = (supplierDebts[rowSupplierRep] || 0) + valRep;
             }
 
             // Apply Filters for Ledger
             let include = true;
-            let supplierOwedInThisRow = 0; // The amount specifically owed to the searched supplier for this row
+            let supplierOwedInThisRow = 0;
 
             if (locator && locator.trim() !== '') {
                 if (rowLoc !== locator.trim().toUpperCase()) include = false;
@@ -161,17 +166,17 @@ export async function POST(req: NextRequest) {
                     if (rowSupplierMiles !== reqSupp && rowSupplierTax !== reqSupp && rowSupplierRep !== reqSupp) {
                         include = false;
                     } else {
-                        // If they appear in this row, calculate exactly how much is owed to THEM specifically
+                        // Check if THIS searched supplier actually has anything pending here
                         let isSupplierPending = false;
-                        if (rowSupplierMiles === reqSupp && statusMiles === '') {
+                        if (rowSupplierMiles === reqSupp && !isMilesPaid) {
                             isSupplierPending = true;
                             supplierOwedInThisRow += valMiles;
                         }
-                        if (rowSupplierTax === reqSupp && statusTax === '') {
+                        if (rowSupplierTax === reqSupp && !isTaxesPaid) {
                             isSupplierPending = true;
                             supplierOwedInThisRow += valTax;
                         }
-                        if (rowSupplierRep === reqSupp && statusRep === '') {
+                        if (rowSupplierRep === reqSupp && !isRepPaid) {
                             isSupplierPending = true;
                             supplierOwedInThisRow += valRep;
                         }
@@ -181,25 +186,26 @@ export async function POST(req: NextRequest) {
                         }
                     }
                 } else if (pendingOnly) {
-                    if (statusMiles !== '' && statusTax !== '' && statusRep !== '') {
+                    // If any of the parts are pending, keep it
+                    if (isMilesPaid && isTaxesPaid && isRepPaid) {
                         include = false;
                     }
                 }
             }
             
             if (pendingOnly && locator && locator.trim() !== '') {
-                 if (statusMiles !== '' && statusTax !== '' && statusRep !== '') {
+                 if (isMilesPaid && isTaxesPaid && isRepPaid) {
                      include = false;
                  }
             }
 
             if (include) {
                 let printIssueStatus = 'OK';
-                if (statusMiles === '' || statusTax === '' || statusRep === '') {
+                // If anything is NOT paid, we mark the row as PENDENTE
+                if (!isMilesPaid || !isTaxesPaid || !isRepPaid) {
                     printIssueStatus = 'PENDENTE';
                 }
 
-                // If searching a specific supplier, show what they specifically are owed. Otherwise use total.
                 const visualRowTotal = (supplier && supplier !== 'TODOS' && supplierOwedInThisRow > 0) 
                     ? formatCurrency(supplierOwedInThisRow) 
                     : `R$ ${totalStr.replace('R$', '').trim()}`;
