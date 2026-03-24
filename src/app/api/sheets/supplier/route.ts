@@ -41,18 +41,14 @@ export async function POST(req: NextRequest) {
             throw new Error('Falha ao ler dados da planilha SAÍDAS.');
         }
 
-        // Fetch BASE data for accurate Quant. Miles, Price p/mile mapping, 
-        // AND supplier credits/payments (Z:AE)
-        const baseData = await sheetsService.readSheetData('BASE!G:AE');
+        // Fetch BASE data for accurate Quant. Miles, Price p/mile mapping
+        const baseData = await sheetsService.readSheetData('BASE!G:K');
         const baseMilesMap: Record<string, { price: string, miles: string }> = {};
-        const manualCredits: Record<string, number> = {};
 
         if (baseData) {
-            // BASE!G:AE → G=0, H=1, I=2, J=3, K=4, ..., Z=19, AA=20, AB=21, AC=22, AD=23, AE=24
             for (let i = 1; i < baseData.length; i++) {
                 const row = baseData[i];
                 if (!row) continue;
-
                 // PNR mapping: G=0(PNR), J=3(Price), K=4(Miles)
                 const pnr = (row[0] || '').trim().toUpperCase();
                 if (pnr) {
@@ -61,22 +57,33 @@ export async function POST(req: NextRequest) {
                         miles: row[4] || '0'  // Col K
                     };
                 }
+            }
+        }
 
-                // Credit/Payment data from BASE columns:
-                // Z=19(SUPPLIER), AA=20(VALOR), AB=21(INFO), AC=22(SITUAÇÃO), AD=23(VALOR EMISSÃO), AE=24(PAGO/N PAGO)
-                const creditSupplier = (row[19] || '').trim().toUpperCase();
-                const creditVal = parseCurrency(row[20]); // AA = value to use
-                const creditSituacao = (row[22] || '').trim().toUpperCase(); // AC = must be "OK"
-                const creditPago = (row[24] || '').trim().toUpperCase(); // AE = must be "PAGO"
+        // Fetch supplier credits/payments from SUPPLIER!Z:AE
+        // Z=0(SUPLIER), AA=1(VALOR), AB=2(DETALHES), AC=3(SITUAÇÃO), AD=4(VALOR EMISSÃO), AE=5(PAGO/N PAGO)
+        const manualCredits: Record<string, number> = {};
+        const creditData = await sheetsService.readSheetData('SUPPLIER!Z:AE');
+        
+        if (creditData) {
+            // Skip headers (row 0 or 1 usually, let's start at 1 to be safe if 0 is empty)
+            for (let i = 1; i < creditData.length; i++) {
+                const row = creditData[i];
+                if (!row) continue;
+                
+                const creditSupplier = (row[0] || '').trim().toUpperCase();
+                const creditVal = parseCurrency(row[1]); // AA (1)
+                const creditSituacao = (row[3] || '').trim().toUpperCase(); // AC (3)
+                const creditPago = (row[5] || '').trim().toUpperCase(); // AE (5)
 
-                // ONLY count if AC=OK AND AE=PAGO — everything else is ignored
+                // ONLY count if AC=OK AND AE=PAGO
                 if (creditSupplier && creditVal > 0 && creditSituacao === 'OK' && creditPago === 'PAGO') {
                     manualCredits[creditSupplier] = (manualCredits[creditSupplier] || 0) + creditVal;
                 }
             }
         }
 
-        // Fetch ignore list separately from column AI (Google Sheets truncates empty trailing columns)
+        // Fetch ignore list separately from column AI
         const ignoreNames = new Set<string>();
         const ignoreData = await sheetsService.readSheetData('SUPPLIER!AI:AI');
         if (ignoreData) {
@@ -88,8 +95,6 @@ export async function POST(req: NextRequest) {
                 }
             }
         }
-
-        console.log(`[API/SUPPLIER] Ignore list (${ignoreNames.size}): ${Array.from(ignoreNames).join(', ')}`);
 
         const ledger: any[] = [];
         const supplierDebts: Record<string, number> = {};
@@ -112,7 +117,6 @@ export async function POST(req: NextRequest) {
 
             const rowLoc = (row[2] || '').trim().toUpperCase();
             
-            // Accurate Miles & Price from BASE, fallback to corrected SAÍDAS indices (4: Price, 5: Qty)
             const baseInfo = baseMilesMap[rowLoc];
             const valMilesPrice = baseInfo ? baseInfo.price : (row[4] || '0');
             const valMilesQty = baseInfo ? baseInfo.miles : (row[5] || '0');
@@ -125,15 +129,13 @@ export async function POST(req: NextRequest) {
             const valRep = parseCurrency(row[11]);
             const paxName = row[1] || '';
             const product = row[3] || '';
-            
             const totalStr = row[12] || '0';
 
             const statusMiles = (row[15] || '').trim(); // Q
             const statusTax = (row[16] || '').trim(); // R
             const statusRep = (row[17] || '').trim(); // S
 
-            // 1. Accumulate ALL supplier DEBTS globally (independent of filters)
-            // If the status cell is empty, it means we OWE this money (it's pending payment)
+            // Accumulate Debts
             if (statusMiles === '') {
                 if (rowSupplierMiles) supplierDebts[rowSupplierMiles] = (supplierDebts[rowSupplierMiles] || 0) + valMiles;
             }
@@ -144,52 +146,63 @@ export async function POST(req: NextRequest) {
                 if (rowSupplierRep) supplierDebts[rowSupplierRep] = (supplierDebts[rowSupplierRep] || 0) + valRep;
             }
 
-            // 2. Apply Filters for the View Ledger
+            // Apply Filters for Ledger
             let include = true;
+            let supplierOwedInThisRow = 0; // The amount specifically owed to the searched supplier for this row
 
             if (locator && locator.trim() !== '') {
-                // If locator searched, ignore date and supplier
                 if (rowLoc !== locator.trim().toUpperCase()) include = false;
             } else {
-                // Date filter
                 if (rowDate && filterStart && rowDate < filterStart) include = false;
                 if (rowDate && filterEnd && rowDate > filterEnd) include = false;
 
-                // Supplier filter
                 if (supplier && supplier.trim() !== '' && supplier !== 'TODOS') {
                     const reqSupp = supplier.trim().toUpperCase();
                     if (rowSupplierMiles !== reqSupp && rowSupplierTax !== reqSupp && rowSupplierRep !== reqSupp) {
                         include = false;
-                    } else if (pendingOnly) {
+                    } else {
+                        // If they appear in this row, calculate exactly how much is owed to THEM specifically
                         let isSupplierPending = false;
-                        if (rowSupplierMiles === reqSupp && statusMiles === '') isSupplierPending = true;
-                        if (rowSupplierTax === reqSupp && statusTax === '') isSupplierPending = true;
-                        if (rowSupplierRep === reqSupp && statusRep === '') isSupplierPending = true;
-                        if (!isSupplierPending) include = false;
-                    }
-                } else {
-                    // No supplier specified, but pendingOnly checked
-                    if (pendingOnly) {
-                        if (statusMiles !== '' && statusTax !== '' && statusRep !== '') {
+                        if (rowSupplierMiles === reqSupp && statusMiles === '') {
+                            isSupplierPending = true;
+                            supplierOwedInThisRow += valMiles;
+                        }
+                        if (rowSupplierTax === reqSupp && statusTax === '') {
+                            isSupplierPending = true;
+                            supplierOwedInThisRow += valTax;
+                        }
+                        if (rowSupplierRep === reqSupp && statusRep === '') {
+                            isSupplierPending = true;
+                            supplierOwedInThisRow += valRep;
+                        }
+
+                        if (pendingOnly && !isSupplierPending) {
                             include = false;
                         }
+                    }
+                } else if (pendingOnly) {
+                    if (statusMiles !== '' && statusTax !== '' && statusRep !== '') {
+                        include = false;
                     }
                 }
             }
             
             if (pendingOnly && locator && locator.trim() !== '') {
-                 // Even if locating by ID, if pendingOnly is selected, we filter out non-pending
                  if (statusMiles !== '' && statusTax !== '' && statusRep !== '') {
                      include = false;
                  }
             }
 
             if (include) {
-                // Determine general status for the UI badge based on the main matching portion
                 let printIssueStatus = 'OK';
                 if (statusMiles === '' || statusTax === '' || statusRep === '') {
                     printIssueStatus = 'PENDENTE';
                 }
+
+                // If searching a specific supplier, show what they specifically are owed. Otherwise use total.
+                const visualRowTotal = (supplier && supplier !== 'TODOS' && supplierOwedInThisRow > 0) 
+                    ? formatCurrency(supplierOwedInThisRow) 
+                    : `R$ ${totalStr.replace('R$', '').trim()}`;
 
                 ledger.push({
                     date: dateStr,
@@ -200,20 +213,19 @@ export async function POST(req: NextRequest) {
                     value: row[7] || '0', 
                     taxesCc: row[8] || '', 
                     tax: row[9] || '0',   
-                    total: totalStr,
+                    total: visualRowTotal,
                     issueStatus: printIssueStatus,
                     supplier: rowSupplierMiles || rowSupplierTax || rowSupplierRep,
                 });
-                filteredTotal += parseCurrency(totalStr);
+                
+                filteredTotal += (supplier && supplier !== 'TODOS') ? supplierOwedInThisRow : parseCurrency(totalStr);
 
-                // Build Text Generator Strings
                 const priceFormatted = valMilesPrice !== '0' ? `R$ ${valMilesPrice.replace('R$', '').trim()}` : '-';
-                const totalFormatted = totalStr !== '0' ? `R$ ${totalStr.replace('R$', '').trim()}` : 'R$ 0,00';
                 const taxFormatted = (row[9] && row[9] !== '0') ? `R$ ${row[9].replace('R$', '').trim()}` : 'R$ 0,00';
                 const valFormatted = (row[7] && row[7] !== '0') ? `R$ ${row[7].replace('R$', '').trim()}` : 'R$ 0,00';
 
-                generatedFullText += `*${dateStr} - ${rowLoc}*\nPAX: ${paxName}\nMILHAS: ${valMilesQty}K\nPREÇO: ${priceFormatted}\nVALOR: ${valFormatted}\nTAX: ${taxFormatted}\n*TOTAL: ${totalFormatted}*\n\n`;
-                generatedSummaryText += `${rowLoc} - ${totalFormatted}\n`;
+                generatedFullText += `*${dateStr} - ${rowLoc}*\nPAX: ${paxName}\nMILHAS: ${valMilesQty}K\nPREÇO: ${priceFormatted}\nVALOR (Milhas): ${valFormatted}\nTAXA: ${taxFormatted}\n*TOTAL DEVIDO: ${visualRowTotal}*\n\n`;
+                generatedSummaryText += `${rowLoc} - ${visualRowTotal}\n`;
             }
         }
 
