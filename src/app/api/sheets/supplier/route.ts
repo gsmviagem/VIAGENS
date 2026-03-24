@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
 
         // Fetch ignore list separately from column AI (Google Sheets truncates empty trailing columns)
         const ignoreNames = new Set<string>();
-        const ignoreData = await sheetsService.readSheetData('BASE!AI:AI');
+        const ignoreData = await sheetsService.readSheetData('SUPPLIER!AI:AI');
         if (ignoreData) {
             for (let i = 1; i < ignoreData.length; i++) {
                 const row = ignoreData[i];
