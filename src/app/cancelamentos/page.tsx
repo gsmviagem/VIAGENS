@@ -37,19 +37,22 @@ export default function CancelamentosPage() {
                 });
                 setLedger(sortedLedger);
 
-                // Filter headers: up to 'TAXAS' (column K), excluding 'DATA' (column I)
-                if (sortedLedger.length > 0) {
-                    const actualHeaders = Object.keys(sortedLedger[0]);
-                    const kIndex = actualHeaders.indexOf('TAXAS');
-                    let displayHeaders = actualHeaders;
-                    if (kIndex !== -1) {
-                        displayHeaders = actualHeaders.slice(0, kIndex + 1);
-                    }
-                    displayHeaders = displayHeaders.filter(h => h.toUpperCase() !== 'DATA');
-                    setHeaders(displayHeaders);
-                } else {
-                    setHeaders([]);
-                }
+                // Hardcode exact headers desired (columns B to K, skipping I 'DATA')
+                // Column A is empty header, B is LOCALIZADOR
+                const displayHeaders = [
+                    "LOCALIZADOR",
+                    "BROKER",
+                    "Product",
+                    "Quant. Miles",
+                    "Account Used",
+                    "OBS",
+                    "SOLICITADO",
+                    "MILHAS",
+                    "TAXAS"
+                ];
+                
+                // We only set headers if we have data to avoid empty empty tables
+                setHeaders(displayHeaders);
             } else {
                 setLedger([]);
                 setHeaders([]);
@@ -74,7 +77,7 @@ export default function CancelamentosPage() {
     });
 
     return (
-        <div className="flex flex-col relative bg-transparent text-[#e5e2e1] font-['Inter'] w-[100vw] md:w-auto -ml-4 md:-ml-0">
+        <div className="flex flex-col relative bg-transparent text-[#e5e2e1] font-['Inter'] w-full">
             {/* Header Section */}
             <header className="mb-8 flex flex-col md:flex-row justify-between items-end gap-6 border-b border-[#474747]/30 pb-4">
                 <div className="space-y-1">
@@ -117,8 +120,7 @@ export default function CancelamentosPage() {
                         </div>
                     </div>
 
-                    {/* Extruded layout width: negative margins to allow the table to expand fully */}
-                    <div className="glass-panel overflow-hidden relative shadow-[0_4px_30px_rgba(0,0,0,0.5)] w-[calc(100vw-32px)] md:w-full md:max-w-none overflow-x-auto">
+                    <div className="glass-panel overflow-hidden relative shadow-[0_4px_30px_rgba(0,0,0,0.5)] w-full overflow-x-auto">
                         {loading && ledger.length === 0 ? (
                             <div className="w-full h-48 flex flex-col items-center justify-center">
                                 <span className="material-symbols-outlined text-3xl text-outline animate-spin mb-3">refresh</span>
@@ -126,11 +128,11 @@ export default function CancelamentosPage() {
                             </div>
                         ) : (
                             <div className="w-full min-w-max">
-                                <table className="w-full text-left border-collapse table-fixed">
+                                <table className="w-full text-left border-collapse table-auto">
                                     <thead>
                                         <tr className="border-b border-[#474747]/30 bg-black/80 backdrop-blur-md">
                                             {headers.map(h => (
-                                                <th key={h} className="py-2 px-3 text-[9px] font-bold tracking-[0.1em] uppercase text-outline truncate" title={h}>
+                                                <th key={h} className="py-2 px-3 text-[9px] font-bold tracking-[0.1em] uppercase text-outline whitespace-nowrap">
                                                     {h}
                                                 </th>
                                             ))}
