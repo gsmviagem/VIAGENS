@@ -41,46 +41,60 @@ export async function POST(req: NextRequest) {
             throw new Error('Falha ao ler dados da planilha SAÍDAS.');
         }
 
-        // Fetch BASE data for accurate Quant. Miles and Price p/mile mapping
-        const baseData = await sheetsService.readSheetData('BASE!G:K');
+        // Fetch BASE data for accurate Quant. Miles, Price p/mile mapping, 
+        // AND supplier credits/payments (Z:AE) + ignore list (AI)
+        // Extended range to AI to capture ignore list column
+        const baseData = await sheetsService.readSheetData('BASE!G:AI');
         const baseMilesMap: Record<string, { price: string, miles: string }> = {};
+        const manualCredits: Record<string, { ok: number, pending: number }> = {};
+        const ignoreNames = new Set<string>();
+
         if (baseData) {
-            // Skip header row
+            // BASE!G:AI → G=0, H=1, I=2, J=3, K=4, ..., Z=19, AA=20, AB=21, AC=22, AD=23, AE=24, ..., AI=28
             for (let i = 1; i < baseData.length; i++) {
                 const row = baseData[i];
-                if (!row || !row[0]) continue;
-                const pnr = row[0].trim().toUpperCase();
-                baseMilesMap[pnr] = {
-                    price: row[3] || '0', // Col J
-                    miles: row[4] || '0'  // Col K
-                };
+                if (!row) continue;
+
+                // PNR mapping: G=0(PNR), J=3(Price), K=4(Miles)
+                const pnr = (row[0] || '').trim().toUpperCase();
+                if (pnr) {
+                    baseMilesMap[pnr] = {
+                        price: row[3] || '0', // Col J
+                        miles: row[4] || '0'  // Col K
+                    };
+                }
+
+                // Credit/Payment data from BASE columns:
+                // Z=19(SUPPLIER), AA=20(VALOR), AB=21(INFO), AC=22(SITUAÇÃO), AD=23(VALOR EMISSÃO), AE=24(PAGO/N PAGO)
+                const creditSupplier = (row[19] || '').trim().toUpperCase();
+                const creditVal = parseCurrency(row[20]); // AA = value to use
+                const creditSituacao = (row[22] || '').trim().toUpperCase(); // AC = must be "OK"
+                const creditPago = (row[24] || '').trim().toUpperCase(); // AE = must be "PAGO"
+
+                if (creditSupplier && creditVal > 0) {
+                    if (!manualCredits[creditSupplier]) {
+                        manualCredits[creditSupplier] = { ok: 0, pending: 0 };
+                    }
+
+                    if (creditSituacao === 'OK' && creditPago === 'PAGO') {
+                        // Only count as confirmed credit if AC=OK AND AE=PAGO
+                        manualCredits[creditSupplier].ok += creditVal;
+                    } else if (creditSituacao === 'OK' && creditPago !== 'PAGO') {
+                        // Situation OK but not yet paid = pending
+                        manualCredits[creditSupplier].pending += creditVal;
+                    }
+                    // Other combinations are ignored
+                }
+
+                // Ignore list: AI=28
+                const ignoreName = (row[28] || '').trim().toUpperCase();
+                if (ignoreName) {
+                    ignoreNames.add(ignoreName);
+                }
             }
         }
 
-        // Fetch manual credit ledger from SUPPLIER Z:AC
-        // Z=0(SUPPLIER), AA=1(VALOR), AB=2(DETALHES), AC=3(SITUAÇÃO)
-        const creditData = await sheetsService.readSheetData('SUPPLIER!Z2:AC1000');
-        const manualCredits: Record<string, { ok: number, pending: number }> = {};
-        
-        if (creditData) {
-            for (const row of creditData) {
-                if (!row || !row[0]) continue;
-                const suppName = row[0].trim().toUpperCase();
-                const val = parseCurrency(row[1]);
-                const status = (row[3] || '').trim().toUpperCase(); // AC column
-                
-                if (!manualCredits[suppName]) {
-                    manualCredits[suppName] = { ok: 0, pending: 0 };
-                }
-                
-                if (status === 'OK') {
-                    manualCredits[suppName].ok += val;
-                } else if (status === 'PENDENTE') {
-                    manualCredits[suppName].pending += val;
-                }
-                // 'ABATIDO' is ignored
-            }
-        }
+        console.log(`[API/SUPPLIER] Ignore list: ${Array.from(ignoreNames).join(', ')}`);
 
         const ledger: any[] = [];
         const supplierDebts: Record<string, number> = {};
@@ -209,10 +223,11 @@ export async function POST(req: NextRequest) {
         }
 
         // Consolidate Supplier List
-        // A supplier appears if they have Debt (SAÍDAS) OR Manual Credits (Z:AC)
+        // A supplier appears if they have Debt (SAÍDAS) OR Credits from BASE (Z:AE)
+        // Exclude names in the AI ignore list
         const allSuppliers = new Set([...Object.keys(supplierDebts), ...Object.keys(manualCredits)]);
         const suppliersList = Array.from(allSuppliers)
-            .filter(name => name.trim() !== '')
+            .filter(name => name.trim() !== '' && !ignoreNames.has(name.trim().toUpperCase()))
             .map(name => {
                 const totalDebtAmount = supplierDebts[name] || 0;
                 const creditOk = manualCredits[name]?.ok || 0;
