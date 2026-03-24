@@ -23,8 +23,23 @@ export default function CancelamentosPage() {
             }
 
             if (result.data.ledger && result.data.ledger.length > 0) {
-                setLedger(result.data.ledger);
-                setHeaders(Object.keys(result.data.ledger[0]));
+                // Sort by PRIORIDADE (1 on top, 3 at bottom)
+                const sortedLedger = result.data.ledger.sort((a: any, b: any) => {
+                    const pA = parseInt((a['PRIORIDADE'] || '99').toString()) || 99;
+                    const pB = parseInt((b['PRIORIDADE'] || '99').toString()) || 99;
+                    return pA - pB;
+                });
+                setLedger(sortedLedger);
+
+                // Filter headers: up to 'TAXAS' (column K), excluding 'DATA' (column I)
+                const actualHeaders = Object.keys(sortedLedger[0]);
+                const kIndex = actualHeaders.indexOf('TAXAS');
+                let displayHeaders = actualHeaders;
+                if (kIndex !== -1) {
+                    displayHeaders = actualHeaders.slice(0, kIndex + 1);
+                }
+                displayHeaders = displayHeaders.filter(h => h.toUpperCase() !== 'DATA');
+                setHeaders(displayHeaders);
             } else {
                 setLedger([]);
                 setHeaders([]);
@@ -92,7 +107,7 @@ export default function CancelamentosPage() {
                         </div>
                     </div>
 
-                    <div className="glass-panel overflow-hidden w-full overflow-x-auto relative">
+                    <div className="glass-panel overflow-hidden w-full overflow-x-auto relative shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
                         {loading && ledger.length === 0 ? (
                             <div className="w-full h-64 flex flex-col items-center justify-center">
                                 <span className="material-symbols-outlined text-4xl text-outline animate-spin mb-4">refresh</span>
@@ -102,7 +117,7 @@ export default function CancelamentosPage() {
                             <div className="min-w-fit w-full">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
-                                        <tr className="border-b border-white/5 bg-black/40">
+                                        <tr className="border-b border-[#474747]/30 bg-black/80 backdrop-blur-md">
                                             {headers.map(h => (
                                                 <th key={h} className="p-4 text-[10px] font-bold tracking-[0.1em] uppercase text-outline whitespace-nowrap">
                                                     {h}
@@ -111,35 +126,41 @@ export default function CancelamentosPage() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filteredLedger.length > 0 ? filteredLedger.map((row, i) => (
-                                            <motion.tr 
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: i * 0.02 }}
-                                                key={i} 
-                                                className="border-b border-white/5 hover:bg-white/5 transition-colors group"
-                                            >
-                                                {headers.map(h => {
-                                                    const cellVal = row[h];
-                                                    const isStatus = h.toUpperCase() === 'STATUS';
-                                                    let statusColor = "text-white";
-                                                    if (isStatus) {
-                                                        const upperVal = cellVal?.toUpperCase();
-                                                        if (upperVal === 'OK') statusColor = 'text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded inline-block';
-                                                        else if (upperVal === 'SOLICITAR') statusColor = 'text-red-400 bg-red-400/10 px-2 py-1 rounded inline-block';
-                                                        else if (upperVal === 'SOLICITADO') statusColor = 'text-amber-400 bg-amber-400/10 px-2 py-1 rounded inline-block';
-                                                        else if (upperVal === 'BASE') statusColor = 'text-blue-400 bg-blue-400/10 px-2 py-1 rounded inline-block';
-                                                    }
-                                                    return (
-                                                        <td key={`${i}-${h}`} className="p-4 text-[11px] font-medium text-white/90 whitespace-nowrap">
-                                                            <span className={isStatus ? statusColor : ""}>
+                                        {filteredLedger.length > 0 ? filteredLedger.map((row, i) => {
+                                            const situacao = (row['SITUAÇÃO'] || '').toUpperCase();
+                                            let rowBg = "hover:bg-white/5 bg-transparent border-b border-white/5"; 
+                                            let textColor = "text-white/90";
+
+                                            if (situacao === 'SOLICITAR') {
+                                                rowBg = "bg-[#451010]/80 hover:bg-[#5c1616] border-b border-[#ff6b6b]/20"; // Vinho
+                                            } else if (situacao === 'SOLICITADO') {
+                                                rowBg = "bg-[#612e0f]/80 hover:bg-[#7a3b14] border-b border-[#ffa94d]/20"; // Laranja
+                                            } else if (situacao === 'BASE') {
+                                                rowBg = "bg-[#0b294d]/80 hover:bg-[#0e3b70] border-b border-[#4dabf7]/20"; // Azul
+                                            } else if (situacao === 'OK') {
+                                                rowBg = "bg-transparent hover:bg-white/5 border-b border-white/5 opacity-50"; // Sem cor, escuro (opacidade menor para dar o tom escuro/riscado)
+                                                textColor = "text-white/40 italic"; 
+                                            }
+
+                                            return (
+                                                <motion.tr 
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: i * 0.02 }}
+                                                    key={i} 
+                                                    className={cn("transition-colors group", rowBg)}
+                                                >
+                                                    {headers.map(h => {
+                                                        const cellVal = row[h];
+                                                        return (
+                                                            <td key={`${i}-${h}`} className={cn("p-4 text-[11px] font-medium whitespace-nowrap", textColor)}>
                                                                 {cellVal || '-'}
-                                                            </span>
-                                                        </td>
-                                                    );
-                                                })}
-                                            </motion.tr>
-                                        )) : (
+                                                            </td>
+                                                        );
+                                                    })}
+                                                </motion.tr>
+                                            );
+                                        }) : (
                                             <tr>
                                                 <td colSpan={headers.length || 1} className="p-8 text-center text-[11px] text-outline uppercase tracking-widest">
                                                     {searchTerm ? 'Nenhum resultado encontrado.' : 'Nenhum dado na planilha.'}
