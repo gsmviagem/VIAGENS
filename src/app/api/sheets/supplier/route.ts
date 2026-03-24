@@ -42,15 +42,13 @@ export async function POST(req: NextRequest) {
         }
 
         // Fetch BASE data for accurate Quant. Miles, Price p/mile mapping, 
-        // AND supplier credits/payments (Z:AE) + ignore list (AI)
-        // Extended range to AI to capture ignore list column
-        const baseData = await sheetsService.readSheetData('BASE!G:AI');
+        // AND supplier credits/payments (Z:AE)
+        const baseData = await sheetsService.readSheetData('BASE!G:AE');
         const baseMilesMap: Record<string, { price: string, miles: string }> = {};
-        const manualCredits: Record<string, { ok: number, pending: number }> = {};
-        const ignoreNames = new Set<string>();
+        const manualCredits: Record<string, number> = {};
 
         if (baseData) {
-            // BASE!G:AI → G=0, H=1, I=2, J=3, K=4, ..., Z=19, AA=20, AB=21, AC=22, AD=23, AE=24, ..., AI=28
+            // BASE!G:AE → G=0, H=1, I=2, J=3, K=4, ..., Z=19, AA=20, AB=21, AC=22, AD=23, AE=24
             for (let i = 1; i < baseData.length; i++) {
                 const row = baseData[i];
                 if (!row) continue;
@@ -71,30 +69,27 @@ export async function POST(req: NextRequest) {
                 const creditSituacao = (row[22] || '').trim().toUpperCase(); // AC = must be "OK"
                 const creditPago = (row[24] || '').trim().toUpperCase(); // AE = must be "PAGO"
 
-                if (creditSupplier && creditVal > 0) {
-                    if (!manualCredits[creditSupplier]) {
-                        manualCredits[creditSupplier] = { ok: 0, pending: 0 };
-                    }
-
-                    if (creditSituacao === 'OK' && creditPago === 'PAGO') {
-                        // Only count as confirmed credit if AC=OK AND AE=PAGO
-                        manualCredits[creditSupplier].ok += creditVal;
-                    } else if (creditSituacao === 'OK' && creditPago !== 'PAGO') {
-                        // Situation OK but not yet paid = pending
-                        manualCredits[creditSupplier].pending += creditVal;
-                    }
-                    // Other combinations are ignored
-                }
-
-                // Ignore list: AI=28
-                const ignoreName = (row[28] || '').trim().toUpperCase();
-                if (ignoreName) {
-                    ignoreNames.add(ignoreName);
+                // ONLY count if AC=OK AND AE=PAGO — everything else is ignored
+                if (creditSupplier && creditVal > 0 && creditSituacao === 'OK' && creditPago === 'PAGO') {
+                    manualCredits[creditSupplier] = (manualCredits[creditSupplier] || 0) + creditVal;
                 }
             }
         }
 
-        console.log(`[API/SUPPLIER] Ignore list: ${Array.from(ignoreNames).join(', ')}`);
+        // Fetch ignore list separately from column AI (Google Sheets truncates empty trailing columns)
+        const ignoreNames = new Set<string>();
+        const ignoreData = await sheetsService.readSheetData('BASE!AI:AI');
+        if (ignoreData) {
+            for (let i = 1; i < ignoreData.length; i++) {
+                const row = ignoreData[i];
+                const name = (row?.[0] || '').trim().toUpperCase();
+                if (name) {
+                    ignoreNames.add(name);
+                }
+            }
+        }
+
+        console.log(`[API/SUPPLIER] Ignore list (${ignoreNames.size}): ${Array.from(ignoreNames).join(', ')}`);
 
         const ledger: any[] = [];
         const supplierDebts: Record<string, number> = {};
@@ -230,24 +225,23 @@ export async function POST(req: NextRequest) {
             .filter(name => name.trim() !== '' && !ignoreNames.has(name.trim().toUpperCase()))
             .map(name => {
                 const totalDebtAmount = supplierDebts[name] || 0;
-                const creditOk = manualCredits[name]?.ok || 0;
-                const creditPending = manualCredits[name]?.pending || 0;
+                const creditPaid = manualCredits[name] || 0; // Only AC=OK + AE=PAGO
                 
-                // Saldo Líquido = Credit OK - Debt
-                const saldo = creditOk - totalDebtAmount;
+                // Saldo Líquido = Credit Paid - Debt
+                const saldo = creditPaid - totalDebtAmount;
                 
                 return {
                     name,
                     debt: formatCurrency(totalDebtAmount),
-                    creditOk: formatCurrency(creditOk),
-                    creditPending: formatCurrency(creditPending),
+                    creditOk: formatCurrency(creditPaid),
+                    creditPending: formatCurrency(0), // No pending concept anymore
                     saldo: formatCurrency(Math.abs(saldo)),
                     saldoType: saldo > 0 ? 'POSITIVE' : (saldo < 0 ? 'NEGATIVE' : 'NEUTRAL'),
                     highlight: false
                 };
             })
-            // Only show suppliers that actually have SOME financial activity pending/owed
-            .filter(s => parseCurrency(s.debt) > 0 || parseCurrency(s.creditOk) > 0 || parseCurrency(s.creditPending) > 0)
+            // Only show suppliers that actually have SOME financial activity
+            .filter(s => parseCurrency(s.debt) > 0 || parseCurrency(s.creditOk) > 0)
             .sort((a, b) => parseCurrency(b.debt) - parseCurrency(a.debt)); // sort by largest debt first
 
         return NextResponse.json({
