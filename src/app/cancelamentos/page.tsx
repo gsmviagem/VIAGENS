@@ -23,8 +23,14 @@ export default function CancelamentosPage() {
             }
 
             if (result.data.ledger && result.data.ledger.length > 0) {
+                // Filter out empty 'LOCALIZADOR'
+                const validLedger = result.data.ledger.filter((row: any) => {
+                    const loc = (row['LOCALIZADOR'] || '').trim();
+                    return loc !== '';
+                });
+
                 // Sort by PRIORIDADE (1 on top, 3 at bottom)
-                const sortedLedger = result.data.ledger.sort((a: any, b: any) => {
+                const sortedLedger = validLedger.sort((a: any, b: any) => {
                     const pA = parseInt((a['PRIORIDADE'] || '99').toString()) || 99;
                     const pB = parseInt((b['PRIORIDADE'] || '99').toString()) || 99;
                     return pA - pB;
@@ -32,14 +38,18 @@ export default function CancelamentosPage() {
                 setLedger(sortedLedger);
 
                 // Filter headers: up to 'TAXAS' (column K), excluding 'DATA' (column I)
-                const actualHeaders = Object.keys(sortedLedger[0]);
-                const kIndex = actualHeaders.indexOf('TAXAS');
-                let displayHeaders = actualHeaders;
-                if (kIndex !== -1) {
-                    displayHeaders = actualHeaders.slice(0, kIndex + 1);
+                if (sortedLedger.length > 0) {
+                    const actualHeaders = Object.keys(sortedLedger[0]);
+                    const kIndex = actualHeaders.indexOf('TAXAS');
+                    let displayHeaders = actualHeaders;
+                    if (kIndex !== -1) {
+                        displayHeaders = actualHeaders.slice(0, kIndex + 1);
+                    }
+                    displayHeaders = displayHeaders.filter(h => h.toUpperCase() !== 'DATA');
+                    setHeaders(displayHeaders);
+                } else {
+                    setHeaders([]);
                 }
-                displayHeaders = displayHeaders.filter(h => h.toUpperCase() !== 'DATA');
-                setHeaders(displayHeaders);
             } else {
                 setLedger([]);
                 setHeaders([]);
@@ -64,9 +74,9 @@ export default function CancelamentosPage() {
     });
 
     return (
-        <div className="flex flex-col relative bg-transparent text-[#e5e2e1] font-['Inter']">
+        <div className="flex flex-col relative bg-transparent text-[#e5e2e1] font-['Inter'] w-[100vw] md:w-auto -ml-4 md:-ml-0">
             {/* Header Section */}
-            <header className="mb-12 flex flex-col md:flex-row justify-between items-end gap-6 border-b border-[#474747]/30 pb-6">
+            <header className="mb-8 flex flex-col md:flex-row justify-between items-end gap-6 border-b border-[#474747]/30 pb-4">
                 <div className="space-y-1">
                     <h1 className="text-4xl font-bold tracking-[0.05em] text-white">Cancelamentos</h1>
                     <p className="text-outline font-light tracking-wide max-w-md">Controle de cancelamentos sincronizado com Google Sheets.</p>
@@ -75,51 +85,52 @@ export default function CancelamentosPage() {
                     <button 
                         onClick={fetchData}
                         disabled={loading}
-                        className="px-6 py-3 bg-surface-container-high micro-border hover:bg-white/5 disabled:opacity-50 transition-all flex items-center gap-2"
+                        className="px-6 py-2 bg-surface-container-high micro-border hover:bg-white/5 disabled:opacity-50 transition-all flex items-center gap-2"
                     >
-                        <span className={cn("material-symbols-outlined text-[18px]", loading && "animate-spin")}>sync</span>
+                        <span className={cn("material-symbols-outlined text-[16px]", loading && "animate-spin")}>sync</span>
                         <span className="text-[10px] font-bold uppercase tracking-widest">{loading ? 'Sincronizando...' : 'Atualizar'}</span>
                     </button>
                 </div>
             </header>
 
             {error && (
-                <div className="mb-8 p-6 glass-panel border border-red-500/30 flex flex-col items-center">
-                    <span className="material-symbols-outlined text-4xl text-red-400 mb-2">warning</span>
-                    <h3 className="text-lg text-white font-medium mb-1">Erro de Sincronização</h3>
-                    <p className="text-sm text-outline mb-4 text-center">{error}</p>
-                    <button onClick={fetchData} className="px-6 py-3 bg-white/10 hover:bg-white/20 micro-border text-xs uppercase tracking-widest font-bold transition-colors">Tentar Novamente</button>
+                <div className="mb-6 p-4 glass-panel border border-red-500/30 flex flex-col items-center">
+                    <span className="material-symbols-outlined text-3xl text-red-400 mb-2">warning</span>
+                    <h3 className="text-md text-white font-medium mb-1">Erro de Sincronização</h3>
+                    <p className="text-xs text-outline mb-3 text-center">{error}</p>
+                    <button onClick={fetchData} className="px-4 py-2 bg-white/10 hover:bg-white/20 micro-border text-[10px] uppercase tracking-widest font-bold transition-colors">Tentar Novamente</button>
                 </div>
             )}
 
             {!error && (
                 <>
-                    <div className="mb-6 flex gap-4">
-                        <div className="w-full max-w-md relative glass-panel flex items-center px-4">
-                            <span className="material-symbols-outlined text-outline absolute left-4">search</span>
+                    <div className="mb-4 flex gap-4">
+                        <div className="w-full max-w-lg relative glass-panel flex items-center px-4 py-1.5">
+                            <span className="material-symbols-outlined text-outline absolute left-4 text-[18px]">search</span>
                             <input 
                                 type="text"
                                 placeholder="Filtrar por localizador, PNR, status..."
-                                className="w-full bg-transparent border-none outline-none py-3 pl-10 text-sm text-white placeholder:text-outline"
+                                className="w-full bg-transparent border-none outline-none py-2 pl-8 text-xs text-white placeholder:text-outline"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
                     </div>
 
-                    <div className="glass-panel overflow-hidden w-full overflow-x-auto relative shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+                    {/* Extruded layout width: negative margins to allow the table to expand fully */}
+                    <div className="glass-panel overflow-hidden relative shadow-[0_4px_30px_rgba(0,0,0,0.5)] w-[calc(100vw-32px)] md:w-full md:max-w-none overflow-x-auto">
                         {loading && ledger.length === 0 ? (
-                            <div className="w-full h-64 flex flex-col items-center justify-center">
-                                <span className="material-symbols-outlined text-4xl text-outline animate-spin mb-4">refresh</span>
-                                <p className="text-[11px] uppercase tracking-widest text-outline">Carregando dados da nuvem...</p>
+                            <div className="w-full h-48 flex flex-col items-center justify-center">
+                                <span className="material-symbols-outlined text-3xl text-outline animate-spin mb-3">refresh</span>
+                                <p className="text-[10px] uppercase tracking-widest text-outline">Carregando dados da nuvem...</p>
                             </div>
                         ) : (
-                            <div className="min-w-fit w-full">
-                                <table className="w-full text-left border-collapse">
+                            <div className="w-full min-w-max">
+                                <table className="w-full text-left border-collapse table-fixed">
                                     <thead>
                                         <tr className="border-b border-[#474747]/30 bg-black/80 backdrop-blur-md">
                                             {headers.map(h => (
-                                                <th key={h} className="p-4 text-[10px] font-bold tracking-[0.1em] uppercase text-outline whitespace-nowrap">
+                                                <th key={h} className="py-2 px-3 text-[9px] font-bold tracking-[0.1em] uppercase text-outline truncate" title={h}>
                                                     {h}
                                                 </th>
                                             ))}
@@ -138,7 +149,7 @@ export default function CancelamentosPage() {
                                             } else if (situacao === 'BASE') {
                                                 rowBg = "bg-[#0b294d]/80 hover:bg-[#0e3b70] border-b border-[#4dabf7]/20"; // Azul
                                             } else if (situacao === 'OK') {
-                                                rowBg = "bg-transparent hover:bg-white/5 border-b border-white/5 opacity-50"; // Sem cor, escuro (opacidade menor para dar o tom escuro/riscado)
+                                                rowBg = "bg-transparent hover:bg-white/5 border-b border-white/5 opacity-50"; 
                                                 textColor = "text-white/40 italic"; 
                                             }
 
@@ -153,7 +164,7 @@ export default function CancelamentosPage() {
                                                     {headers.map(h => {
                                                         const cellVal = row[h];
                                                         return (
-                                                            <td key={`${i}-${h}`} className={cn("p-4 text-[11px] font-medium whitespace-nowrap", textColor)}>
+                                                            <td key={`${i}-${h}`} className={cn("py-1.5 px-3 text-[10px] font-medium truncate max-w-[200px]", textColor)} title={cellVal || ''}>
                                                                 {cellVal || '-'}
                                                             </td>
                                                         );
