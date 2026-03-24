@@ -27,13 +27,18 @@ export async function GET(req: NextRequest) {
         const ledger: any[] = [];
         let headers: string[] = [];
 
-        // Skip row 0 (headers) for counting, but store headers
         for (let i = 0; i < rawData.length; i++) {
             const row = rawData[i];
             
-            if (i === 0) {
-                headers = row.map(h => (h || '').trim());
-                continue;
+            // Find the first non-empty row to use as headers
+            if (headers.length === 0) {
+                if (row && row.length > 0) {
+                    // Ensure it has at least some text to be considered a header row
+                    if (row.some(Boolean)) {
+                        headers = row.map(h => (h || '').trim());
+                    }
+                }
+                continue; // Skip the header row itself from data processing
             }
 
             if (!row || row.length === 0) continue;
