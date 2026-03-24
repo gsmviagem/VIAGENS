@@ -31,13 +31,20 @@ function parseDateStr(dateStr: string): Date | null {
 }
 
 export async function POST(req: NextRequest) {
+    const startTime = Date.now();
+    console.log(`[API/BASE] Request started at ${new Date().toISOString()}`);
+
     try {
         const body = await req.json();
         const { startDate, endDate, salesman, product, route } = body;
 
         const sheetsService = new GoogleSheetsService();
         if (!sheetsService.isConfigured()) {
-            return NextResponse.json({ success: false, error: 'Google Sheets não está configurado.' }, { status: 500 });
+            console.error('[API/BASE] Google Sheets not configured. Check env vars: GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY, GOOGLE_SHEET_ID');
+            return NextResponse.json({ 
+                success: false, 
+                error: 'Google Sheets não está configurado. Verifique as variáveis de ambiente no Vercel.' 
+            }, { status: 500 });
         }
 
         // Fetch BASE data from row 6492 onwards (Data starting Jan 2025)
@@ -47,9 +54,23 @@ export async function POST(req: NextRequest) {
         // K(9): Price p/mile, L(10): Quant. Miles, P(14): Tax R$, Q(15): Tax US$
         // R(16): Sold, S(17): CC Taxes, T(18): Client Paid, U(19): Revenue
         // V(20): Pay To, X(22): Emissão, Y(23): Taxas, Z(24): Supplier, AH(32): MesAno
-        const rawData = await sheetsService.readSheetData('BASE!B6492:AH');
+
+        console.log('[API/BASE] Fetching data from Google Sheets...');
+        
+        // Wrap Sheets call with a timeout to avoid silent hangs
+        const timeoutMs = 55000; // 55s safety margin (maxDuration is 60s)
+        const rawData = await Promise.race([
+            sheetsService.readSheetData('BASE!B6492:AH'),
+            new Promise<null>((_, reject) => 
+                setTimeout(() => reject(new Error(`Timeout: Google Sheets não respondeu em ${timeoutMs/1000}s`)), timeoutMs)
+            )
+        ]);
+
+        const fetchDuration = Date.now() - startTime;
+        console.log(`[API/BASE] Sheets fetch completed in ${fetchDuration}ms, rows: ${rawData?.length || 0}`);
+
         if (!rawData) {
-            throw new Error('Falha ao ler dados da planilha BASE.');
+            throw new Error('Falha ao ler dados da planilha BASE. Resposta vazia do Google Sheets.');
         }
 
         const ledger: any[] = [];
@@ -247,7 +268,16 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (error: any) {
-        console.error('[API/BASE] Error:', error.message);
-        return NextResponse.json({ success: false, error: 'Erro ao buscar dados: ' + error.message }, { status: 500 });
+        const elapsed = Date.now() - startTime;
+        console.error(`[API/BASE] Error after ${elapsed}ms:`, error.message);
+        
+        let userMessage = 'Erro ao buscar dados: ' + error.message;
+        if (error.message?.includes('Timeout')) {
+            userMessage = 'A planilha demorou muito para responder. Tente novamente em alguns instantes.';
+        } else if (error.message?.includes('not configured') || error.message?.includes('credentials')) {
+            userMessage = 'Credenciais do Google Sheets não configuradas. Verifique as variáveis de ambiente no Vercel.';
+        }
+        
+        return NextResponse.json({ success: false, error: userMessage }, { status: 500 });
     }
 }

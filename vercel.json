@@ -2,6 +2,15 @@
   "functions": {
     "src/app/api/quotation/route.ts": {
       "maxDuration": 30
+    },
+    "src/app/api/sheets/base/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/sheets/supplier/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/sync/sheets/route.ts": {
+      "maxDuration": 60
     }
   }
 }

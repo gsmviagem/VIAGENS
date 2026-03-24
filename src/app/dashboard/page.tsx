@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 export default function FinancialsPage() {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<any>(null);
+    const [error, setError] = useState<string | null>(null);
 
     const [startDate, setStartDate] = useState("2025-01-01");
     const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
@@ -25,6 +26,7 @@ export default function FinancialsPage() {
 
     const fetchData = async () => {
         setLoading(true);
+        setError(null);
         try {
             const payload = {
                 startDate,
@@ -37,22 +39,27 @@ export default function FinancialsPage() {
             const res = await fetch('/api/sheets/base', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+            body: JSON.stringify(payload)
             });
             const json = await res.json();
             
             if (json.success) {
                 setData(json.data);
+                setError(null);
                 setLastSync(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
                 if (uniqueSalesmen.length === 0 && json.data.options) {
                     setUniqueSalesmen(json.data.options.salesmen || []);
                     setUniqueProducts(json.data.options.products || []);
                 }
             } else {
-                toast.error(json.error || "Erro ao buscar dados do Financeiro");
+                const errMsg = json.error || "Erro ao buscar dados do Financeiro";
+                setError(errMsg);
+                toast.error(errMsg);
             }
-        } catch (error) {
-            toast.error("Erro na conexão com o servidor");
+        } catch (err: any) {
+            const errMsg = "Erro na conexão com o servidor. Verifique sua internet e tente novamente.";
+            setError(errMsg);
+            toast.error(errMsg);
         } finally {
             setLoading(false);
         }
@@ -77,6 +84,25 @@ export default function FinancialsPage() {
         );
     }
 
+    if (error && !data) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+                <div className="material-symbols-outlined text-red-400 text-6xl">cloud_off</div>
+                <div className="text-center space-y-2">
+                    <p className="text-white font-bold text-lg">Falha na Sincronização</p>
+                    <p className="text-white/50 text-sm max-w-md">{error}</p>
+                </div>
+                <Button 
+                    onClick={fetchData}
+                    className="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 border border-emerald-500/30 font-black text-xs h-10 px-8 rounded-lg shadow-lg transition-all"
+                >
+                    <span className="material-symbols-outlined text-sm mr-2">refresh</span>
+                    Tentar Novamente
+                </Button>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-4 pb-4">
             {/* Cabeçalho */}
@@ -93,9 +119,20 @@ export default function FinancialsPage() {
                         <p className="text-white/60 font-medium font-mono text-[11px] tracking-widest mt-0.5">
                             Real-time Analytics da Aba BASE
                             {lastSync && <span className="ml-3 text-emerald-400/80">● Sync {lastSync}</span>}
+                            {error && <span className="ml-3 text-red-400/80">● Erro</span>}
                         </p>
                     </div>
                 </div>
+                <Button 
+                    onClick={fetchData}
+                    disabled={loading}
+                    className="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 border border-emerald-500/30 font-black text-[10px] h-9 px-5 rounded-lg shadow-lg transition-all uppercase tracking-widest disabled:opacity-50"
+                >
+                    <span className={`material-symbols-outlined text-sm mr-1.5 ${loading ? 'animate-spin' : ''}`}>
+                        {loading ? 'refresh' : 'sync'}
+                    </span>
+                    {loading ? 'Syncing...' : 'Sync'}
+                </Button>
             </div>
 
             {/* Filtros */}
