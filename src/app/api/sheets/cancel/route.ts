@@ -48,13 +48,16 @@ export async function GET(req: NextRequest) {
             // Use the first cell (A, index 0) to check if row is reasonably valid (like an ID, Date, etc.)
             // We'll collect the row to send back as an object mapped by headers (or just array)
             const rowObj: Record<string, string> = {};
+            let hasData = false;
             headers.forEach((header, colIdx) => {
                 if (header) {
-                    rowObj[header] = (row[colIdx] || '').trim();
+                    const val = (row[colIdx] || '').trim();
+                    rowObj[header] = val;
+                    if (val !== '') hasData = true;
                 }
             });
-            // We only push rows that have some basic data (e.g. at least index 0 is not empty)
-            if (row[0] && row[0].trim() !== '') {
+            // Push row if it has any data in any of the mapped header columns
+            if (hasData) {
                 ledger.push(rowObj);
             }
         }
