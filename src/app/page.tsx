@@ -49,7 +49,7 @@ export default function DashboardPage() {
                 const cancelRes = await fetch('/api/sheets/cancel');
                 const cancelJson = await cancelRes.json();
                 if (cancelJson.success) {
-                    setCancelStats({ ...cancelJson.data, loading: false });
+                    setCancelStats({ ...cancelJson.data.counts, loading: false });
                 } else {
                     setCancelStats(prev => ({ ...prev, loading: false }));
                 }
@@ -90,6 +90,49 @@ export default function DashboardPage() {
 
             {/* Bento Grid Layout */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                
+                {/* SECTION: Cancel Requests Tracking (Moved to top) */}
+                <section className="col-span-1 md:col-span-12">
+                    <div className="glass-panel p-6 w-full flex flex-col md:flex-row items-center justify-between gap-6 border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.05)] relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-red-500/5 to-transparent pointer-events-none"></div>
+                        <div className="flex items-center gap-4 z-10 shrink-0">
+                            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20">
+                                <span className="material-symbols-outlined text-red-400">cancel_schedule_send</span>
+                            </div>
+                            <div>
+                                <h2 className="font-['Inter'] tracking-[0.1em] uppercase text-[12px] font-bold text-white leading-tight">Cancel<br/>Requests</h2>
+                                <p className="text-[10px] text-outline tracking-wider lowercase">via google sheets</p>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 w-full z-10">
+                            {cancelStats.loading ? (
+                                <div className="col-span-4 flex justify-center py-2">
+                                    <span className="material-symbols-outlined animate-spin text-outline">refresh</span>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="bg-black/40 border border-white/5 p-4 rounded-lg flex flex-col items-center justify-center text-center group hover:bg-white/5 transition-all">
+                                        <p className="text-[9px] font-black tracking-[0.1em] uppercase text-outline mb-1 group-hover:text-red-300 transition-colors">Solicitar</p>
+                                        <p className="text-2xl font-light text-white tracking-tighter">{cancelStats.solicitar}</p>
+                                    </div>
+                                    <div className="bg-black/40 border border-white/5 p-4 rounded-lg flex flex-col items-center justify-center text-center group hover:bg-white/5 transition-all">
+                                        <p className="text-[9px] font-black tracking-[0.1em] uppercase text-outline mb-1 group-hover:text-amber-300 transition-colors">Solicitado</p>
+                                        <p className="text-2xl font-light text-white tracking-tighter">{cancelStats.solicitado}</p>
+                                    </div>
+                                    <div className="bg-black/40 border border-white/5 p-4 rounded-lg flex flex-col items-center justify-center text-center group hover:bg-white/5 transition-all">
+                                        <p className="text-[9px] font-black tracking-[0.1em] uppercase text-outline mb-1 group-hover:text-blue-300 transition-colors">Base</p>
+                                        <p className="text-2xl font-light text-white tracking-tighter">{cancelStats.base}</p>
+                                    </div>
+                                    <div className="bg-black/40 border border-white/5 p-4 rounded-lg flex flex-col items-center justify-center text-center group hover:bg-white/5 transition-all">
+                                        <p className="text-[9px] font-black tracking-[0.1em] uppercase text-outline mb-1 group-hover:text-emerald-300 transition-colors">OK</p>
+                                        <p className="text-2xl font-light text-white tracking-tighter">{cancelStats.ok}</p>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </section>
                 
                 {/* SECTION 1: Air Automations (Large Asymmetric) */}
                 <section className="md:col-span-8 group">
@@ -247,48 +290,7 @@ export default function DashboardPage() {
                     </div>
                 </section>
 
-                {/* SECTION 5: Cancel Requests Tracking */}
-                <section className="col-span-1 md:col-span-12">
-                    <div className="glass-panel p-6 w-full flex flex-col md:flex-row items-center justify-between gap-6 border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.05)] relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-red-500/5 to-transparent pointer-events-none"></div>
-                        <div className="flex items-center gap-4 z-10 shrink-0">
-                            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20">
-                                <span className="material-symbols-outlined text-red-400">cancel_schedule_send</span>
-                            </div>
-                            <div>
-                                <h2 className="font-['Inter'] tracking-[0.1em] uppercase text-[12px] font-bold text-white leading-tight">Cancel<br/>Requests</h2>
-                                <p className="text-[10px] text-outline tracking-wider lowercase">via google sheets</p>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 w-full z-10">
-                            {cancelStats.loading ? (
-                                <div className="col-span-4 flex justify-center py-2">
-                                    <span className="material-symbols-outlined animate-spin text-outline">refresh</span>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="bg-black/40 border border-white/5 p-4 rounded-lg flex flex-col items-center justify-center text-center group hover:bg-white/5 transition-all">
-                                        <p className="text-[9px] font-black tracking-[0.1em] uppercase text-outline mb-1 group-hover:text-red-300 transition-colors">Solicitar</p>
-                                        <p className="text-2xl font-light text-white tracking-tighter">{cancelStats.solicitar}</p>
-                                    </div>
-                                    <div className="bg-black/40 border border-white/5 p-4 rounded-lg flex flex-col items-center justify-center text-center group hover:bg-white/5 transition-all">
-                                        <p className="text-[9px] font-black tracking-[0.1em] uppercase text-outline mb-1 group-hover:text-amber-300 transition-colors">Solicitado</p>
-                                        <p className="text-2xl font-light text-white tracking-tighter">{cancelStats.solicitado}</p>
-                                    </div>
-                                    <div className="bg-black/40 border border-white/5 p-4 rounded-lg flex flex-col items-center justify-center text-center group hover:bg-white/5 transition-all">
-                                        <p className="text-[9px] font-black tracking-[0.1em] uppercase text-outline mb-1 group-hover:text-blue-300 transition-colors">Base</p>
-                                        <p className="text-2xl font-light text-white tracking-tighter">{cancelStats.base}</p>
-                                    </div>
-                                    <div className="bg-black/40 border border-white/5 p-4 rounded-lg flex flex-col items-center justify-center text-center group hover:bg-white/5 transition-all">
-                                        <p className="text-[9px] font-black tracking-[0.1em] uppercase text-outline mb-1 group-hover:text-emerald-300 transition-colors">OK</p>
-                                        <p className="text-2xl font-light text-white tracking-tighter">{cancelStats.ok}</p>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </section>
+                {/* Removed Cancel section from here */}
             </div>
             
             <footer className="mt-12 pt-8 pb-4 flex justify-between items-center text-outline text-[10px] font-bold uppercase tracking-widest border-t border-[#474747]/30">

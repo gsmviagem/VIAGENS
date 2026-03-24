@@ -14,6 +14,7 @@ const navItems = [
     { href: '/inventario', label: 'Inventory', icon: 'inventory' },
     { href: '/dashboard', label: 'Financials', icon: 'payments' },
     { href: '/fornecedores', label: 'Suppliers', icon: 'handshake' },
+    { href: '/cancelamentos', label: 'Cancel', icon: 'cancel_schedule_send' },
     { href: '/auto-extrator', label: 'Automations', icon: 'precision_manufacturing' },
     { href: '/calculo', label: 'Calculator', icon: 'calculate' },
     { href: '/configuracoes', label: 'Settings', icon: 'settings' }
