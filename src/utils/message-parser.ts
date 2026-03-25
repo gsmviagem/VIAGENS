@@ -20,6 +20,7 @@ export interface ProcessedData {
     infants: number;
     flightTime: string;
     passengers: PassengerData[];
+    hasFlightData?: boolean;
 }
 
 const MONTHS_MAP: { [key: string]: string } = {
@@ -37,7 +38,7 @@ const MONTHS_MAP: { [key: string]: string } = {
     dec: '12', december: '12', dezembro: '12'
 };
 
-export function parseFlightMessage(message: string): ProcessedData {
+export function parseFlightMessage(message: string, isAmericanFormat: boolean = false): ProcessedData {
     // 0. Initial Sanitization
     let msg = message.toLowerCase().replace(/\t/g, ' '); // Replace tabs with spaces
     msg = msg.replace(/\b(?:pls|please)\b/g, ' '); // Remove noise
@@ -88,9 +89,14 @@ export function parseFlightMessage(message: string): ProcessedData {
         let birthMonth = '';
         let birthYear = '';
 
-        if (match[2]) { // Slashed: DD/MM/YYYY
-            birthDay = match[2];
-            birthMonth = match[3];
+        if (match[2]) { // Slashed: DD/MM/YYYY or MM/DD/YYYY
+            if (isAmericanFormat) {
+                birthMonth = match[2];
+                birthDay = match[3];
+            } else {
+                birthDay = match[2];
+                birthMonth = match[3];
+            }
             birthYear = match[4];
         } else if (match[5]) { // Month-first: Nov. 28, 1981
             birthMonth = MONTHS_MAP[match[5].toLowerCase()];
@@ -118,8 +124,18 @@ export function parseFlightMessage(message: string): ProcessedData {
     }
 
     // Explicit counts (if any)
-    const adultMatch = msg.match(/(?:(\d+)\s*(?:adulto|adultos|pax|adults?))|(?:(?:adulto|adultos|pax|adults?)\s*[:\-]?\s*(\d+))/i);
-    const explicitAdults = adultMatch ? parseInt(adultMatch[1] || adultMatch[2]) : 0;
+    const getCount = (regex: RegExp) => {
+        let count = 0;
+        let m;
+        while ((m = regex.exec(msg)) !== null) {
+            count += parseInt(m[1] || m[2]);
+        }
+        return count;
+    };
+
+    const explicitAdults = getCount(/(?:(\d+)\s*(?:adulto|adultos|pax|adult\b|adults\b))|(?:(?:adulto|adultos|pax|adult\b|adults\b)\s*[:\-]?\s*(\d+))/gi);
+    const explicitChildren = getCount(/(?:(\d+)\s*(?:crian[cç]as?|children|child|chld|chd\b))|(?:(?:crian[cç]as?|children|child|chld|chd\b)\s*[:\-]?\s*(\d+))/gi);
+    const explicitInfants = getCount(/(?:(\d+)\s*(?:beb[eê]s?|infant|inf\b|baby|babies))|(?:(?:beb[eê]s?|infant|inf\b|baby|babies)\s*[:\-]?\s*(\d+))/gi);
 
     // Remove passengers from the "Flight Info Pool"
     let flightInfoPool = msg;
@@ -209,6 +225,10 @@ export function parseFlightMessage(message: string): ProcessedData {
 
     // Final adjustments
     data.adults = Math.max(data.adults, explicitAdults);
+    data.children = Math.max(data.children, explicitChildren);
+    data.infants = Math.max(data.infants, explicitInfants);
+    
+    data.hasFlightData = !!(data.origin || data.destination || data.date || data.flightTime);
     
     return data;
 }

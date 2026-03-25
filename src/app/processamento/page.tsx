@@ -15,6 +15,7 @@ export default function BookPage() {
     const [result, setResult] = useState<ProcessedData | null>(null);
     const [isCopying, setIsCopying] = useState(false);
     const [outputMode, setOutputMode] = useState<'full' | 'simple'>('full');
+    const [isAmericanFormat, setIsAmericanFormat] = useState(false);
 
     // Shortcut States
     const [contas, setContas] = useState<Shortcut[]>([]);
@@ -83,7 +84,7 @@ export default function BookPage() {
         }
 
         try {
-            const data = parseFlightMessage(input);
+            const data = parseFlightMessage(input, isAmericanFormat);
             setResult(data);
             setOutputMode(mode);
             toast.success(`Dados processados (${mode === 'full' ? 'Completo' : 'Simplificado'})`);
@@ -94,44 +95,32 @@ export default function BookPage() {
 
     const formatOutput = (data: ProcessedData) => {
         if (outputMode === 'simple') {
-            const header = `${data.origin} - ${data.destination}
-${data.date}
-${data.classType}`;
+            const parts: string[] = [];
+
+            if (data.hasFlightData) {
+                parts.push(`${data.origin} - ${data.destination}\n${data.date}\n${data.classType}`);
+            }
 
             const passengerBlocks = data.passengers.map(p => {
-                return `${p.firstName}
-${p.lastName}
-${p.birthDate}
-${p.gender}`;
+                return `${p.firstName}\n${p.lastName}\n${p.birthDate}\n${p.gender}`;
             }).join('\n\n');
 
-            return `${header}\n\n${passengerBlocks}`;
+            parts.push(passengerBlocks);
+            return parts.filter(Boolean).join('\n\n');
         }
 
-        const baseInfo = `Gostaria de emitir em tabela fixa:
-⇾ Origem e Destino: ${data.origin} - ${data.destination}
-⇾ Data de ida: ${data.date}
-⇾ Classe: ${data.classType}
-⇾ Companhia parceira: ${data.partner}
-⇾ Adultos: ${data.adults}
-⇾ Crianças: ${data.children}
-⇾ Bebês: ${data.infants}
-⇾ Voo: ${data.flightTime}`;
+        const parts: string[] = [];
+
+        if (data.hasFlightData) {
+            parts.push(`Gostaria de emitir em tabela fixa:\n⇾ Origem e Destino: ${data.origin} - ${data.destination}\n⇾ Data de ida: ${data.date}\n⇾ Classe: ${data.classType}\n⇾ Companhia parceira: ${data.partner}\n⇾ Adultos: ${data.adults}\n⇾ Crianças: ${data.children}\n⇾ Bebês: ${data.infants}\n⇾ Voo: ${data.flightTime}`);
+        }
 
         const passengerBlocks = data.passengers.map(p => {
-            return `
-DADOS DO PASSAGEIRO
-➔ Primeiro nome: ${p.firstName}
-➔ Último nome: ${p.lastName}
-➔ Gênero: ${p.gender}
-➔ Data de nascimento: ${p.birthDate}
-➔ Número do passaporte: ${p.passportNumber}
-➔ Nacionalidade: ${p.nationality}
-➔ Data de validade do passaporte: ${p.passportExpiry}
-➔ País de emissão do passaporte: ${p.passportIssuanceCountry}`;
+            return `\nDADOS DO PASSAGEIRO\n➔ Primeiro nome: ${p.firstName}\n➔ Último nome: ${p.lastName}\n➔ Gênero: ${p.gender}\n➔ Data de nascimento: ${p.birthDate}\n➔ Número do passaporte: ${p.passportNumber}\n➔ Nacionalidade: ${p.nationality}\n➔ Data de validade do passaporte: ${p.passportExpiry}\n➔ País de emissão do passaporte: ${p.passportIssuanceCountry}`;
         }).join('\n');
 
-        return `${baseInfo}\n${passengerBlocks}`;
+        parts.push(passengerBlocks);
+        return parts.filter(Boolean).join('\n');
     };
 
     const handleCopy = () => {
@@ -170,7 +159,25 @@ DADOS DO PASSAGEIRO
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 p-4 shrink-0 border-t border-white/5">
+                    <div className="px-4 pt-3 shrink-0 border-t border-white/5">
+                        <label className="flex items-center gap-2.5 cursor-pointer group">
+                            <div className="relative">
+                                <input
+                                    type="checkbox"
+                                    checked={isAmericanFormat}
+                                    onChange={(e) => setIsAmericanFormat(e.target.checked)}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-8 h-[18px] bg-white/10 rounded-full peer-checked:bg-white/80 transition-all border border-white/10 peer-checked:border-white/30" />
+                                <div className="absolute left-[3px] top-[3px] w-3 h-3 bg-[#555] rounded-full peer-checked:translate-x-[14px] peer-checked:bg-black transition-all" />
+                            </div>
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-[#777] group-hover:text-[#aaa] transition-colors select-none">
+                                Datas americanas (MM/DD)
+                            </span>
+                        </label>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 p-4 shrink-0">
                         <button
                             onClick={() => handleProcess('full')}
                             className="flex items-center justify-center gap-2 bg-white text-black py-3 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-white/90 transition-all active:scale-95 shadow-md"
@@ -220,7 +227,7 @@ DADOS DO PASSAGEIRO
                     </div>
 
                     {result && (
-                        <div className="grid grid-cols-2 gap-3 p-4 shrink-0 border-t border-white/5">
+                        <div className={`grid ${result.hasFlightData ? 'grid-cols-2' : 'grid-cols-1'} gap-3 p-4 shrink-0 border-t border-white/5`}>
                             <div className="p-3 rounded-lg bg-white/5 border border-white/5 flex items-center gap-3 overflow-hidden">
                                 <span className="material-symbols-outlined text-[16px] text-white/40">group</span>
                                 <div className="text-[9px] font-bold text-[#a19f9d] uppercase tracking-wider truncate">
@@ -228,13 +235,15 @@ DADOS DO PASSAGEIRO
                                     {result.passengers.length} ({result.adults}A, {result.children}C, {result.infants}I)
                                 </div>
                             </div>
-                            <div className="p-3 rounded-lg bg-white/5 border border-white/5 flex items-center gap-3 overflow-hidden">
-                                <span className="material-symbols-outlined text-[16px] text-white/40">flight</span>
-                                <div className="text-[9px] font-bold text-[#a19f9d] uppercase tracking-wider truncate">
-                                    <span className="block text-white font-black">ROTA</span>
-                                    {result.origin || 'N/A'} → {result.destination || 'N/A'}
+                            {result.hasFlightData && (
+                                <div className="p-3 rounded-lg bg-white/5 border border-white/5 flex items-center gap-3 overflow-hidden">
+                                    <span className="material-symbols-outlined text-[16px] text-white/40">flight</span>
+                                    <div className="text-[9px] font-bold text-[#a19f9d] uppercase tracking-wider truncate">
+                                        <span className="block text-white font-black">ROTA</span>
+                                        {result.origin || 'N/A'} → {result.destination || 'N/A'}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     )}
                 </div>
