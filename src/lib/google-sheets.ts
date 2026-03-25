@@ -96,6 +96,29 @@ export class GoogleSheetsService {
     }
 
     /**
+     * Updates data in a specific range in the Google Sheet
+     */
+    async updateSheetData(range: string, values: any[][]): Promise<boolean> {
+        try {
+            if (!this.spreadsheetId) throw new Error('Spreadsheet ID not configured');
+
+            await this.sheets.spreadsheets.values.update({
+                spreadsheetId: this.spreadsheetId,
+                range,
+                valueInputOption: 'USER_ENTERED',
+                requestBody: {
+                    values
+                }
+            });
+
+            return true;
+        } catch (error: any) {
+            console.error(`[GoogleSheets] Error updating range ${range}:`, error.message);
+            return false;
+        }
+    }
+
+    /**
      * Checks if the service is properly configured
      */
     isConfigured(): boolean {

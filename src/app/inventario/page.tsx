@@ -6,6 +6,14 @@ export const revalidate = 0; // Disable cache so it always fetches fresh data
 // Strip all non-numeric characters from CPF values
 const cleanCpf = (value: string | undefined) => (value || '').replace(/\D/g, '') || '-';
 
+// Format name to show only first and last
+const formatName = (fullName: string | undefined) => {
+    if (!fullName) return '-';
+    const parts = fullName.trim().split(/\s+/);
+    if (parts.length <= 2) return fullName;
+    return `${parts[0]} ${parts[parts.length - 1]}`;
+};
+
 export default async function InventarioPage() {
     const sheetsService = new GoogleSheetsService();
     
@@ -55,7 +63,7 @@ export default async function InventarioPage() {
                     <div className="flex-1 overflow-y-auto divide-y divide-white/5 custom-scrollbar bg-[#0e0e0e]/40">
                         {latamEntries.map((row, i) => (
                             <div key={i} className={`grid ${gridLayout} text-center text-[11px] text-white py-3 hover:bg-white/5 transition-colors items-center px-1`}>
-                                <div className="truncate px-2 font-medium" title={row[0]}>{row[0] || '-'}</div>
+                                <div className="truncate px-2 font-medium" title={row[0]}>{formatName(row[0])}</div>
                                 <div className="truncate px-2 font-mono text-outline" title={cleanCpf(row[1])}>{cleanCpf(row[1])}</div>
                                 <div className="truncate px-2 font-mono text-outline/60" title={row[2]}>{row[2] || '-'}</div>
                                 <div className="truncate px-2 font-medium tracking-tight text-secondary" title={row[3]}>{row[3] || '-'}</div>
@@ -83,7 +91,7 @@ export default async function InventarioPage() {
                     <div className="flex-1 overflow-y-auto divide-y divide-white/5 custom-scrollbar bg-[#0e0e0e]/40">
                         {smilesEntries.map((row, i) => (
                             <div key={i} className={`grid ${gridLayout} text-center text-[11px] text-white py-3 hover:bg-white/5 transition-colors items-center px-1`}>
-                                <div className="truncate px-2 font-medium" title={row[0]}>{row[0] || '-'}</div>
+                                <div className="truncate px-2 font-medium" title={row[0]}>{formatName(row[0])}</div>
                                 <div className="truncate px-2 font-mono text-outline" title={cleanCpf(row[1])}>{cleanCpf(row[1])}</div>
                                 <div className="truncate px-2 font-mono text-outline/60" title={row[2]}>{row[2] || '-'}</div>
                                 <div className="truncate px-2 font-medium tracking-tight text-secondary" title={row[3]}>{row[3] || '-'}</div>

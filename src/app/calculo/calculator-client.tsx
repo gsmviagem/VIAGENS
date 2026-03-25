@@ -38,10 +38,18 @@ const DEFAULT_AZUL_ROUTES: AzulRoute[] = [
     { id: 'a5', route: 'VCP-ORY', price: 4000 },
 ];
 
-export default function CalculatorClient({ initialDolar }: { initialDolar: number }) {
+export default function CalculatorClient({ 
+    initialDolar, 
+    initialRateUpTo50k, 
+    initialRateOver50k 
+}: { 
+    initialDolar: number;
+    initialRateUpTo50k: number;
+    initialRateOver50k: number;
+}) {
     const [dolar, setDolar] = useState<number>(initialDolar || 5.0);
-    const [rateUpTo50k, setRateUpTo50k] = useState<number>(14.50);
-    const [rateOver50k, setRateOver50k] = useState<number>(13.50);
+    const [rateUpTo50k, setRateUpTo50k] = useState<number>(initialRateUpTo50k || 14.50);
+    const [rateOver50k, setRateOver50k] = useState<number>(initialRateOver50k || 13.50);
 
     const [presets, setPresets] = useState<ClientPreset[]>(DEFAULT_PRESETS);
     const [activePresetId, setActivePresetId] = useState<string | null>(null);
@@ -69,9 +77,26 @@ export default function CalculatorClient({ initialDolar }: { initialDolar: numbe
         } catch {}
     }, []);
 
-    const saveRates = () => {
-        localStorage.setItem('gsm_calc_rates', JSON.stringify({ rateUpTo50k, rateOver50k }));
-        toast.success('Rates salvos!');
+    const saveRates = async () => {
+        try {
+            // Local persistence
+            localStorage.setItem('gsm_calc_rates', JSON.stringify({ rateUpTo50k, rateOver50k }));
+            
+            // Server persistence (Global default)
+            const res = await fetch('/api/sheets/calc-rates', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rateUpTo50k, rateOver50k })
+            });
+            
+            if (res.ok) {
+                toast.success('Rates salvos como padrão global!');
+            } else {
+                toast.warning('Salvo localmente, mas erro ao salvar na planilha.');
+            }
+        } catch (err) {
+            toast.error('Erro ao conectar com o servidor.');
+        }
     };
 
     const savePresets = (updated: ClientPreset[]) => {

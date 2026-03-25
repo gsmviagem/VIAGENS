@@ -30,7 +30,14 @@ export function Navbar() {
         <>
             <nav className="fixed top-0 w-full z-50 bg-[#131313]/90 backdrop-blur-xl border-b border-[#474747]/30 shadow-[0_40px_40px_rgba(0,0,0,0.08)] flex justify-between items-center px-8 h-16">
                 <div className="flex items-center gap-8">
-                    <Link href="/" className="text-xl font-black tracking-[0.1em] text-white">CHRONOS</Link>
+                    <Link href="/" className="flex items-center gap-2 group">
+                        <img 
+                            src="https://lh3.googleusercontent.com/d/1_logo_placeholder" 
+                            alt="Chronos Hub Logo" 
+                            className="w-10 h-10 object-contain brightness-110 group-hover:scale-105 transition-transform" 
+                        />
+                        <span className="text-xl font-black tracking-[0.1em] text-white">CHRONOS</span>
+                    </Link>
                     
                     {/* Horizontal Navigation Links for Desktop */}
                     <div className="hidden lg:flex gap-1 overflow-x-auto custom-scrollbar">
@@ -60,8 +67,12 @@ export function Navbar() {
                         <span className="material-symbols-outlined text-white">settings</span>
                     </Link>
                     
-                    <div className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30 hidden sm:block">
-                        <img alt="User Profile" className="w-full h-full object-cover" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" />
+                    <div className="w-8 h-8 rounded-full overflow-hidden border border-emerald-500/30 hidden sm:block">
+                        <img 
+                            alt="User Profile" 
+                            className="w-full h-full object-cover" 
+                            src="https://lh3.googleusercontent.com/d/1_avatar_placeholder" 
+                        />
                     </div>
 
                     <button

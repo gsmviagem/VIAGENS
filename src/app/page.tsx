@@ -12,6 +12,7 @@ export default function DashboardPage() {
     const [recentEmissions, setRecentEmissions] = useState<any[]>([]);
     const [stats, setStats] = useState({ totalMiles: 0, totalEmissions: 0 });
     const [cancelStats, setCancelStats] = useState({ solicitar: 0, solicitado: 0, base: 0, ok: 0, loading: true });
+    const [marketData, setMarketData] = useState({ dolar: 0, suppliers: [], loading: true });
     const [loading, setLoading] = useState(true);
 
     const supabase = createClient();
@@ -55,6 +56,28 @@ export default function DashboardPage() {
                 }
             } catch (err) {
                 setCancelStats(prev => ({ ...prev, loading: false }));
+            }
+
+            // Fetch Market & Suppliers
+            try {
+                const [marketRes, supplierRes] = await Promise.all([
+                    fetch('/api/sheets/market'),
+                    fetch('/api/sheets/supplier', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ pendingOnly: true })
+                    })
+                ]);
+                const marketJson = await marketRes.json();
+                const supplierJson = await supplierRes.json();
+
+                setMarketData({
+                    dolar: marketJson.success ? marketJson.data.dolar : 0,
+                    suppliers: supplierJson.success ? supplierJson.data.suppliers : [],
+                    loading: false
+                });
+            } catch (err) {
+                setMarketData(prev => ({ ...prev, loading: false }));
             }
         }
 
@@ -260,7 +283,7 @@ export default function DashboardPage() {
                         <div>
                             <div className="flex justify-between items-start mb-6">
                                 <h2 className="font-['Inter'] tracking-[0.1em] uppercase text-[11px] font-bold text-secondary">Data Synchronization</h2>
-                                <span className="material-symbols-outlined text-outline">autorenew</span>
+                                <span className="material-symbols-outlined text-outline text-lg">autorenew</span>
                             </div>
                             <div className="space-y-4">
                                 <div className="flex items-center gap-4 group cursor-pointer">
@@ -268,8 +291,11 @@ export default function DashboardPage() {
                                         <span className="material-symbols-outlined text-outline">table_chart</span>
                                     </div>
                                     <div>
-                                        <p className="text-[11px] font-bold text-white tracking-wide">TICKETS_MASTER_SHEET</p>
-                                        <p className="text-[10px] text-outline tracking-wider">Secure uplink active</p>
+                                        <p className="text-[11px] font-bold text-white tracking-wide uppercase">Tickets Master</p>
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-1.5 h-1.5 bg-secondary rounded-full animate-pulse"></span>
+                                            <p className="text-[10px] text-outline tracking-wider">Secure uplink active</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -290,7 +316,46 @@ export default function DashboardPage() {
                     </div>
                 </section>
 
-                {/* Removed Cancel section from here */}
+                {/* SECTION 5: Market & Suppliers (New) */}
+                <section className="md:col-span-12">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {/* Dollar Card */}
+                        <div className="glass-panel p-6 flex flex-col justify-between bg-gradient-to-br from-emerald-500/5 to-transparent border-emerald-500/20">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h2 className="font-['Inter'] tracking-[0.1em] uppercase text-[10px] font-bold text-emerald-400 mb-1">Market Data</h2>
+                                    <p className="text-2xl font-light text-white tracking-tight">Cotação Dólar</p>
+                                </div>
+                                <span className="material-symbols-outlined text-emerald-400">attach_money</span>
+                            </div>
+                            <div className="mt-6 flex items-baseline gap-2">
+                                <span className="text-4xl font-black text-white">R$ {marketData.dolar.toFixed(2).replace('.', ',')}</span>
+                                <span className="text-[10px] font-bold text-emerald-400/60 uppercase tracking-widest">Live Rate</span>
+                            </div>
+                        </div>
+
+                        {/* Suppliers Card */}
+                        <div className="glass-panel p-6 col-span-2 flex flex-col bg-gradient-to-br from-blue-500/5 to-transparent border-blue-500/20">
+                            <div className="flex justify-between items-center mb-4">
+                                <div>
+                                    <h2 className="font-['Inter'] tracking-[0.1em] uppercase text-[10px] font-bold text-blue-400 mb-1">Accounts Payable</h2>
+                                    <p className="text-xl font-light text-white tracking-tight">Fornecedores a Pagar</p>
+                                </div>
+                                <span className="material-symbols-outlined text-blue-400">handshake</span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 overflow-y-auto max-h-[120px] custom-scrollbar pr-2">
+                                {marketData.suppliers.length > 0 ? marketData.suppliers.filter((s:any) => s.saldoType === 'NEGATIVE').map((s:any, i:number) => (
+                                    <div key={i} className="bg-black/40 border border-white/5 p-3 rounded-lg flex flex-col hover:bg-white/5 transition-all">
+                                        <span className="text-[10px] font-black text-white/40 uppercase truncate" title={s.name}>{s.name}</span>
+                                        <span className="text-lg font-bold text-white tracking-tighter">R$ {s.saldo}</span>
+                                    </div>
+                                )) : (
+                                    <div className="col-span-3 py-4 text-center text-outline text-[10px] uppercase font-bold tracking-widest">Nenhuma dívida encontrada</div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
             
             <footer className="mt-12 pt-8 pb-4 flex justify-between items-center text-outline text-[10px] font-bold uppercase tracking-widest border-t border-[#474747]/30">
