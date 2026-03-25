@@ -48,6 +48,9 @@ export async function POST(req: NextRequest) {
                         if (filterEnd && rowDate > filterEnd) return false;
                     }
 
+                    // Check if already paid (Column W is different from empty)
+                    if (row[21] && row[21].trim() !== '') return false;
+
                     return true;
                 })
                 .map(row => ({
