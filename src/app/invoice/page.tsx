@@ -136,87 +136,67 @@ export default function InvoicePage() {
 
         // Branding Header
         doc.setFillColor(PRIMARY_BLUE[0], PRIMARY_BLUE[1], PRIMARY_BLUE[2]);
-        doc.rect(0, 0, pageWidth, 50, 'F');
+        doc.rect(0, 0, pageWidth, 40, 'F');
         
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(26);
+        doc.setFontSize(24);
         doc.setFont('helvetica', 'bold');
-        doc.text('DIMAIS CORP', 20, 28);
+        doc.text('DIMAIS CORP', 20, 26);
         
-        doc.setFontSize(9);
+        doc.setFontSize(12);
         doc.setFont('helvetica', 'normal');
-        doc.setTextColor(200, 200, 200);
-        doc.text('HUB FINANCIAL SYSTEMS - EXECUTIVE BILLING', 20, 35);
+        doc.setTextColor(200, 220, 255);
+        doc.text('INVOICE', pageWidth - 20, 26, { align: 'right' });
 
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(255, 255, 255);
-        doc.text('INVOICE', pageWidth - 20, 30, { align: 'right' });
-
-        // Client & Invoice Details
-        doc.setTextColor(40, 40, 40);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('FROM:', 20, 65);
-        doc.setFont('helvetica', 'normal');
-        doc.text('DIMAIS CORP', 50, 65);
-
-        doc.setFont('helvetica', 'bold');
-        doc.text('BILL TO:', 20, 72);
-        doc.setFont('helvetica', 'normal');
-        doc.text((selectedClient.company || selectedClient.broker).toUpperCase(), 50, 72);
-
-        doc.setFont('helvetica', 'bold');
-        doc.text('DATE:', 20, 79);
-        doc.setFont('helvetica', 'normal');
-        doc.text(new Date().toLocaleDateString('en-US'), 50, 79);
-
-        // Period 
-        let periodText = 'No items found';
-        if (data.emissions.length > 0) {
-            const rowDates = data.emissions.map(e => {
-                const [d, m, y] = e.date.split('/');
-                return new Date(parseInt(y), parseInt(m) - 1, parseInt(d)).getTime();
-            }).filter(t => !isNaN(t));
-            const min = new Date(Math.min(...rowDates));
-            const max = new Date(Math.max(...rowDates));
-            periodText = `${min.toLocaleDateString('en-US')} - ${max.toLocaleDateString('en-US')}`;
-        }
-        doc.setFont('helvetica', 'bold');
-        doc.text('PERIOD:', 20, 86);
-        doc.setFont('helvetica', 'normal');
-        doc.text(periodText, 50, 86);
-
-        // Summary Box (Top)
-        doc.setFillColor(245, 247, 250);
-        doc.rect(pageWidth - 90, 60, 70, 35, 'F');
-        doc.setFontSize(9);
-        doc.setTextColor(100, 100, 100);
-        doc.text('Gross Expenses:', pageWidth - 85, 70);
-        doc.setTextColor(0, 0, 0);
-        doc.text(`$ ${totalEmissions.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, pageWidth - 25, 70, { align: 'right' });
-        
-        doc.setTextColor(100, 100, 100);
-        doc.text('Applied Credits:', pageWidth - 85, 77);
-        doc.setTextColor(180, 0, 0);
-        doc.text(`- $ ${totalSelectedCredits.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, pageWidth - 25, 77, { align: 'right' });
-
-        doc.setDrawColor(PRIMARY_BLUE[0], PRIMARY_BLUE[1], PRIMARY_BLUE[2]);
-        doc.setLineWidth(0.5);
-        doc.line(pageWidth - 85, 82, pageWidth - 25, 82);
-
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        const finalColor: [number, number, number] = finalTotal <= 0 ? [0, 150, 0] : PRIMARY_BLUE;
-        doc.setTextColor(finalColor[0], finalColor[1], finalColor[2]);
-        doc.text(finalTotal <= 0 ? 'CREDIT BALANCE:' : 'NET TOTAL DUE:', pageWidth - 85, 89);
-        doc.text(`$ ${Math.abs(finalTotal).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, pageWidth - 25, 89, { align: 'right' });
-
-        // Emissions Table
+        // Bill to section
         doc.setTextColor(PRIMARY_BLUE[0], PRIMARY_BLUE[1], PRIMARY_BLUE[2]);
-        doc.setFontSize(10);
-        doc.text('ITEMIZED EXPENSES', 20, 105);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text('BILL TO', 20, 60);
+        
+        doc.setTextColor(40, 40, 40);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text((selectedClient.company || selectedClient.broker).toUpperCase(), 20, 66);
 
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(120, 120, 120);
+        doc.text(`Date: ${new Date().toLocaleDateString('en-US')}`, 20, 72);
+
+        // Sleek Summary (Right side)
+        const sumRight = pageWidth - 20;
+        const sumLeft = pageWidth - 80;
+        let sumY = 58;
+
+        doc.setFontSize(10);
+        doc.setTextColor(120, 120, 120);
+        doc.text('Bookings', sumLeft, sumY);
+        doc.setTextColor(40, 40, 40);
+        doc.text(`$ ${totalEmissions.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumRight, sumY, { align: 'right' });
+        sumY += 8;
+
+        if (totalSelectedCredits > 0) {
+            doc.setTextColor(120, 120, 120);
+            doc.text('Credits', sumLeft, sumY);
+            doc.setTextColor(180, 0, 0);
+            doc.text(`- $ ${totalSelectedCredits.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumRight, sumY, { align: 'right' });
+            sumY += 8;
+        }
+
+        // Divider
+        doc.setDrawColor(230, 230, 230);
+        doc.setLineWidth(0.5);
+        doc.line(sumLeft, sumY - 4, sumRight, sumY - 4);
+
+        const finalColor: [number, number, number] = finalTotal <= 0 ? [0, 150, 0] : PRIMARY_BLUE;
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(finalColor[0], finalColor[1], finalColor[2]);
+        doc.text('TOTAL', sumLeft, sumY);
+        doc.text(`$ ${Math.abs(finalTotal).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumRight, sumY, { align: 'right' });
+
+        // Emissions Table (No header text)
         const emissionsRows = data.emissions.map(e => [
             formatUSDate(e.date),
             e.pax,
@@ -226,12 +206,19 @@ export default function InvoicePage() {
         ]);
 
         autoTable(doc, {
-            startY: 108,
+            startY: Math.max(85, sumY + 15),
             head: [['Date', 'Passenger', 'Loc', 'Route', 'Price']],
             body: emissionsRows,
-            theme: 'striped',
-            headStyles: { fillColor: PRIMARY_BLUE, textColor: [255, 255, 255], fontSize: 8 },
-            bodyStyles: { fontSize: 7, cellPadding: 1.5 },
+            theme: 'plain',
+            headStyles: { 
+                textColor: PRIMARY_BLUE, 
+                fontSize: 8, 
+                fontStyle: 'bold', 
+                lineWidth: { bottom: 0.5 }, 
+                lineColor: [200, 200, 200] 
+            },
+            bodyStyles: { fontSize: 8, cellPadding: 2, textColor: [60, 60, 60] },
+            alternateRowStyles: { fillColor: [250, 252, 255] },
             columnStyles: { 4: { halign: 'right', fontStyle: 'bold' } }
         });
 
