@@ -107,31 +107,50 @@ export default function InvoicePage() {
         const doc = new jsPDF() as any;
         const pageWidth = doc.internal.pageSize.width;
 
-        // Header
+        // Branding Header
         doc.setFillColor(14, 14, 14);
-        doc.rect(0, 0, pageWidth, 40, 'F');
+        doc.rect(0, 0, pageWidth, 50, 'F');
         
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(22);
+        doc.setFontSize(26);
         doc.setFont('helvetica', 'bold');
-        doc.text('CHRONOS HUB', 20, 25);
+        doc.text('DIMAIS CORP', 20, 28);
         
-        doc.setFontSize(10);
+        doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        doc.text('FATURA DE EMISSÕES', pageWidth - 20, 25, { align: 'right' });
+        doc.setTextColor(150, 150, 150);
+        doc.text('HUB FINANCIAL SYSTEMS', 20, 35);
 
-        // Client Info
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(255, 255, 255);
+        doc.text('INVOICE / FATURA', pageWidth - 20, 30, { align: 'right' });
+
+        // Client & Invoice Details
         doc.setTextColor(40, 40, 40);
-        doc.setFontSize(12);
+        doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text('CLIENTE:', 20, 50);
+        doc.text('REMETENTE:', 20, 65);
         doc.setFont('helvetica', 'normal');
-        doc.text(`${selectedClient.broker} (${selectedClient.company})`, 50, 50);
+        doc.text('DIMAIS CORP', 50, 65);
 
         doc.setFont('helvetica', 'bold');
-        doc.text('DATA:', 20, 58);
+        doc.text('DESTINATÁRIO:', 20, 72);
         doc.setFont('helvetica', 'normal');
-        doc.text(new Date().toLocaleDateString('pt-BR'), 50, 58);
+        doc.text((selectedClient.company || selectedClient.broker).toUpperCase(), 50, 72);
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('DATA EMISSÃO:', 20, 79);
+        doc.setFont('helvetica', 'normal');
+        doc.text(new Date().toLocaleDateString('pt-BR'), 50, 79);
+
+        // Period filter info
+        if (startDate || endDate) {
+            doc.setFont('helvetica', 'bold');
+            doc.text('PERÍODO:', 20, 86);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`${startDate || 'Início'} ate ${endDate || 'Hoje'}`, 50, 86);
+        }
 
         // Table
         const tableData = data.emissions.map(e => [
@@ -144,55 +163,70 @@ export default function InvoicePage() {
         ]);
 
         (doc as any).autoTable({
-            startY: 70,
+            startY: 95,
             head: [['Data', 'Passageiro', 'LOC', 'Produto', 'Rota', 'Valor']],
             body: tableData,
-            theme: 'grid',
-            headStyles: { fillColor: [30, 30, 30], textColor: [255, 255, 255] },
-            styles: { fontSize: 8 },
+            theme: 'striped',
+            headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold' },
+            bodyStyles: { fontSize: 8, cellPadding: 2 },
+            columnStyles: {
+                5: { halign: 'right', fontStyle: 'bold' }
+            }
         });
 
-        const finalY = (doc as any).lastAutoTable.finalY + 10;
+        const finalY = (doc as any).lastAutoTable.finalY + 15;
 
-        // Summary
-        doc.setFontSize(10);
-        doc.text(`Subtotal Emissões: R$ ${totalEmissions.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, pageWidth - 20, finalY, { align: 'right' });
+        // Summary Box
+        doc.setFillColor(245, 245, 245);
+        doc.rect(pageWidth - 90, finalY - 5, 70, 35, 'F');
+
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Subtotal:', pageWidth - 85, finalY + 5);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`R$ ${totalEmissions.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, pageWidth - 25, finalY + 5, { align: 'right' });
         
         if (deductCredits && totalCredits > 0) {
+            doc.setTextColor(100, 100, 100);
+            doc.text('Créditos:', pageWidth - 85, finalY + 12);
             doc.setTextColor(180, 0, 0);
-            doc.text(`Créditos/Pagamentos: - R$ ${totalCredits.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, pageWidth - 20, finalY + 7, { align: 'right' });
-            doc.setTextColor(0, 0, 0);
+            doc.text(`- R$ ${totalCredits.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, pageWidth - 25, finalY + 12, { align: 'right' });
         }
 
-        doc.setFontSize(14);
+        doc.setLineWidth(0.5);
+        doc.line(pageWidth - 85, finalY + 18, pageWidth - 25, finalY + 18);
+
+        doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        doc.text(`TOTAL DEVIDO: R$ ${Math.max(0, finalTotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, pageWidth - 20, finalY + 18, { align: 'right' });
+        doc.setTextColor(finalTotal <= 0 ? [0, 150, 0] : [0, 0, 0]);
+        doc.text(finalTotal <= 0 ? 'CRÉDITO:' : 'TOTAL DEVIDO:', pageWidth - 85, finalY + 25);
+        doc.text(`R$ ${Math.abs(finalTotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, pageWidth - 25, finalY + 25, { align: 'right' });
 
         // Footer
         doc.setFontSize(8);
         doc.setFont('helvetica', 'italic');
-        doc.setTextColor(100, 100, 100);
-        doc.text('Este documento é uma fatura pro-forma gerada automaticamente pelo Chronos Hub.', pageWidth / 2, 285, { align: 'center' });
+        doc.setTextColor(150, 150, 150);
+        doc.text('DIMAIS CORP - SOLUÇÕES EM VIAGENS E TECNOLOGIA', pageWidth / 2, 285, { align: 'center' });
 
-        doc.save(`Invoice_${selectedClient.broker.replace(/\\s+/g, '_')}_${new Date().getTime()}.pdf`);
+        doc.save(`Invoice_${(selectedClient.company || selectedClient.broker).replace(/\s+/g, '_')}_${new Date().getFullYear()}.pdf`);
     };
 
     return (
-        <div className="space-y-8 max-w-6xl mx-auto">
-            <header className="flex justify-between items-end">
+        <div className="space-y-8 max-w-[1600px] mx-auto px-4">
+            <header className="flex justify-between items-end px-2">
                 <div>
                     <h1 className="text-3xl font-black tracking-tight text-white uppercase font-display">Invoice Generation</h1>
-                    <p className="text-[#a19f9d] mt-2">Gere faturas detalhadas para seus brokers e empresas.</p>
+                    <p className="text-[#a19f9d] mt-2">DIMAIS CORP - Hub Systems</p>
                 </div>
                 <div className="glass-panel px-4 py-2 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">Billing System Active</span>
+                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">DIMAIS CORP ACTIVE</span>
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* FILTERS PANEL */}
-                <div className="lg:col-span-1 space-y-6">
+            <div className="flex flex-col lg:flex-row gap-8">
+                {/* FILTERS PANEL (FIXED WIDTH) */}
+                <div className="w-full lg:w-[400px] space-y-6 flex-shrink-0">
                     <div className="glass-panel p-6 space-y-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-outline uppercase tracking-widest">Nome do Cliente ou Empresa</label>
@@ -297,48 +331,52 @@ export default function InvoicePage() {
                     )}
                 </div>
 
-                {/* PREVIEW PANEL */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="glass-panel flex flex-col h-[600px]">
-                        <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/2">
+                {/* PREVIEW PANEL (EXPANDED) */}
+                <div className="flex-1 min-w-0 space-y-6">
+                    <div className="glass-panel flex flex-col h-[700px] w-full">
+                        <div className="p-4 border-b border-white/5 flex justify-between items-center bg-white/2">
                             <div className="flex items-center gap-3">
-                                <span className="material-symbols-outlined text-outline">preview</span>
-                                <h2 className="text-[11px] font-black text-white uppercase tracking-widest">Invoice Preview</h2>
+                                <span className="material-symbols-outlined text-outline text-lg">preview</span>
+                                <h2 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Live Billing Preview</h2>
                             </div>
-                            <button
-                                onClick={generatePDF}
-                                disabled={data.emissions.length === 0}
-                                className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2 rounded-sm text-[10px] font-black text-white uppercase tracking-widest transition-all disabled:opacity-30"
-                            >
-                                <span className="material-symbols-outlined text-[16px]">picture_as_pdf</span>
-                                Exportar PDF
-                            </button>
+                            <div className="flex items-center gap-4">
+                                <span className="text-[9px] text-outline font-bold uppercase tracking-widest">{selectedClient?.company || selectedClient?.broker || 'No Client selected'}</span>
+                                <button
+                                    onClick={generatePDF}
+                                    disabled={data.emissions.length === 0}
+                                    className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2 rounded-sm text-[10px] font-black text-white uppercase tracking-widest transition-all disabled:opacity-30"
+                                >
+                                    <span className="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+                                    Exportar PDF
+                                </button>
+                            </div>
                         </div>
 
                         <div className="flex-1 overflow-y-auto custom-scrollbar p-0">
                             {data.emissions.length > 0 ? (
-                                <table className="w-full text-left border-collapse">
+                                <table className="w-full text-left border-collapse table-fixed">
                                     <thead className="sticky top-0 bg-[#151515] z-10">
-                                        <tr className="border-b border-white/5">
-                                            <th className="px-6 py-4 text-[9px] font-black text-outline uppercase tracking-widest">Data</th>
-                                            <th className="px-6 py-4 text-[9px] font-black text-outline uppercase tracking-widest">Pax / LOC</th>
-                                            <th className="px-6 py-4 text-[9px] font-black text-outline uppercase tracking-widest">Rota</th>
-                                            <th className="px-6 py-4 text-right text-[9px] font-black text-outline uppercase tracking-widest">Valor</th>
+                                        <tr className="border-b border-white/10">
+                                            <th className="w-24 px-4 py-3 text-[9px] font-black text-outline uppercase tracking-widest">Data</th>
+                                            <th className="px-4 py-3 text-[9px] font-black text-outline uppercase tracking-widest">Passageiro / Localizador</th>
+                                            <th className="w-32 px-4 py-3 text-[9px] font-black text-outline uppercase tracking-widest">Rota</th>
+                                            <th className="w-24 px-4 py-3 text-[9px] font-black text-outline uppercase tracking-widest text-right">Produto</th>
+                                            <th className="w-28 px-4 py-3 text-right text-[9px] font-black text-outline uppercase tracking-widest">Valor</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/5">
                                         {data.emissions.map((e, i) => (
-                                            <tr key={i} className="hover:bg-white/2 transition-colors">
-                                                <td className="px-6 py-4 text-[11px] font-mono text-white/60">{e.date}</td>
-                                                <td className="px-6 py-4">
-                                                    <p className="text-[11px] font-bold text-white uppercase">{e.pax}</p>
-                                                    <p className="text-[10px] font-mono text-outline">{e.pnr}</p>
+                                            <tr key={i} className="hover:bg-white/2 transition-colors border-l-2 border-transparent hover:border-secondary">
+                                                <td className="px-4 py-2 text-[10px] font-mono text-white/40">{e.date}</td>
+                                                <td className="px-4 py-2">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] font-bold text-white uppercase truncate" title={e.pax}>{e.pax}</span>
+                                                        <span className="text-[9px] font-mono text-outline/60">{e.pnr}</span>
+                                                    </div>
                                                 </td>
-                                                <td className="px-6 py-4">
-                                                    <p className="text-[11px] text-white/80">{e.route}</p>
-                                                    <p className="text-[9px] text-outline uppercase font-bold">{e.product}</p>
-                                                </td>
-                                                <td className="px-6 py-4 text-right text-[11px] font-bold text-white">
+                                                <td className="px-4 py-2 text-[10px] text-white/70 whitespace-nowrap overflow-hidden text-ellipsis">{e.route}</td>
+                                                <td className="px-4 py-2 text-right text-[9px] font-black text-secondary uppercase">{e.product}</td>
+                                                <td className="px-4 py-2 text-right text-[10px] font-bold text-white">
                                                     {e.value}
                                                 </td>
                                             </tr>
@@ -368,9 +406,17 @@ export default function InvoicePage() {
                             )}
 
                             <div className="pt-4 border-t border-white/5 flex justify-between items-center">
-                                <span className="text-[12px] font-black text-white uppercase tracking-widest">Total a Pagar</span>
-                                <span className="text-2xl font-black text-secondary">
-                                    R$ {Math.max(0, finalTotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                <span className={cn(
+                                    "text-[12px] font-black uppercase tracking-widest",
+                                    finalTotal <= 0 ? "text-emerald-500" : "text-white"
+                                )}>
+                                    {finalTotal <= 0 ? 'Saldo Credor' : 'Total a Pagar'}
+                                </span>
+                                <span className={cn(
+                                    "text-2xl font-black",
+                                    finalTotal <= 0 ? "text-emerald-500" : "text-secondary"
+                                )}>
+                                    R$ {Math.abs(finalTotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                 </span>
                             </div>
                         </div>
