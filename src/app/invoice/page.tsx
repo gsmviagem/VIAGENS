@@ -221,19 +221,18 @@ export default function InvoicePage() {
             formatUSDate(e.date),
             e.pax,
             e.pnr,
-            e.product,
             e.route,
             e.value.replace('R$', '$')
         ]);
 
         autoTable(doc, {
             startY: 108,
-            head: [['Date', 'Passenger', 'Loc', 'Product', 'Route', 'Amount']],
+            head: [['Date', 'Passenger', 'Loc', 'Route', 'Price']],
             body: emissionsRows,
             theme: 'striped',
             headStyles: { fillColor: PRIMARY_BLUE, textColor: [255, 255, 255], fontSize: 8 },
             bodyStyles: { fontSize: 7, cellPadding: 1.5 },
-            columnStyles: { 5: { halign: 'right', fontStyle: 'bold' } }
+            columnStyles: { 4: { halign: 'right', fontStyle: 'bold' } }
         });
 
         // Credits Table (If any selected)
@@ -428,26 +427,26 @@ export default function InvoicePage() {
                                             <thead>
                                                 <tr className="bg-black/20">
                                                     <th className="w-24 px-6 py-4 text-[8px] font-black text-outline uppercase">Date</th>
-                                                    <th className="px-6 py-4 text-[8px] font-black text-outline uppercase text-center">Passenger / Loc</th>
-                                                    <th className="w-32 px-6 py-4 text-[8px] font-black text-outline uppercase">Route</th>
-                                                    <th className="w-28 px-6 py-4 text-right text-[8px] font-black text-outline uppercase">Amount</th>
+                                                    <th className="px-6 py-4 text-[8px] font-black text-outline uppercase">Passenger</th>
+                                                    <th className="w-24 px-6 py-4 text-[8px] font-black text-outline uppercase text-center">Loc</th>
+                                                    <th className="px-6 py-4 text-[8px] font-black text-outline uppercase">Route</th>
+                                                    <th className="w-28 px-6 py-4 text-right text-[8px] font-black text-outline uppercase">Price</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-white/5">
                                                 {data.emissions.map((e, i) => (
                                                     <tr key={i} className="hover:bg-white/5 transition-colors group">
-                                                        <td className="px-6 py-3 text-[10px] font-mono text-white/30">{formatUSDate(e.date)}</td>
-                                                        <td className="px-6 py-3">
-                                                            <div className="flex flex-col text-center">
-                                                                <span className="text-[10px] font-black text-white uppercase truncate px-1" title={e.pax}>{e.pax}</span>
-                                                                <span className="text-[9px] font-mono text-outline/40 leading-none mt-1">{e.pnr}</span>
-                                                            </div>
+                                                        <td className="px-6 py-2 text-[10px] font-mono text-white/30">{formatUSDate(e.date)}</td>
+                                                        <td className="px-6 py-2">
+                                                            <span className="text-[10px] font-black text-white uppercase truncate block" title={e.pax}>{e.pax}</span>
                                                         </td>
-                                                        <td className="px-6 py-3">
+                                                        <td className="px-6 py-2 text-center">
+                                                            <span className="text-[9px] font-mono text-outline uppercase">{e.pnr}</span>
+                                                        </td>
+                                                        <td className="px-6 py-2">
                                                             <span className="text-[10px] text-white/70 block truncate">{e.route}</span>
-                                                            <span className="text-[8px] text-emerald-500/60 font-black uppercase">{e.product}</span>
                                                         </td>
-                                                        <td className="px-6 py-3 text-right text-[11px] font-black text-white">
+                                                        <td className="px-6 py-2 text-right text-[11px] font-black text-white">
                                                             $ {parseCurrency(e.value).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                                         </td>
                                                     </tr>
