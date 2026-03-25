@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
 
         let totalRevenue = 0;
         let totalClientPaid = 0;
+        let totalUnpaidClient = 0; // New: unpaid client billings
         let totalTaxBrl = 0;
         let totalTaxUsd = 0;
         let totalSales = 0;
@@ -127,9 +128,16 @@ export async function POST(req: NextRequest) {
                 const revenue = parseCurrency(row[19]); // U(19)
                 const mesAno = (row[32] || '').trim(); // AH(32)
 
+                // Check Paid Status (Column V=20, W=21 relative to B=0)
+                const isPaid = (row[20] && row[20].trim() !== '') || (row[21] && row[21].trim() !== '');
+
                 // 1. Global KPIs
                 totalRevenue += revenue;
                 totalClientPaid += clientPaid;
+                if (!isPaid) {
+                    totalUnpaidClient += clientPaid;
+                }
+                
                 totalTaxBrl += taxBrl;
                 totalTaxUsd += taxUsd;
                 totalSales += 1;
@@ -151,6 +159,7 @@ export async function POST(req: NextRequest) {
                     client: (row[3] || '').trim(), // E(3)
                     revenue: formatCurrencyUSD(revenue),
                     clientPaid: formatCurrencyUSD(clientPaid),
+                    status: isPaid ? 'PAID' : 'PENDING',
                     mesAno: mesAno
                 });
 
@@ -246,6 +255,7 @@ export async function POST(req: NextRequest) {
                 summary: {
                     totalRevenue: formatCurrencyUSD(totalRevenue),
                     totalClientPaid: formatCurrencyUSD(totalClientPaid),
+                    totalUnpaidClient: formatCurrencyUSD(totalUnpaidClient), // New
                     totalTaxBrl: formatCurrencyBRL(totalTaxBrl),
                     totalTaxUsd: formatCurrencyUSD(totalTaxUsd),
                     totalSales,
