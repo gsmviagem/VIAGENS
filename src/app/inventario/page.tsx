@@ -3,6 +3,9 @@ import { GoogleSheetsService } from '@/lib/google-sheets';
 
 export const revalidate = 0; // Disable cache so it always fetches fresh data
 
+// Strip all non-numeric characters from CPF values
+const cleanCpf = (value: string | undefined) => (value || '').replace(/\D/g, '') || '-';
+
 export default async function InventarioPage() {
     const sheetsService = new GoogleSheetsService();
     
@@ -53,7 +56,7 @@ export default async function InventarioPage() {
                         {latamEntries.map((row, i) => (
                             <div key={i} className={`grid ${gridLayout} text-center text-[11px] text-white py-3 hover:bg-white/5 transition-colors items-center px-1`}>
                                 <div className="truncate px-2 font-medium" title={row[0]}>{row[0] || '-'}</div>
-                                <div className="truncate px-2 font-mono text-outline" title={row[1]}>{row[1] || '-'}</div>
+                                <div className="truncate px-2 font-mono text-outline" title={cleanCpf(row[1])}>{cleanCpf(row[1])}</div>
                                 <div className="truncate px-2 font-mono text-outline/60" title={row[2]}>{row[2] || '-'}</div>
                                 <div className="truncate px-2 font-medium tracking-tight text-secondary" title={row[3]}>{row[3] || '-'}</div>
                                 <div className="truncate px-2 font-bold tracking-tight" title={row[4]}>{row[4] || '-'}</div>
@@ -81,7 +84,7 @@ export default async function InventarioPage() {
                         {smilesEntries.map((row, i) => (
                             <div key={i} className={`grid ${gridLayout} text-center text-[11px] text-white py-3 hover:bg-white/5 transition-colors items-center px-1`}>
                                 <div className="truncate px-2 font-medium" title={row[0]}>{row[0] || '-'}</div>
-                                <div className="truncate px-2 font-mono text-outline" title={row[1]}>{row[1] || '-'}</div>
+                                <div className="truncate px-2 font-mono text-outline" title={cleanCpf(row[1])}>{cleanCpf(row[1])}</div>
                                 <div className="truncate px-2 font-mono text-outline/60" title={row[2]}>{row[2] || '-'}</div>
                                 <div className="truncate px-2 font-medium tracking-tight text-secondary" title={row[3]}>{row[3] || '-'}</div>
                                 <div className="truncate px-2 font-bold tracking-tight" title={row[4]}>{row[4] || '-'}</div>
@@ -109,7 +112,7 @@ export default async function InventarioPage() {
                         {azulEntries.map((row, i) => (
                             <div key={i} className={`grid ${gridLayout} text-center text-[11px] text-white py-3 hover:bg-white/5 transition-colors items-center px-1`}>
                                 <div className="truncate px-2 font-medium" title={row[0]}>{row[0] || '-'}</div>
-                                <div className="truncate px-2 font-mono text-outline" title={row[1]}>{row[1] || '-'}</div>
+                                <div className="truncate px-2 font-mono text-outline" title={cleanCpf(row[1])}>{cleanCpf(row[1])}</div>
                                 <div className="truncate px-2 font-mono text-outline/60" title={row[2]}>{row[2] || '-'}</div>
                                 <div className="truncate px-2 font-medium tracking-tight text-secondary" title={row[3]}>{row[3] || '-'}</div>
                                 <div className="truncate px-2 font-bold tracking-tight" title={row[4]}>{row[4] || '-'}</div>
