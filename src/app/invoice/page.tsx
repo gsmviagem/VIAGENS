@@ -144,13 +144,28 @@ export default function InvoicePage() {
         doc.setFont('helvetica', 'normal');
         doc.text(new Date().toLocaleDateString('pt-BR'), 50, 79);
 
-        // Period filter info
-        if (startDate || endDate) {
-            doc.setFont('helvetica', 'bold');
-            doc.text('PERÍODO:', 20, 86);
-            doc.setFont('helvetica', 'normal');
-            doc.text(`${startDate || 'Início'} ate ${endDate || 'Hoje'}`, 50, 86);
+        // Calculate actual period from emissions data
+        let periodText = 'Nenhuma emissão encontrada';
+        if (data.emissions.length > 0) {
+            const rowDates = data.emissions
+                .map(e => {
+                    const [d, m, y] = e.date.split('/');
+                    return new Date(parseInt(y), parseInt(m) - 1, parseInt(d)).getTime();
+                })
+                .filter(t => !isNaN(t));
+                
+            if (rowDates.length > 0) {
+                const min = new Date(Math.min(...rowDates));
+                const max = new Date(Math.max(...rowDates));
+                periodText = `${min.toLocaleDateString('pt-BR')} a ${max.toLocaleDateString('pt-BR')}`;
+            }
         }
+
+        // Period filter info
+        doc.setFont('helvetica', 'bold');
+        doc.text('PERÍODO:', 20, 86);
+        doc.setFont('helvetica', 'normal');
+        doc.text(periodText, 50, 86);
 
         // Table
         const tableData = data.emissions.map(e => [
