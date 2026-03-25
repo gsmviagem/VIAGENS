@@ -134,66 +134,73 @@ export default function InvoicePage() {
         const pageWidth = doc.internal.pageSize.width;
         const PRIMARY_BLUE: [number, number, number] = [0, 43, 92]; // #002b5c
 
-        // Branding Header
+        // Minimalist Corporate Header
+        // Thin top accent line
         doc.setFillColor(PRIMARY_BLUE[0], PRIMARY_BLUE[1], PRIMARY_BLUE[2]);
-        doc.rect(0, 0, pageWidth, 40, 'F');
+        doc.rect(0, 0, pageWidth, 4, 'F');
         
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(24);
+        doc.setTextColor(PRIMARY_BLUE[0], PRIMARY_BLUE[1], PRIMARY_BLUE[2]);
+        doc.setFontSize(22);
         doc.setFont('helvetica', 'bold');
-        doc.text('DIMAIS CORP', 20, 26);
+        doc.text('DIMAIS CORP', 20, 20);
         
         doc.setFontSize(12);
         doc.setFont('helvetica', 'normal');
-        doc.setTextColor(200, 220, 255);
-        doc.text('INVOICE', pageWidth - 20, 26, { align: 'right' });
+        doc.setTextColor(150, 150, 150);
+        doc.text('INVOICE  # ' + Date.now().toString().slice(-6), pageWidth - 20, 20, { align: 'right' });
+
+        // Subtle divider
+        doc.setDrawColor(240, 240, 240);
+        doc.setLineWidth(0.5);
+        doc.line(20, 26, pageWidth - 20, 26);
 
         // Bill to section
-        doc.setTextColor(PRIMARY_BLUE[0], PRIMARY_BLUE[1], PRIMARY_BLUE[2]);
-        doc.setFontSize(9);
+        const startY = 38;
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
-        doc.text('BILL TO', 20, 60);
+        doc.setTextColor(120, 120, 120);
+        doc.text('BILL TO', 20, startY);
         
         doc.setTextColor(40, 40, 40);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(11);
-        doc.text((selectedClient.company || selectedClient.broker).toUpperCase(), 20, 66);
+        doc.text((selectedClient.company || selectedClient.broker).toUpperCase(), 20, startY + 5);
 
-        doc.setFontSize(9);
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(120, 120, 120);
-        doc.text(`Date: ${new Date().toLocaleDateString('en-US')}`, 20, 72);
+        doc.text(`Date: ${new Date().toLocaleDateString('en-US')}`, 20, startY + 10);
 
         // Sleek Summary (Right side)
         const sumRight = pageWidth - 20;
-        const sumLeft = pageWidth - 80;
-        let sumY = 58;
+        const sumLeft = pageWidth - 65;
+        let sumY = startY + 2;
 
-        doc.setFontSize(10);
+        doc.setFontSize(9);
         doc.setTextColor(120, 120, 120);
         doc.text('Bookings', sumLeft, sumY);
         doc.setTextColor(40, 40, 40);
         doc.text(`$ ${totalEmissions.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumRight, sumY, { align: 'right' });
-        sumY += 8;
+        sumY += 6;
 
         if (totalSelectedCredits > 0) {
             doc.setTextColor(120, 120, 120);
             doc.text('Credits', sumLeft, sumY);
             doc.setTextColor(180, 0, 0);
             doc.text(`- $ ${totalSelectedCredits.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumRight, sumY, { align: 'right' });
-            sumY += 8;
+            sumY += 6;
         }
 
         // Divider
         doc.setDrawColor(230, 230, 230);
         doc.setLineWidth(0.5);
-        doc.line(sumLeft, sumY - 4, sumRight, sumY - 4);
+        doc.line(sumLeft, sumY - 3, sumRight, sumY - 3);
 
         const finalColor: [number, number, number] = finalTotal <= 0 ? [0, 150, 0] : PRIMARY_BLUE;
-        doc.setFontSize(12);
+        doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(finalColor[0], finalColor[1], finalColor[2]);
-        doc.text('TOTAL', sumLeft, sumY);
+        doc.text('TOTAL', sumLeft, sumY += 1.5);
         doc.text(`$ ${Math.abs(finalTotal).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumRight, sumY, { align: 'right' });
 
         // Emissions Table (No header text)
