@@ -132,7 +132,7 @@ export default function InvoicePage() {
 
         const doc = new jsPDF() as any;
         const pageWidth = doc.internal.pageSize.width;
-        const PRIMARY_BLUE = [0, 43, 92]; // #002b5c
+        const PRIMARY_BLUE: [number, number, number] = [0, 43, 92]; // #002b5c
 
         // Branding Header
         doc.setFillColor(PRIMARY_BLUE[0], PRIMARY_BLUE[1], PRIMARY_BLUE[2]);
@@ -207,7 +207,8 @@ export default function InvoicePage() {
 
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(finalTotal <= 0 ? [0, 150, 0] : PRIMARY_BLUE[0], PRIMARY_BLUE[1], PRIMARY_BLUE[2]);
+        const finalColor: [number, number, number] = finalTotal <= 0 ? [0, 150, 0] : PRIMARY_BLUE;
+        doc.setTextColor(finalColor[0], finalColor[1], finalColor[2]);
         doc.text(finalTotal <= 0 ? 'CREDIT BALANCE:' : 'NET TOTAL DUE:', pageWidth - 85, 89);
         doc.text(`$ ${Math.abs(finalTotal).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, pageWidth - 25, 89, { align: 'right' });
 
