@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 interface Client {
     broker: string;
@@ -162,7 +162,7 @@ export default function InvoicePage() {
             e.value
         ]);
 
-        (doc as any).autoTable({
+        autoTable(doc, {
             startY: 95,
             head: [['Data', 'Passageiro', 'LOC', 'Produto', 'Rota', 'Valor']],
             body: tableData,
