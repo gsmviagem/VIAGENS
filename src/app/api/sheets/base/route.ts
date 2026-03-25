@@ -128,8 +128,9 @@ export async function POST(req: NextRequest) {
                 const revenue = parseCurrency(row[19]); // U(19)
                 const mesAno = (row[32] || '').trim(); // AH(32)
 
-                // Check Paid Status (Column V=20, W=21 relative to B=0)
-                const isPaid = (row[20] && row[20].trim() !== '') || (row[21] && row[21].trim() !== '');
+                // Check Paid Status (Column V=20 relative to B=0)
+                // Se a coluna V for vazia, significa que o cliente ainda NÃO PAGOU.
+                const isPaid = (row[20] && row[20].trim() !== '');
 
                 // 1. Global KPIs
                 totalRevenue += revenue;

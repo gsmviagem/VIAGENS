@@ -41,11 +41,11 @@ export async function POST(req: NextRequest) {
                     const isMatch = (bName && rowClient === bName) || (cName && rowClient === cName);
                     if (!isMatch) return false;
 
-                    // CHECK IF PAID (Column V or W - Index 21 or 22)
-                    // If either is not empty, it's paid, so we EXCLUDE it (return false)
+                    // CHECK IF PAID (Column V - Index 21)
+                    // Se a coluna V (Pay To) NÃO for vazia, significa que já foi pago.
+                    // Portanto, excluímos da fatura em aberto.
                     const isVPaid = row[21] && row[21].trim() !== '';
-                    const isWPaid = row[22] && row[22].trim() !== '';
-                    if (isVPaid || isWPaid) return false;
+                    if (isVPaid) return false;
 
                     // Date filter (Column B - Index 1)
                     if (row[1]) {
