@@ -15,6 +15,7 @@ const navItems = [
     { href: '/processamento', label: 'Book', icon: 'auto_stories' },
     { href: '/auto-extrator', label: 'Automations', icon: 'precision_manufacturing' },
     { href: '/calculo', label: 'Calculator', icon: 'calculate' },
+    { href: '/invoice', label: 'Invoice', icon: 'description' },
 ];
 
 export function Sidebar() {
