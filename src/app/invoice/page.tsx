@@ -33,8 +33,8 @@ export default function InvoicePage() {
     const [clients, setClients] = useState<Client[]>([]);
     const [search, setSearch] = useState('');
     const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
+    const [startDate, setStartDate] = useState('2020-01-01');
+    const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
     const [deductCredits, setDeductCredits] = useState(true);
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<{ emissions: Emission[], credits: Credit[] }>({ emissions: [], credits: [] });
@@ -65,7 +65,8 @@ export default function InvoicePage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    clientName: selectedClient.broker,
+                    brokerName: selectedClient.broker,
+                    companyName: selectedClient.company,
                     startDate,
                     endDate
                 })
@@ -276,7 +277,7 @@ export default function InvoicePage() {
                         <button
                             onClick={handleFetchData}
                             disabled={!selectedClient || loading}
-                            className="w-full bg-secondary hover:bg-secondary-dark disabled:opacity-50 text-white font-black uppercase text-[11px] tracking-widest py-4 transition-all active:scale-95"
+                            className="w-full bg-[#3c3b3b] hover:bg-[#2a2a2a] disabled:opacity-50 text-white font-black uppercase text-[11px] tracking-widest py-4 transition-all active:scale-95 border border-white/10"
                         >
                             {loading ? 'Carregando...' : 'Carregar Emissões'}
                         </button>

@@ -12,7 +12,7 @@ function parseCurrency(val: string | undefined): number {
 
 export async function POST(req: NextRequest) {
     try {
-        const { clientName, startDate, endDate } = await req.json();
+        const { brokerName, companyName, startDate, endDate } = await req.json();
         
         const sheetsService = new GoogleSheetsService();
         if (!sheetsService.isConfigured()) {
@@ -29,11 +29,16 @@ export async function POST(req: NextRequest) {
             const filterEnd = endDate ? new Date(endDate) : null;
             if (filterEnd) filterEnd.setHours(23, 59, 59, 999);
 
+            const bName = (brokerName || '').trim().toUpperCase();
+            const cName = (companyName || '').trim().toUpperCase();
+
             emissions = baseData
                 .filter(row => {
-                    const broker = (row[3] || '').trim().toUpperCase();
-                    const target = clientName.trim().toUpperCase();
-                    if (broker !== target) return false;
+                    const rowClient = (row[3] || '').trim().toUpperCase();
+                    
+                    // Match either Broker or Company
+                    const isMatch = (bName && rowClient === bName) || (cName && rowClient === cName);
+                    if (!isMatch) return false;
 
                     // Date filter
                     if (row[0]) {
@@ -61,8 +66,14 @@ export async function POST(req: NextRequest) {
         let credits: any[] = [];
 
         if (clientsData) {
+            const bName = (brokerName || '').trim().toUpperCase();
+            const cName = (companyName || '').trim().toUpperCase();
+
             credits = clientsData
-                .filter(row => (row[0] || '').trim().toUpperCase() === clientName.trim().toUpperCase())
+                .filter(row => {
+                    const rowBroker = (row[0] || '').trim().toUpperCase();
+                    return (bName && rowBroker === bName) || (cName && rowBroker === cName);
+                })
                 .map(row => ({
                     broker: row[0],
                     payment: row[1],
