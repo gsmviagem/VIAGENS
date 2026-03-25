@@ -198,7 +198,11 @@ export default function InvoicePage() {
 
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(finalTotal <= 0 ? [0, 150, 0] : [0, 0, 0]);
+        if (finalTotal <= 0) {
+            doc.setTextColor(0, 150, 0);
+        } else {
+            doc.setTextColor(0, 0, 0);
+        }
         doc.text(finalTotal <= 0 ? 'CRÉDITO:' : 'TOTAL DEVIDO:', pageWidth - 85, finalY + 25);
         doc.text(`R$ ${Math.abs(finalTotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, pageWidth - 25, finalY + 25, { align: 'right' });
 
