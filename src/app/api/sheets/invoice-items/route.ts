@@ -19,47 +19,52 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: 'Not configured' }, { status: 500 });
         }
 
-        // 1. Fetch emissions from BASE!B:Z
-        // B=0(Date), E=3(Broker/Client), G=5(Pax), H=6(PNR), I=7(Product), J=8(Route), T=18(Client Paid)
-        const baseData = await sheetsService.readSheetData('BASE!B3:Z');
+        // 1. Fetch emissions from BASE!A3:AZ
+        // A=0(Booking Date/empty?), B=1(Date), E=4(Broker/Client), G=6(Pax), H=7(PNR), I=8(Product), J=9(Route), T=19(Client Paid), W=22(Paid Details)
+        const baseData = await sheetsService.readSheetData('BASE!A3:AZ');
         let emissions: any[] = [];
         
         if (baseData) {
             const filterStart = startDate ? new Date(startDate) : null;
             const filterEnd = endDate ? new Date(endDate) : null;
-            if (filterEnd) filterEnd.setHours(23, 59, 59, 999);
+            if (filterEnd) filterEnd.setHours(23, 59, 59, 999); 
 
             const bName = (brokerName || '').trim().toUpperCase();
             const cName = (companyName || '').trim().toUpperCase();
 
             emissions = baseData
                 .filter(row => {
-                    const rowClient = (row[3] || '').trim().toUpperCase();
+                    if (!row || row.length < 5) return false;
+                    const rowClient = (row[4] || '').trim().toUpperCase();
                     
                     // Match either Broker or Company
                     const isMatch = (bName && rowClient === bName) || (cName && rowClient === cName);
                     if (!isMatch) return false;
 
-                    // Date filter
-                    if (row[0]) {
-                        const [d, m, y] = row[0].split('/');
-                        const rowDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-                        if (filterStart && rowDate < filterStart) return false;
-                        if (filterEnd && rowDate > filterEnd) return false;
-                    }
+                    // CHECK IF PAID (Column W - Index 22)
+                    // If not empty, it's paid, so we EXCLUDE it (return false)
+                    if (row[22] && row[22].trim() !== '') return false;
 
-                    // Check if already paid (Column W is different from empty)
-                    if (row[21] && row[21].trim() !== '') return false;
+                    // Date filter (Column B - Index 1)
+                    if (row[1]) {
+                        const parts = row[1].split('/');
+                        if (parts.length === 3) {
+                            const [d, m, y] = parts;
+                            const rowDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+                            if (filterStart && rowDate < filterStart) return false;
+                            if (filterEnd && rowDate > filterEnd) return false;
+                        }
+                    }
 
                     return true;
                 })
                 .map(row => ({
-                    date: row[0] || '',
-                    pax: row[5] || '',
-                    pnr: row[6] || '',
-                    product: row[7] || '',
-                    route: row[8] || '',
-                    value: row[18] || '0' // Client Paid (Value to bill)
+                    date: row[1] || '',
+                    pax: row[6] || '',
+                    pnr: row[7] || '',
+                    product: row[8] || '',
+                    route: row[9] || '',
+                    value: row[19] || '0' // Client Paid
                 }));
         }
 

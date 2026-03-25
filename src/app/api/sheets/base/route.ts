@@ -47,8 +47,8 @@ export async function POST(req: NextRequest) {
             }, { status: 500 });
         }
 
-        // Fetch BASE data from row 6492 onwards (Data starting Jan 2025)
-        // Colunas da aba BASE:
+        // Fetch BASE data from row 3 onwards (Look everything always)
+        // Colunas da aba BASE (starting at B=0):
         // B(0): Booking Date, C(1): US$ Price, D(2): Salesman, E(3): Broker/Client
         // F(4): Num. Passengers, G(5): Pax Name, H(6): PNR, I(7): Product, J(8): Route
         // K(9): Price p/mile, L(10): Quant. Miles, P(14): Tax R$, Q(15): Tax US$
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         // Wrap Sheets call with a timeout to avoid silent hangs
         const timeoutMs = 55000; // 55s safety margin (maxDuration is 60s)
         const rawData = await Promise.race([
-            sheetsService.readSheetData('BASE!B6492:AH'),
+            sheetsService.readSheetData('BASE!B3:AH'),
             new Promise<null>((_, reject) => 
                 setTimeout(() => reject(new Error(`Timeout: Google Sheets não respondeu em ${timeoutMs/1000}s`)), timeoutMs)
             )
