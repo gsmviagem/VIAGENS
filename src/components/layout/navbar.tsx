@@ -33,11 +33,11 @@ export function Navbar() {
                 <div className="flex items-center gap-8">
                     <Link href="/" className="flex items-center gap-2 group">
                         <img 
-                            src="https://lh3.googleusercontent.com/d/1_logo_placeholder" 
-                            alt="Chronos Hub Logo" 
+                            src="/logo.png" 
+                            alt="Dimais Corp Logo" 
                             className="w-10 h-10 object-contain brightness-110 group-hover:scale-105 transition-transform" 
                         />
-                        <span className="text-xl font-black tracking-[0.1em] text-white">CHRONOS</span>
+                        <span className="text-xl font-black tracking-[0.1em] text-white">DIMAIS CORP</span>
                     </Link>
                     
                     {/* Horizontal Navigation Links for Desktop */}
@@ -72,7 +72,7 @@ export function Navbar() {
                         <img 
                             alt="User Profile" 
                             className="w-full h-full object-cover" 
-                            src="https://lh3.googleusercontent.com/d/1_avatar_placeholder" 
+                            src="/avatar.png" 
                         />
                     </div>
 
