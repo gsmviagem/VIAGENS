@@ -60,29 +60,32 @@ export function parseMRZ(ocrText: string): PassengerData | null {
     
     // Find potential MRZ lines
     // MRZ for passport is 2 lines of 44 chars. But OCR might miss some.
+    const cleanedLines = lines.map(cleanOCRText);
+
     let mrzLine1 = '';
     let mrzLine2 = '';
 
-    for (let i = 0; i < lines.length; i++) {
-        let line = cleanOCRText(lines[i]);
-        if (line.startsWith('P<') || line.startsWith('P') && line.includes('<<')) {
-            mrzLine1 = line;
-            if (i + 1 < lines.length) {
-                mrzLine2 = cleanOCRText(lines[i + 1]);
+    // Try finding by strict properties first
+    mrzLine1 = cleanedLines.find(l => l.startsWith('P') && l.includes('<<')) || '';
+    mrzLine2 = cleanedLines.find(l => /[A-Z<]{3}\d{6}\d[MF<]\d{6}/.test(l)) || '';
+
+    if (!mrzLine1 || !mrzLine2) {
+        // Fallback sequentially
+        for (let i = 0; i < cleanedLines.length; i++) {
+            let line = cleanedLines[i];
+            if (!mrzLine1 && (line.startsWith('P<') || line.startsWith('P') && line.includes('<<'))) {
+                mrzLine1 = line;
+                if (i + 1 < cleanedLines.length) mrzLine2 = cleanedLines[i + 1];
             }
-            break;
         }
     }
 
     if (!mrzLine1 || !mrzLine2) {
-        // Try fallback: find any line with a lot of '<'
-        for (let i = 0; i < lines.length; i++) {
-            if (lines[i].split('<').length > 5) {
-                if (!mrzLine1) mrzLine1 = cleanOCRText(lines[i]);
-                else if (!mrzLine2) {
-                    mrzLine2 = cleanOCRText(lines[i]);
-                    break;
-                }
+        // Ultimate fallback
+        for (let line of cleanedLines) {
+            if (line.split('<').length > 5) {
+                if (!mrzLine1) mrzLine1 = line;
+                else if (!mrzLine2) mrzLine2 = line;
             }
         }
     }
@@ -91,7 +94,8 @@ export function parseMRZ(ocrText: string): PassengerData | null {
 
     // Pad or trim to 44 chars just in case (OCR might miss trailing <)
     mrzLine1 = (mrzLine1 + '<'.repeat(44)).substring(0, 44);
-    mrzLine2 = (mrzLine2 + '<'.repeat(44)).substring(0, 44);
+    // Don't truncate mrzLine2 just yet, we'll use regex.
+
 
     try {
         // Line 1: P<ISSLASTNAME<<FIRSTNAME<<<<<<<<<<<<<
@@ -108,12 +112,34 @@ export function parseMRZ(ocrText: string): PassengerData | null {
         lastName = formatName(lastName);
         firstName = formatName(firstName);
 
-        // Line 2: passport(9) check(1) nat(3) dob(6) check(1) sex(1) expiry(6) check(1) personal(14) check(1) check(1)
-        const passportNumber = mrzLine2.substring(0, 9).replace(/</g, '').replace(/O/g, '0');
-        const nationalityCode = mrzLine2.substring(10, 13).replace(/</g, '');
-        const dobRaw = mrzLine2.substring(13, 19);
-        const sexRaw = mrzLine2.substring(20, 21);
-        const expiryRaw = mrzLine2.substring(21, 27);
+        // Robust Line 2 matching: (Nat 3) (DOB 6) (Check 1) (Sex 1) (Expiry 6)
+        const coreMatch = mrzLine2.match(/([A-Z<]{3})(\d{6})\d([MF<])(\d{6})/);
+        let nationalityCode = 'N/A';
+        let dobRaw = '';
+        let sexRaw = '';
+        let expiryRaw = '';
+        let passportNumber = '';
+
+        if (coreMatch) {
+            nationalityCode = coreMatch[1].replace(/</g, '');
+            dobRaw = coreMatch[2];
+            sexRaw = coreMatch[3];
+            expiryRaw = coreMatch[4];
+            
+            const matchIndex = mrzLine2.indexOf(coreMatch[0]);
+            if (matchIndex > 0) {
+                // Everything before the core match (minus 1 for the passport check digit) is the passport number
+                passportNumber = mrzLine2.substring(0, matchIndex - 1).replace(/</g, '').replace(/O/g, '0');
+            }
+        } else {
+            // Strict fallback
+            mrzLine2 = (mrzLine2 + '<'.repeat(44)).substring(0, 44);
+            passportNumber = mrzLine2.substring(0, 9).replace(/</g, '').replace(/O/g, '0');
+            nationalityCode = mrzLine2.substring(10, 13).replace(/</g, '');
+            dobRaw = mrzLine2.substring(13, 19);
+            sexRaw = mrzLine2.substring(20, 21);
+            expiryRaw = mrzLine2.substring(21, 27);
+        }
 
         let gender = 'Masculino';
         if (sexRaw === 'F') gender = 'Feminino';
