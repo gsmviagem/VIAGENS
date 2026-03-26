@@ -122,11 +122,11 @@ export default function BuscaPage() {
     };
 
     return (
-        <div className="space-y-10">
+        <div className="space-y-8 w-full h-full overflow-hidden flex flex-col">
             <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="flex flex-col md:flex-row md:items-end justify-between gap-6"
+                className="flex flex-col md:flex-row md:items-end justify-between gap-6 shrink-0"
             >
                 <div>
                     <h1 className="text-4xl font-black text-white tracking-tight mb-2">Vector <span className="text-primary font-normal">Search</span></h1>
@@ -139,137 +139,140 @@ export default function BuscaPage() {
                 </div>
             </motion.div>
 
-            {/* Search Form */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="glass-panel p-8 rounded-[32px] border border-white/10 shadow-[0_0_50px_-12px_rgba(0,255,200,0.1)]"
-            >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
-                    <div className="space-y-2 group">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-primary transition-colors ml-1">Departure</label>
-                        <div className="relative">
-                            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl group-focus-within:text-primary transition-all">location_on</span>
-                            <Input
-                                id="origin-input"
-                                placeholder="GRU, JFK..."
-                                className="pl-11 h-14 bg-white/5 border-white/10 text-white rounded-2xl focus-visible:ring-primary text-lg font-bold uppercase"
-                                value={origin}
-                                onChange={e => setOrigin(e.target.value)}
-                                maxLength={3}
-                            />
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-10 min-h-0">
+                {/* Search Form */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="glass-panel p-8 rounded-[32px] border border-white/10 shadow-[0_0_50px_-12px_rgba(0,255,200,0.1)]"
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                        <div className="space-y-2 group">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-primary transition-colors ml-1">Departure</label>
+                            <div className="relative">
+                                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl group-focus-within:text-primary transition-all">location_on</span>
+                                <Input
+                                    id="origin-input"
+                                    placeholder="GRU, JFK..."
+                                    className="pl-11 h-14 bg-white/5 border-white/10 text-white rounded-2xl focus-visible:ring-primary text-lg font-bold uppercase"
+                                    value={origin}
+                                    onChange={e => setOrigin(e.target.value)}
+                                    maxLength={3}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="relative md:flex items-center justify-center pt-6">
+                            <Button
+                                variant="ghost"
+                                id="swap-button"
+                                className="w-12 h-12 rounded-full border border-white/10 glass-panel text-primary hover:bg-primary hover:text-background-dark transition-all"
+                                onClick={handleSwap}
+                            >
+                                <span className="material-symbols-outlined">swap_horiz</span>
+                            </Button>
+                        </div>
+
+                        <div className="space-y-2 group">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-primary transition-colors ml-1">Arrival</label>
+                            <div className="relative">
+                                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500">location_on</span>
+                                <Input
+                                    id="destination-input"
+                                    placeholder="LHR, CDG..."
+                                    className="pl-11 h-14 bg-white/5 border-white/10 text-white rounded-2xl focus-visible:ring-primary text-lg font-bold uppercase"
+                                    value={destination}
+                                    onChange={e => setDestination(e.target.value)}
+                                    maxLength={3}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2 group">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-primary transition-colors ml-1">Date</label>
+                            <div className="relative">
+                                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">calendar_today</span>
+                                <Input
+                                    id="date-input"
+                                    type="date"
+                                    className="pl-11 h-14 bg-white/5 border-white/10 text-white rounded-2xl focus-visible:ring-primary text-base font-bold"
+                                    value={date}
+                                    onChange={e => setDate(e.target.value)}
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    <div className="relative md:flex items-center justify-center pt-6">
-                        <Button
-                            variant="ghost"
-                            id="swap-button"
-                            className="w-12 h-12 rounded-full border border-white/10 glass-panel text-primary hover:bg-primary hover:text-background-dark transition-all"
-                            onClick={handleSwap}
-                        >
-                            <span className="material-symbols-outlined">swap_horiz</span>
-                        </Button>
-                    </div>
-
-                    <div className="space-y-2 group">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-primary transition-colors ml-1">Arrival</label>
-                        <div className="relative">
-                            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500">location_on</span>
-                            <Input
-                                id="destination-input"
-                                placeholder="LHR, CDG..."
-                                className="pl-11 h-14 bg-white/5 border-white/10 text-white rounded-2xl focus-visible:ring-primary text-lg font-bold uppercase"
-                                value={destination}
-                                onChange={e => setDestination(e.target.value)}
-                                maxLength={3}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2 group">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-focus-within:text-primary transition-colors ml-1">Date</label>
-                        <div className="relative">
-                            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">calendar_today</span>
-                            <Input
-                                id="date-input"
-                                type="date"
-                                className="pl-11 h-14 bg-white/5 border-white/10 text-white rounded-2xl focus-visible:ring-primary text-base font-bold"
-                                value={date}
-                                onChange={e => setDate(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-6 pt-6 border-t border-white/5">
-                    <div className="flex gap-4">
-                        <Badge variant="outline" className="border-white/10 text-slate-400 py-1.5 px-4 rounded-lg flex items-center gap-2">
-                            <span className="material-symbols-outlined text-sm text-primary">person</span> 1 Adult
-                        </Badge>
-                        <Badge variant="outline" className="border-white/10 text-slate-400 py-1.5 px-4 rounded-lg flex items-center gap-2">
-                            <span className="material-symbols-outlined text-sm text-primary">business_center</span> Economy
-                        </Badge>
-                    </div>
-                    <Button
-                        id="search-button"
-                        onClick={handleSearch}
-                        disabled={isLoading}
-                        className="w-full sm:w-auto px-12 h-14 bg-primary text-background-dark font-black text-lg rounded-2xl shadow-[0_0_20px_rgba(0,255,200,0.3)] hover:brightness-110 flex items-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                        {isLoading ? (
-                            <><span className="material-symbols-outlined animate-spin text-xl">refresh</span> SCANNING...</>
-                        ) : (
-                            <><span className="material-symbols-outlined text-xl">search</span> INITIATE SCAN</>
-                        )}
-                    </Button>
-                </div>
-            </motion.div>
-
-            {/* Results */}
-            <AnimatePresence>
-                {isLoading && (
-                    <motion.div
-                        key="loading"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="flex flex-col items-center justify-center py-16 gap-4 text-slate-500"
-                    >
-                        <div className="w-16 h-16 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
-                        <p className="font-black text-xs uppercase tracking-widest animate-pulse">Consultando companhias aéreas...</p>
-                    </motion.div>
-                )}
-
-                {results && !isLoading && (
-                    <motion.div
-                        key="results"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="space-y-6"
-                    >
-                        <div className="flex items-center justify-between px-2">
-                            <h2 className="text-xl font-bold text-white flex items-center gap-3">
-                                Live Data Feed <span className="w-2 h-2 bg-primary rounded-full animate-pulse shadow-[0_0_8px_rgba(0,255,200,1)]"></span>
-                            </h2>
-                            <Badge variant="outline" className="border-white/10 text-slate-400">
-                                {results.filter(r => r.success).length}/{results.length} online
+                    <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-6 pt-6 border-t border-white/5">
+                        <div className="flex gap-4">
+                            <Badge variant="outline" className="border-white/10 text-slate-400 py-1.5 px-4 rounded-lg flex items-center gap-2">
+                                <span className="material-symbols-outlined text-sm text-primary">person</span> 1 Adult
+                            </Badge>
+                            <Badge variant="outline" className="border-white/10 text-slate-400 py-1.5 px-4 rounded-lg flex items-center gap-2">
+                                <span className="material-symbols-outlined text-sm text-primary">business_center</span> Economy
                             </Badge>
                         </div>
-
-                        <div className="grid gap-4">
-                            {results.length === 0 ? (
-                                <div className="text-center py-16 text-slate-600 flex flex-col items-center gap-4">
-                                    <span className="material-symbols-outlined text-5xl text-slate-800 mb-4 block">location_off</span>
-                                    <p className="font-black uppercase tracking-widest text-xs">Nenhum resultado encontrado</p>
-                                </div>
+                        <Button
+                            id="search-button"
+                            onClick={handleSearch}
+                            disabled={isLoading}
+                            className="w-full sm:w-auto px-12 h-14 bg-primary text-background-dark font-black text-lg rounded-2xl shadow-[0_0_20px_rgba(0,255,200,0.3)] hover:brightness-110 flex items-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                            {isLoading ? (
+                                <><span className="material-symbols-outlined animate-spin text-xl">refresh</span> SCANNING...</>
                             ) : (
-                                results.map((r, i) => <ResultCard key={r.site} result={r} index={i} />)
+                                <><span className="material-symbols-outlined text-xl">search</span> INITIATE SCAN</>
                             )}
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                        </Button>
+                    </div>
+                </motion.div>
+
+                {/* Results Section */}
+                <AnimatePresence>
+                    {isLoading && (
+                        <motion.div
+                            key="loading"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex flex-col items-center justify-center py-16 gap-4 text-slate-500"
+                        >
+                            <div className="w-16 h-16 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+                            <p className="font-black text-xs uppercase tracking-widest animate-pulse">Consultando companhias aéreas...</p>
+                        </motion.div>
+                    )}
+
+                    {results && !isLoading && (
+                        <motion.div
+                            key="results"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="space-y-6 pb-12"
+                        >
+                            <div className="flex items-center justify-between px-2 sticky top-0 z-10 bg-[#0e0e0e] py-2">
+                                <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                                    Live Data Feed <span className="w-2 h-2 bg-primary rounded-full animate-pulse shadow-[0_0_8px_rgba(0,255,200,1)]"></span>
+                                </h2>
+                                <Badge variant="outline" className="border-white/10 text-slate-400">
+                                    {results.filter(r => r.success).length}/{results.length} online
+                                </Badge>
+                            </div>
+
+                            <div className="grid gap-4">
+                                {results.length === 0 ? (
+                                    <div className="text-center py-16 text-slate-600 flex flex-col items-center gap-4">
+                                        <span className="material-symbols-outlined text-5xl text-slate-800 mb-4 block">location_off</span>
+                                        <p className="font-black uppercase tracking-widest text-xs">Nenhum resultado encontrado</p>
+                                    </div>
+                                ) : (
+                                    results.map((r, i) => <ResultCard key={r.site} result={r} index={i} />)
+                                )}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
         </div>
     );
 }

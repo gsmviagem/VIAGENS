@@ -16,13 +16,36 @@ interface SearchOptions {
     passengers?: number;
 }
 
+// ─── In-memory cache (15 min TTL) ─────────────────────────────────────────────
+const cache = new Map<string, { results: QuotationResult[]; ts: number }>();
+const CACHE_TTL = 15 * 60 * 1000;
+
+function getCacheKey(opts: SearchOptions, dateISO: string): string {
+    return `${opts.origin}-${opts.destination}-${dateISO}-${opts.passengers ?? 1}`;
+}
+
+// ─── In-memory rate limiter (10 req/min per IP) ────────────────────────────────
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 10;
+const RATE_WINDOW = 60 * 1000;
+
+function checkRateLimit(ip: string): boolean {
+    const now = Date.now();
+    const entry = rateLimitMap.get(ip);
+    if (!entry || now > entry.resetAt) {
+        rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW });
+        return true;
+    }
+    if (entry.count >= RATE_LIMIT) return false;
+    entry.count++;
+    return true;
+}
+
 /**
- * Format date from any common format to YYYY-MM-DD 
+ * Format date from any common format to YYYY-MM-DD
  */
 function normalizeDate(date: string): string {
-    // Already YYYY-MM-DD
     if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
-    // DD/MM/YYYY
     const parts = date.split(/[-/]/);
     if (parts.length === 3) {
         if (parts[0].length === 4) return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
@@ -31,12 +54,18 @@ function normalizeDate(date: string): string {
     return date;
 }
 
+/**
+ * Validate IATA airport code (3 uppercase letters)
+ */
+function isValidIATA(code: string): boolean {
+    return /^[A-Z]{3}$/.test(code.trim().toUpperCase());
+}
+
 // ─── Smiles ───────────────────────────────────────────────────────────────────
 async function searchSmiles(opts: SearchOptions, dateISO: string): Promise<QuotationResult> {
     const searchUrl = `https://www.smiles.com.br/emissao-passagem-com-milhas?originAirportCode=${opts.origin}&destinationAirportCode=${opts.destination}&departureDate=${dateISO}&adults=${opts.passengers ?? 1}&children=0&infants=0&tripType=2&currencyCode=BRL`;
 
     try {
-        // Smiles internal API – requires cookies/session. Try with minimal headers.
         const params = new URLSearchParams({
             adults: String(opts.passengers ?? 1),
             children: '0',
@@ -64,7 +93,7 @@ async function searchSmiles(opts: SearchOptions, dateISO: string): Promise<Quota
                     'accept': 'application/json, text/plain, */*',
                     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
                 },
-                // signal: AbortSignal.timeout(12000),
+                signal: AbortSignal.timeout(12000),
             }
         );
 
@@ -93,11 +122,9 @@ async function searchSmiles(opts: SearchOptions, dateISO: string): Promise<Quota
 
 // ─── Azul ─────────────────────────────────────────────────────────────────────
 async function searchAzul(opts: SearchOptions, dateISO: string): Promise<QuotationResult> {
-    // Azul Pelo Mundo deep link format
     const searchUrl = `https://azulpelomundo.voeazul.com.br/pt/result?origin=${opts.origin}&destination=${opts.destination}&departDate=${dateISO}&adults=${opts.passengers ?? 1}&children=0&infants=0&type=OW`;
 
     try {
-        // Try TudoAzul API
         const params = new URLSearchParams({
             originAirportCode: opts.origin,
             destinationAirportCode: opts.destination,
@@ -115,7 +142,7 @@ async function searchAzul(opts: SearchOptions, dateISO: string): Promise<Quotati
                 'Referer': 'https://azulpelomundo.voeazul.com.br/',
                 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             },
-           // signal: AbortSignal.timeout(12000),
+            signal: AbortSignal.timeout(12000),
         });
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -160,7 +187,7 @@ async function searchLatam(opts: SearchOptions, dateISO: string): Promise<Quotat
                 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             },
             body: JSON.stringify(body),
-            // signal: AbortSignal.timeout(12000),
+            signal: AbortSignal.timeout(12000),
         });
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -190,19 +217,52 @@ async function searchLatam(opts: SearchOptions, dateISO: string): Promise<Quotat
 // ─── Main Handler ─────────────────────────────────────────────────────────────
 export async function POST(req: Request) {
     try {
+        // Rate limiting
+        const ip = (req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown').split(',')[0].trim();
+        if (!checkRateLimit(ip)) {
+            return NextResponse.json({ success: false, error: 'Muitas requisições. Aguarde 1 minuto.' }, { status: 429 });
+        }
+
         const opts: SearchOptions = await req.json();
 
         if (!opts.origin || !opts.destination || !opts.date) {
             return NextResponse.json({ success: false, error: 'Origem, destino e data são obrigatórios' }, { status: 400 });
         }
 
+        // IATA validation
+        const origin = opts.origin.trim().toUpperCase();
+        const destination = opts.destination.trim().toUpperCase();
+        if (!isValidIATA(origin) || !isValidIATA(destination)) {
+            return NextResponse.json({ success: false, error: 'Códigos IATA inválidos. Use 3 letras (ex: GRU, JFK, LHR).' }, { status: 400 });
+        }
+        opts.origin = origin;
+        opts.destination = destination;
+
         const dateISO = normalizeDate(opts.date);
+
+        // Check cache
+        const cacheKey = getCacheKey(opts, dateISO);
+        const cached = cache.get(cacheKey);
+        if (cached && Date.now() - cached.ts < CACHE_TTL) {
+            return NextResponse.json({ success: true, results: cached.results, cached: true });
+        }
 
         const results = await Promise.all([
             searchSmiles(opts, dateISO),
             searchAzul(opts, dateISO),
             searchLatam(opts, dateISO),
         ]);
+
+        // Store in cache
+        cache.set(cacheKey, { results, ts: Date.now() });
+
+        // Cleanup old cache entries
+        if (cache.size > 200) {
+            const now = Date.now();
+            for (const [key, val] of cache.entries()) {
+                if (now - val.ts > CACHE_TTL) cache.delete(key);
+            }
+        }
 
         return NextResponse.json({ success: true, results });
 

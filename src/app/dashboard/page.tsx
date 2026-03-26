@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import * as XLSX from "xlsx";
 
 export default function FinancialsPage() {
     const [loading, setLoading] = useState(true);
@@ -75,6 +76,59 @@ export default function FinancialsPage() {
         fetchData();
     };
 
+    const handleExportExcel = () => {
+        if (!data) return;
+
+        const wb = XLSX.utils.book_new();
+
+        // Summary sheet
+        const summaryRows = [
+            ['Métrica', 'Valor'],
+            ['Revenue (US$)', data.summary.totalRevenue],
+            ['Client Paid (US$)', data.summary.totalClientPaid],
+            ['Pendente de Pagamento', data.summary.totalUnpaidClient],
+            ['Total Emissões', data.summary.totalSales],
+            ['Total Passageiros', data.summary.totalPax],
+            ['Milhas Usadas', data.summary.totalMiles],
+            ['Ticket Médio', data.summary.avgTicket],
+            ['Taxas (R$)', data.summary.totalTaxBrl],
+            ['Custo/Milha', data.summary.avgPricePerMile],
+        ];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryRows), 'Resumo');
+
+        // Salesmen sheet
+        if (data.salesmen?.length > 0) {
+            const salesmenRows = [['Vendedor', 'Revenue', 'Vendas', 'Ticket Médio'],
+                ...data.salesmen.map((s: any) => [s.name, s.revenue, s.sales, s.ticket])];
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(salesmenRows), 'Vendedores');
+        }
+
+        // Monthly sheet
+        if (data.monthly?.length > 0) {
+            const monthlyRows = [['Mês/Ano', 'Vendas', 'Revenue'],
+                ...data.monthly.map((m: any) => [m.mesAno, m.sales, m.revenue])];
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(monthlyRows), 'Mensal');
+        }
+
+        // Products sheet
+        if (data.products?.length > 0) {
+            const productRows = [['Programa', 'Revenue', 'Vendas', 'Milhas (k)'],
+                ...data.products.map((p: any) => [p.name, p.revenue, p.sales, p.milesVal])];
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(productRows), 'Produtos');
+        }
+
+        // Ledger sheet
+        if (data.ledger?.length > 0) {
+            const ledgerRows = [['Data', 'LOC', 'Vendedor', 'Produto', 'Rota', 'Cliente', 'Revenue', 'Pago', 'Status'],
+                ...data.ledger.map((l: any) => [l.date, l.loc, l.salesman, l.product, l.route, l.client, l.revenue, l.clientPaid, l.status])];
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ledgerRows), 'Ledger');
+        }
+
+        const filename = `financials_${startDate}_${endDate}${salesman !== 'TODOS' ? '_' + salesman : ''}.xlsx`;
+        XLSX.writeFile(wb, filename);
+        toast.success('Exportado com sucesso!');
+    };
+
     if (loading && !data) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
@@ -104,7 +158,7 @@ export default function FinancialsPage() {
     }
 
     return (
-        <div className="space-y-4 pb-4 h-[calc(100vh-5rem)] overflow-hidden flex flex-col">
+        <div className="space-y-4 pb-4 h-full overflow-hidden flex flex-col">
             {/* Cabeçalho */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-1 shrink-0">
                 <div className="flex items-center gap-3">
@@ -123,16 +177,26 @@ export default function FinancialsPage() {
                         </p>
                     </div>
                 </div>
-                <Button 
-                    onClick={fetchData}
-                    disabled={loading}
-                    className="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 border border-emerald-500/30 font-black text-[10px] h-9 px-5 rounded-lg shadow-lg transition-all uppercase tracking-widest disabled:opacity-50"
-                >
-                    <span className={`material-symbols-outlined text-sm mr-1.5 ${loading ? 'animate-spin' : ''}`}>
-                        {loading ? 'refresh' : 'sync'}
-                    </span>
-                    {loading ? 'Syncing...' : 'Sync'}
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button
+                        onClick={fetchData}
+                        disabled={loading}
+                        className="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 border border-emerald-500/30 font-black text-[10px] h-9 px-5 rounded-lg shadow-lg transition-all uppercase tracking-widest disabled:opacity-50"
+                    >
+                        <span className={`material-symbols-outlined text-sm mr-1.5 ${loading ? 'animate-spin' : ''}`}>
+                            {loading ? 'refresh' : 'sync'}
+                        </span>
+                        {loading ? 'Syncing...' : 'Sync'}
+                    </Button>
+                    <Button
+                        onClick={handleExportExcel}
+                        disabled={loading || !data}
+                        className="bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 border border-blue-500/30 font-black text-[10px] h-9 px-5 rounded-lg shadow-lg transition-all uppercase tracking-widest disabled:opacity-50"
+                    >
+                        <span className="material-symbols-outlined text-sm mr-1.5">download</span>
+                        Export Excel
+                    </Button>
+                </div>
             </div>
 
             {/* Filtros */}
@@ -213,8 +277,8 @@ export default function FinancialsPage() {
             </Card>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pb-4">
-            {/* KPIs Principais (4 cards grandes) */}
-            <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+            {/* KPIs Principais (5 cards grandes) */}
+            <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-5">
                 <Card className="bg-black/20 border-white/10 backdrop-blur-xl rounded-[1rem] shadow-xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl -z-10 group-hover:bg-emerald-500/10 transition-all"></div>
                     <CardHeader className="pb-0 pt-3 px-5 flex flex-row items-center justify-between">
@@ -268,6 +332,20 @@ export default function FinancialsPage() {
                             {data?.summary?.totalMiles || 0}k
                         </div>
                         <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wide">Custo: {data?.summary?.avgPricePerMile}</p>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-black/20 border-red-500/20 backdrop-blur-xl rounded-[1rem] shadow-xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 blur-3xl -z-10 group-hover:bg-red-500/10 transition-all"></div>
+                    <CardHeader className="pb-0 pt-3 px-5 flex flex-row items-center justify-between">
+                        <CardTitle className="text-[10px] font-black text-white/60 uppercase tracking-widest">Recebimento Pendente</CardTitle>
+                        <span className="material-symbols-outlined text-red-400 text-lg opacity-80">pending_actions</span>
+                    </CardHeader>
+                    <CardContent className="px-5 pb-3 pt-1">
+                        <div className="text-2xl font-black text-red-400 tracking-tighter">
+                            {data?.summary?.totalUnpaidClient || "$0.00"}
+                        </div>
+                        <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wide">A receber de clientes (US$)</p>
                     </CardContent>
                 </Card>
             </div>

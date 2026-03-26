@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { toast } from "sonner";
 import { parseFlightMessage, ProcessedData } from '@/utils/message-parser';
+import Tesseract from 'tesseract.js';
+import { parseMRZ } from '@/utils/mrz-parser';
 
 type Shortcut = {
     id: string;
@@ -16,6 +18,10 @@ export default function BookPage() {
     const [isCopying, setIsCopying] = useState(false);
     const [outputMode, setOutputMode] = useState<'full' | 'simple'>('full');
     const [isAmericanFormat, setIsAmericanFormat] = useState(false);
+    
+    // Image Upload States
+    const [isProcessingImage, setIsProcessingImage] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Shortcut States
     const [contas, setContas] = useState<Shortcut[]>([]);
@@ -93,6 +99,65 @@ export default function BookPage() {
         }
     };
 
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        setIsProcessingImage(true);
+        let extractedPassengers = [];
+
+        try {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                toast.info(`Analisando imagem ${i + 1} de ${files.length}... (pode levar alguns segundos)`);
+                
+                const { data: { text } } = await Tesseract.recognize(file, 'eng');
+                
+                const mrzData = parseMRZ(text);
+                if (mrzData) {
+                    extractedPassengers.push(mrzData);
+                    toast.success(`Passageiro ${mrzData.firstName} extraído!`);
+                } else {
+                    toast.error(`Não foi possível extrair dados da imagem ${i + 1}`);
+                }
+            }
+
+            if (extractedPassengers.length > 0) {
+                const calculateAge = (birthDate: string) => {
+                    const parts = birthDate.split('/');
+                    if (parts.length !== 3) return 30; // default adult
+                    return new Date().getFullYear() - parseInt(parts[2]);
+                };
+
+                setResult(prev => {
+                    const current = prev || {
+                        origin: '', destination: '', date: '', classType: '', partner: '',
+                        adults: 0, children: 0, infants: 0,
+                        flightTime: '', passengers: [], hasFlightData: false
+                    };
+                    
+                    const newAdults = extractedPassengers.filter(p => calculateAge(p.birthDate) >= 12).length;
+                    const newChildren = extractedPassengers.filter(p => calculateAge(p.birthDate) >= 2 && calculateAge(p.birthDate) < 12).length;
+                    const newInfants = extractedPassengers.filter(p => calculateAge(p.birthDate) < 2).length;
+                    
+                    return {
+                        ...current,
+                        passengers: [...current.passengers, ...extractedPassengers],
+                        adults: current.adults + newAdults,
+                        children: current.children + newChildren,
+                        infants: current.infants + newInfants
+                    };
+                });
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error("Erro ao processar as imagens OCR");
+        } finally {
+            setIsProcessingImage(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
     const formatOutput = (data: ProcessedData) => {
         if (outputMode === 'simple') {
             const parts: string[] = [];
@@ -132,7 +197,7 @@ export default function BookPage() {
     };
 
     return (
-        <div className="flex flex-col w-full h-[calc(100vh-11rem)] pt-2 text-[#e5e2e1] font-['Inter']">
+        <div className="flex flex-col w-full h-full pt-2 text-[#e5e2e1] font-['Inter'] overflow-hidden">
             
             <header className="mb-6 shrink-0">
                 <div className="space-y-1">
@@ -159,7 +224,35 @@ export default function BookPage() {
                         />
                     </div>
 
-                    <div className="px-4 pt-3 shrink-0 border-t border-white/5">
+                    <div className="px-4 pt-3 pb-2 shrink-0 border-t border-white/5 flex gap-2">
+                        <input 
+                            type="file" 
+                            accept="image/*" 
+                            multiple 
+                            ref={fileInputRef} 
+                            onChange={handleImageUpload} 
+                            style={{ display: 'none' }} 
+                        />
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isProcessingImage}
+                            className="flex items-center justify-center gap-2 bg-white/10 text-white flex-1 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest hover:bg-white/20 transition-all active:scale-95 border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isProcessingImage ? (
+                                <>
+                                    <span className="material-symbols-outlined text-[14px] animate-spin">refresh</span>
+                                    Lendo Foto...
+                                </>
+                            ) : (
+                                <>
+                                    <span className="material-symbols-outlined text-[14px]">add_photo_alternate</span>
+                                    Passaporte (Foto)
+                                </>
+                            )}
+                        </button>
+                    </div>
+
+                    <div className="px-4 shrink-0">
                         <label className="flex items-center gap-2.5 cursor-pointer group">
                             <div className="relative">
                                 <input

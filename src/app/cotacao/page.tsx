@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const sites = [
     { id: 'smiles', name: 'Smiles Rewards', color: 'border-orange-500/30 text-orange-400' },
@@ -11,6 +12,39 @@ const sites = [
     { id: 'azul', name: 'Azul Rewards', color: 'border-blue-500/30 text-blue-400' },
     { id: 'busca-ideal', name: 'Busca Ideal', color: 'border-cyan-500/30 text-cyan-400' },
 ];
+
+interface HistoryEntry {
+    origin: string;
+    destination: string;
+    date: string;
+    passengers: number;
+    bestPrice: string;
+    bestSite: string;
+    ts: number;
+}
+
+const HISTORY_KEY = 'quotation_history';
+const MAX_HISTORY = 5;
+
+function loadHistory(): HistoryEntry[] {
+    try {
+        return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    } catch {
+        return [];
+    }
+}
+
+function saveHistory(entry: HistoryEntry) {
+    const prev = loadHistory().filter(
+        h => !(h.origin === entry.origin && h.destination === entry.destination && h.date === entry.date)
+    );
+    const updated = [entry, ...prev].slice(0, MAX_HISTORY);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+}
+
+function isValidIATA(code: string): boolean {
+    return /^[A-Z]{3}$/.test(code.trim().toUpperCase());
+}
 
 export default function CotacaoPage() {
     const [isSearching, setIsSearching] = useState(false);
@@ -21,6 +55,9 @@ export default function CotacaoPage() {
         azul: 'idle',
         'busca-ideal': 'idle',
     });
+    const [history, setHistory] = useState<HistoryEntry[]>([]);
+    const [iataError, setIataError] = useState('');
+    const [fromCache, setFromCache] = useState(false);
 
     const [form, setForm] = useState({
         origin: '',
@@ -29,45 +66,129 @@ export default function CotacaoPage() {
         passengers: 1
     });
 
+    useEffect(() => {
+        setHistory(loadHistory());
+    }, []);
+
+    const handleSwap = () => {
+        setForm(prev => ({ ...prev, origin: prev.destination, destination: prev.origin }));
+        setIataError('');
+    };
+
+    const validateForm = (): boolean => {
+        const origin = form.origin.trim().toUpperCase();
+        const dest = form.destination.trim().toUpperCase();
+        if (!origin || !dest || !form.date) {
+            setIataError('Preencha origem, destino e data.');
+            return false;
+        }
+        if (!isValidIATA(origin)) {
+            setIataError(`Código de origem inválido: "${origin}". Use 3 letras (ex: GRU).`);
+            return false;
+        }
+        if (!isValidIATA(dest)) {
+            setIataError(`Código de destino inválido: "${dest}". Use 3 letras (ex: JFK).`);
+            return false;
+        }
+        setIataError('');
+        return true;
+    };
+
     const handleSearch = async () => {
-        if (!form.origin || !form.destination || !form.date) return;
+        if (!validateForm()) return;
 
         setIsSearching(true);
+        setFromCache(false);
         const newStatus = { ...searchStatus };
         Object.keys(newStatus).forEach(site => newStatus[site] = 'searching');
         setSearchStatus(newStatus);
         setResults([]);
 
         try {
+            const payload = {
+                ...form,
+                origin: form.origin.trim().toUpperCase(),
+                destination: form.destination.trim().toUpperCase(),
+            };
             const response = await fetch('/api/quotation', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(form)
+                body: JSON.stringify(payload)
             });
             const data = await response.json();
 
+            if (!response.ok) {
+                toast.error(data.error || 'Erro na busca');
+                Object.keys(newStatus).forEach(site => newStatus[site] = 'error');
+                setSearchStatus({ ...newStatus });
+                return;
+            }
+
             if (data.success) {
                 setResults(data.results);
+                setFromCache(!!data.cached);
                 const updatedStatus: any = {};
                 data.results.forEach((r: any) => {
                     const key = r.site.toLowerCase().replace(/\s+/g, '-');
                     updatedStatus[key] = r.success ? 'done' : 'error';
                 });
                 setSearchStatus(updatedStatus);
+
+                // Build best price for history
+                const successResults = data.results.filter((r: any) => r.success && typeof r.price === 'number');
+                const best = successResults.sort((a: any, b: any) => {
+                    if (a.currency === b.currency) return a.price - b.price;
+                    return a.currency === 'miles' ? -1 : 1;
+                })[0];
+
+                const entry: HistoryEntry = {
+                    origin: payload.origin,
+                    destination: payload.destination,
+                    date: form.date,
+                    passengers: form.passengers,
+                    bestPrice: best ? `${best.price.toLocaleString('pt-BR')}${best.currency === 'miles' ? 'k mi' : ' BRL'}` : 'N/A',
+                    bestSite: best?.site ?? '–',
+                    ts: Date.now(),
+                };
+                saveHistory(entry);
+                setHistory(loadHistory());
+
+                if (data.cached) toast.info('Resultado em cache (< 15 min)');
             }
         } catch (error) {
             console.error('Search failed:', error);
+            toast.error('Falha na conexão com o servidor.');
         } finally {
             setIsSearching(false);
         }
     };
 
+    const loadFromHistory = (entry: HistoryEntry) => {
+        setForm({ origin: entry.origin, destination: entry.destination, date: entry.date, passengers: entry.passengers });
+        setIataError('');
+    };
+
+    const openViewBoard = (siteId: string) => {
+        const result = results.find(r => r.site.toLowerCase().includes(siteId));
+        if (result?.searchUrl) {
+            window.open(result.searchUrl, '_blank', 'noopener,noreferrer');
+        } else {
+            // Fallback URLs per site
+            const fallbacks: Record<string, string> = {
+                smiles: 'https://www.smiles.com.br',
+                latam: 'https://www.latamairlines.com/br/pt',
+                azul: 'https://azulpelomundo.voeazul.com.br',
+                'busca-ideal': 'https://www.buscaideal.com.br',
+            };
+            window.open(fallbacks[siteId] || '#', '_blank', 'noopener,noreferrer');
+        }
+    };
+
     return (
-        <div className="relative overflow-visible">
-            {/* Background elements */}
+        <div className="h-full overflow-hidden flex flex-col">
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 blur-[150px] -z-10 animate-pulse"></div>
 
-            <header className="mb-12">
+            <header className="mb-10 shrink-0">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -83,7 +204,7 @@ export default function CotacaoPage() {
                 </motion.div>
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1">
                 {/* Search Form Panel */}
                 <motion.div
                     initial={{ opacity: 0, x: -20 }}
@@ -99,37 +220,68 @@ export default function CotacaoPage() {
                         <div className="space-y-4">
                             <div className="group relative">
                                 <label className="text-[10px] font-bold uppercase text-slate-500 ml-1 mb-1 block group-focus-within:text-primary transition-colors">Origin (IATA)</label>
-                                <div className="flex items-center bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus-within:border-primary/50 transition-all">
+                                <div className={cn(
+                                    "flex items-center bg-white/5 border rounded-xl px-4 py-3 focus-within:border-primary/50 transition-all",
+                                    iataError && form.origin && !isValidIATA(form.origin.toUpperCase()) ? 'border-red-500/50' : 'border-white/10'
+                                )}>
                                     <span className="material-symbols-outlined text-slate-400 mr-3 text-lg rotate-45">flight</span>
                                     <input
                                         type="text"
                                         placeholder="EX: GRU"
                                         value={form.origin}
-                                        onChange={(e) => setForm({ ...form, origin: e.target.value.toUpperCase() })}
+                                        maxLength={3}
+                                        onChange={(e) => {
+                                            setForm({ ...form, origin: e.target.value.toUpperCase() });
+                                            setIataError('');
+                                        }}
                                         className="bg-transparent border-none outline-none text-white font-bold w-full placeholder:text-slate-600 focus:ring-0"
                                     />
                                 </div>
                             </div>
 
                             <div className="flex justify-center -my-2 relative z-10">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-primary/20 border border-primary/30 text-primary hover:bg-primary/30">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={handleSwap}
+                                    title="Trocar origem e destino"
+                                    className="h-8 w-8 rounded-full bg-primary/20 border border-primary/30 text-primary hover:bg-primary/30 active:scale-95 transition-all"
+                                >
                                     <span className="material-symbols-outlined text-sm rotate-90">swap_horiz</span>
                                 </Button>
                             </div>
 
                             <div className="group relative">
                                 <label className="text-[10px] font-bold uppercase text-slate-500 ml-1 mb-1 block group-focus-within:text-primary transition-colors">Destination (IATA)</label>
-                                <div className="flex items-center bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus-within:border-primary/50 transition-all">
+                                <div className={cn(
+                                    "flex items-center bg-white/5 border rounded-xl px-4 py-3 focus-within:border-primary/50 transition-all",
+                                    iataError && form.destination && !isValidIATA(form.destination.toUpperCase()) ? 'border-red-500/50' : 'border-white/10'
+                                )}>
                                     <span className="material-symbols-outlined text-slate-400 mr-3 text-lg -rotate-45">flight</span>
                                     <input
                                         type="text"
                                         placeholder="EX: LHR"
                                         value={form.destination}
-                                        onChange={(e) => setForm({ ...form, destination: e.target.value.toUpperCase() })}
+                                        maxLength={3}
+                                        onChange={(e) => {
+                                            setForm({ ...form, destination: e.target.value.toUpperCase() });
+                                            setIataError('');
+                                        }}
                                         className="bg-transparent border-none outline-none text-white font-bold w-full placeholder:text-slate-600 focus:ring-0"
                                     />
                                 </div>
                             </div>
+
+                            {iataError && (
+                                <motion.p
+                                    initial={{ opacity: 0, y: -4 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-[11px] text-red-400 font-bold flex items-center gap-1 pl-1"
+                                >
+                                    <span className="material-symbols-outlined text-sm">error</span>
+                                    {iataError}
+                                </motion.p>
+                            )}
 
                             <div className="grid grid-cols-2 gap-4 mt-6">
                                 <div className="group">
@@ -151,8 +303,10 @@ export default function CotacaoPage() {
                                         <span className="material-symbols-outlined text-slate-400 mr-3 text-lg">person</span>
                                         <input
                                             type="number"
+                                            min={1}
+                                            max={9}
                                             value={form.passengers}
-                                            onChange={(e) => setForm({ ...form, passengers: parseInt(e.target.value) })}
+                                            onChange={(e) => setForm({ ...form, passengers: parseInt(e.target.value) || 1 })}
                                             className="bg-transparent border-none outline-none text-white text-sm w-full"
                                         />
                                     </div>
@@ -174,24 +328,33 @@ export default function CotacaoPage() {
                         </div>
                     </div>
 
+                    {/* Search History */}
                     <div className="glass-panel p-6 border-primary/20 bg-primary/5">
                         <div className="flex items-center gap-2 mb-4">
                             <span className="material-symbols-outlined text-primary text-sm">history</span>
                             <h3 className="text-xs font-bold uppercase tracking-widest text-primary/80">Search History</h3>
                         </div>
                         <div className="space-y-3">
-                            {[1, 2].map(i => (
-                                <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5">
-                                    <div>
-                                        <p className="text-sm font-bold text-white">GRU → JFK</p>
-                                        <p className="text-[10px] text-slate-500">20/05/2026 • 1 Pax</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-xs font-black text-primary">65k mi</p>
-                                        <p className="text-[9px] text-slate-500 lowercase">Smiles</p>
-                                    </div>
-                                </div>
-                            ))}
+                            {history.length === 0 ? (
+                                <p className="text-[11px] text-slate-600 text-center py-4">Nenhuma busca recente.</p>
+                            ) : (
+                                history.map((h, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => loadFromHistory(h)}
+                                        className="w-full flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5 text-left"
+                                    >
+                                        <div>
+                                            <p className="text-sm font-bold text-white">{h.origin} → {h.destination}</p>
+                                            <p className="text-[10px] text-slate-500">{h.date} • {h.passengers} Pax</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-xs font-black text-primary">{h.bestPrice}</p>
+                                            <p className="text-[9px] text-slate-500 lowercase">{h.bestSite}</p>
+                                        </div>
+                                    </button>
+                                ))
+                            )}
                         </div>
                     </div>
                 </motion.div>
@@ -209,7 +372,6 @@ export default function CotacaoPage() {
                                     site.color
                                 )}
                             >
-                                {/* Site specific background glow */}
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-current opacity-5 blur-3xl -z-10 group-hover:opacity-10 transition-opacity"></div>
 
                                 <div className="flex justify-between items-start mb-4">
@@ -224,7 +386,9 @@ export default function CotacaoPage() {
                                             ) : searchStatus[site.id] === 'done' ? (
                                                 <div className="flex items-center gap-2">
                                                     <span className="material-symbols-outlined text-sm text-emerald-400">check_circle</span>
-                                                    <span className="text-[10px] font-bold text-emerald-400 uppercase">Found Optimised Path</span>
+                                                    <span className="text-[10px] font-bold text-emerald-400 uppercase">
+                                                        Found Optimised Path {fromCache && <span className="text-emerald-600">(cache)</span>}
+                                                    </span>
                                                 </div>
                                             ) : searchStatus[site.id] === 'error' ? (
                                                 <div className="flex items-center gap-2">
@@ -255,25 +419,43 @@ export default function CotacaoPage() {
                                                 </div>
                                             ) : (
                                                 <p className="text-3xl font-black tracking-tighter text-white">
-                                                    {results.find(r => r.site.toLowerCase().includes(site.id))?.price || '---'}
+                                                    {results.find(r => r.site.toLowerCase().includes(site.id))?.price !== undefined
+                                                        ? typeof results.find(r => r.site.toLowerCase().includes(site.id))?.price === 'number'
+                                                            ? results.find(r => r.site.toLowerCase().includes(site.id))?.price.toLocaleString('pt-BR')
+                                                            : results.find(r => r.site.toLowerCase().includes(site.id))?.price
+                                                        : '---'}
                                                     <span className="text-xs uppercase ml-1 opacity-50">
                                                         {results.find(r => r.site.toLowerCase().includes(site.id))?.currency === 'miles' ? 'mi' : 'brl'}
                                                     </span>
                                                 </p>
                                             )}
                                         </div>
-                                        <Button variant="ghost" size="sm" className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-white">View Board</Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => openViewBoard(site.id)}
+                                            className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-white"
+                                        >
+                                            View Board
+                                        </Button>
                                     </div>
                                 </div>
                             </motion.div>
                         ))}
                     </div>
 
-                    {/* Comparative Table / Detailed Results */}
+                    {/* Comparative Table */}
                     <div className="glass-panel p-1 border-white/5 bg-white/[0.01]">
-                        <div className="p-6 border-b border-white/5">
-                            <h3 className="font-bold text-slate-200">Comparative Flight Matrix</h3>
-                            <p className="text-xs text-slate-500">Aggregated results for best routing efficiency</p>
+                        <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                            <div>
+                                <h3 className="font-bold text-slate-200">Comparative Flight Matrix</h3>
+                                <p className="text-xs text-slate-500">Aggregated results for best routing efficiency</p>
+                            </div>
+                            {fromCache && (
+                                <span className="text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-1 rounded-md border border-white/10">
+                                    Cache Hit &lt;15min
+                                </span>
+                            )}
                         </div>
                         {results.length > 0 ? (
                             <div className="overflow-x-auto">
@@ -283,6 +465,7 @@ export default function CotacaoPage() {
                                             <th className="px-6 py-4 font-bold">Source</th>
                                             <th className="px-6 py-4 font-bold">Protocol</th>
                                             <th className="px-6 py-4 font-bold text-right">Extracted Value</th>
+                                            <th className="px-6 py-4 font-bold text-right">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/5 font-medium">
@@ -298,7 +481,19 @@ export default function CotacaoPage() {
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-right text-primary font-black">
-                                                    {res.price} {res.currency === 'miles' ? 'MI' : 'BRL'}
+                                                    {typeof res.price === 'number' ? res.price.toLocaleString('pt-BR') : res.price}{' '}
+                                                    {res.currency === 'miles' ? 'MI' : 'BRL'}
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    {res.searchUrl && (
+                                                        <button
+                                                            onClick={() => window.open(res.searchUrl, '_blank', 'noopener,noreferrer')}
+                                                            className="text-[10px] font-bold text-slate-500 hover:text-primary transition-colors uppercase tracking-widest flex items-center gap-1 ml-auto"
+                                                        >
+                                                            <span className="material-symbols-outlined text-sm">open_in_new</span>
+                                                            Abrir
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}

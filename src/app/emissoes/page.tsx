@@ -63,11 +63,11 @@ export default function EmissoesPage() {
     );
 
     return (
-        <div className="space-y-12 w-full">
+        <div className="space-y-8 w-full h-full overflow-hidden flex flex-col">
             <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="flex flex-col md:flex-row md:items-center justify-between gap-6"
+                className="flex flex-col md:flex-row md:items-center justify-between gap-6 shrink-0"
             >
                 <div className="flex flex-col gap-1">
                     <h1 className="text-4xl font-black text-white tracking-tight">Operational Ledger</h1>
@@ -91,7 +91,7 @@ export default function EmissoesPage() {
             </motion.div>
 
             {/* Controls */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
                 <div className="md:col-span-3 relative">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
                     <Input
@@ -107,10 +107,10 @@ export default function EmissoesPage() {
             </div>
 
             {/* Ledger Table */}
-            <div className="glass-panel rounded-3xl border border-white/5 overflow-hidden">
-                <div className="overflow-x-auto">
+            <div className="glass-panel rounded-3xl border border-white/5 overflow-hidden flex-1 flex flex-col min-h-0">
+                <div className="overflow-y-auto custom-scrollbar flex-1">
                     <table className="w-full text-left border-collapse">
-                        <thead>
+                        <thead className="sticky top-0 z-10 bg-[#0e0e0e]">
                             <tr className="bg-white/[0.02]">
                                 <th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-white/5">Locator</th>
                                 <th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-white/5">Passenger</th>

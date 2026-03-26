@@ -210,7 +210,7 @@ export default function CalculatorClient({
     }, [rows, dolar, rateUpTo50k, rateOver50k, azulRoutes]);
 
     return (
-        <div className="flex flex-col xl:flex-row gap-6 items-start h-[calc(100vh-5rem)] overflow-hidden">
+        <div className="flex flex-col xl:flex-row gap-6 items-start h-full overflow-hidden">
             {/* Variables Sidebar */}
             <div className="w-full xl:w-80 shrink-0 space-y-6 overflow-y-auto custom-scrollbar xl:max-h-full">
 

@@ -17,9 +17,9 @@ for (const line of lines) {
 
             console.log(`Adding ${key}...`);
             try {
-                try { execSync(`npx vercel env rm ${key} production -y`, { stdio: 'ignore' }); } catch(e) {}
+                try { execSync(`npx vercel env rm ${key} production -y --scope gsmviagem-2042s-projects`, { stdio: 'ignore' }); } catch(e) {}
                 
-                const child = spawnSync('npx.cmd', ['vercel', 'env', 'add', key, 'production'], {
+                const child = spawnSync('npx.cmd', ['vercel', 'env', 'add', key, 'production', '--scope', 'gsmviagem-2042s-projects'], {
                     input: value,
                     encoding: 'utf-8',
                     shell: true

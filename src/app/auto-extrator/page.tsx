@@ -361,12 +361,12 @@ export default function AutoExtratorPage() {
     };
 
     return (
-        <div className="space-y-12 w-full">
+        <div className="space-y-8 w-full h-full overflow-hidden flex flex-col">
             {/* Header */}
             <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="flex flex-col md:flex-row md:items-center justify-between gap-6"
+                className="flex flex-col md:flex-row md:items-center justify-between gap-6 shrink-0"
             >
                 <div className="flex flex-col gap-1">
                     <h1 className="text-4xl font-black text-white tracking-tight">
@@ -384,81 +384,84 @@ export default function AutoExtratorPage() {
                 )}
             </motion.div>
 
-            {/* Credential Cards — one per airline */}
-            <div>
-                <div className="flex items-center gap-2 mb-4">
-                    <span className="material-symbols-outlined text-primary text-sm">shield</span>
-                    <h2 className="text-sm font-black uppercase tracking-widest text-slate-400">Vault de Credenciais</h2>
-                </div>
-                {isLoading ? (
-                    <div className="grid md:grid-cols-3 gap-4">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className="glass-panel rounded-2xl p-5 h-40 animate-pulse opacity-30" />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="grid md:grid-cols-3 gap-4">
-                        {AIRLINES.map(airline => (
-                            <AirlineCard
-                                key={airline.id}
-                                airline={airline}
-                                accounts={accountsByAirline[airline.id] ?? []}
-                                isRunning={runningAirline === airline.id}
-                                onAddAccount={handleAddAccount}
-                                onDeleteAccount={handleDeleteAccount}
-                                onSync={handleSync}
-                            />
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            {/* Extraction Info Banner */}
-            <div className="p-4 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 flex items-start gap-3">
-                <span className="material-symbols-outlined text-yellow-500 text-xl mt-0.5 shrink-0">warning</span>
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-8 min-h-0">
+                {/* Credential Cards — one per airline */}
                 <div>
-                    <p className="text-sm font-bold text-yellow-400">Sobre a extração Azul</p>
-                    <p className="text-xs text-slate-400 mt-1">O extrator faz login real em <strong>voeazul.com.br</strong>, navega para "Minhas Viagens", abre cada reserva e extrai todos os dados. O processo pode levar 2–5 minutos dependendo do número de emissões. Os dados são salvos automaticamente no banco de dados.</p>
-                </div>
-            </div>
-
-            {/* Console Log */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="glass-panel rounded-2xl p-5 border border-white/5"
-            >
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-sm text-primary">terminal</span>
-                        </div>
-                        <h3 className="font-bold text-white">System Console</h3>
+                    <div className="flex items-center gap-2 mb-4">
+                        <span className="material-symbols-outlined text-primary text-sm">shield</span>
+                        <h2 className="text-sm font-black uppercase tracking-widest text-slate-400">Vault de Credenciais</h2>
                     </div>
-                    <span className="material-symbols-outlined text-primary text-sm animate-pulse">monitoring</span>
+                    {isLoading ? (
+                        <div className="grid md:grid-cols-3 gap-4">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="glass-panel rounded-2xl p-5 h-40 animate-pulse opacity-30" />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="grid md:grid-cols-3 gap-4">
+                            {AIRLINES.map(airline => (
+                                <AirlineCard
+                                    key={airline.id}
+                                    airline={airline}
+                                    accounts={accountsByAirline[airline.id] ?? []}
+                                    isRunning={runningAirline === airline.id}
+                                    onAddAccount={handleAddAccount}
+                                    onDeleteAccount={handleDeleteAccount}
+                                    onSync={handleSync}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
-                <div className="bg-black/60 rounded-xl p-4 font-mono text-xs leading-relaxed border border-white/5 max-h-[300px] overflow-y-auto custom-scrollbar space-y-2">
-                    <AnimatePresence initial={false}>
-                        {logs.map(log => (
-                            <motion.div
-                                key={log.id}
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                className="flex gap-3"
-                            >
-                                <span className="text-slate-600 shrink-0 select-none">[{log.time}]</span>
-                                <span className={cn(
-                                    log.level === 'error' ? 'text-blue-400' :
-                                        log.level === 'success' ? 'text-green-400' :
-                                            'text-slate-400'
-                                )}>
-                                    {log.message}
-                                </span>
-                            </motion.div>
-                        ))}
-                    </AnimatePresence>
+
+                {/* Extraction Info Banner */}
+                <div className="p-4 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 flex items-start gap-3">
+                    <span className="material-symbols-outlined text-yellow-500 text-xl mt-0.5 shrink-0">warning</span>
+                    <div>
+                        <p className="text-sm font-bold text-yellow-400">Sobre a extração Azul</p>
+                        <p className="text-xs text-slate-400 mt-1">O extrator faz login real em <strong>voeazul.com.br</strong>, navega para "Minhas Viagens", abre cada reserva e extrai todos os dados. O processo pode levar 2–5 minutos dependendo do número de emissões. Os dados são salvos automaticamente no banco de dados.</p>
+                    </div>
                 </div>
-            </motion.div>
+
+                {/* Console Log */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="glass-panel rounded-2xl p-5 border border-white/5"
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="size-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+                                <span className="material-symbols-outlined text-sm text-primary">terminal</span>
+                            </div>
+                            <h3 className="font-bold text-white">System Console</h3>
+                        </div>
+                        <span className="material-symbols-outlined text-primary text-sm animate-pulse">monitoring</span>
+                    </div>
+                    <div className="bg-black/60 rounded-xl p-4 font-mono text-xs leading-relaxed border border-white/5 max-h-[400px] overflow-y-auto custom-scrollbar space-y-2">
+                        <AnimatePresence initial={false}>
+                            {logs.map(log => (
+                                <motion.div
+                                    key={log.id}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    className="flex gap-3"
+                                >
+                                    <span className="text-slate-600 shrink-0 select-none">[{log.time}]</span>
+                                    <span className={cn(
+                                        log.level === 'error' ? 'text-blue-400' :
+                                            log.level === 'success' ? 'text-green-400' :
+                                                'text-slate-400'
+                                    )}>
+                                        {log.message}
+                                    </span>
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+                    </div>
+                </motion.div>
+            </div>
         </div>
     );
 }

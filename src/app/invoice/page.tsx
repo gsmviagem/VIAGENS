@@ -298,7 +298,7 @@ export default function InvoicePage() {
     };
 
     return (
-        <div className="space-y-8 max-w-[1700px] mx-auto px-6 h-[calc(100vh-5rem)] overflow-hidden flex flex-col">
+        <div className="space-y-8 max-w-[1700px] mx-auto px-6 h-full overflow-hidden flex flex-col">
             <header className="flex justify-between items-end shrink-0">
                 <div>
                     <h1 className="text-4xl font-black tracking-tighter text-white uppercase font-display italic">Invoice Center</h1>

@@ -27,11 +27,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ConfiguracoesPage() {
     return (
-        <div className="space-y-12 w-full">
+        <div className="h-full overflow-hidden flex flex-col space-y-8">
             <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="flex flex-col md:flex-row md:items-center justify-between gap-6"
+                className="flex flex-col md:flex-row md:items-center justify-between gap-6 shrink-0"
             >
                 <div className="flex flex-col gap-1">
                     <h1 className="text-4xl font-black text-white tracking-tight">System Matrix</h1>
@@ -44,8 +44,8 @@ export default function ConfiguracoesPage() {
                 </div>
             </motion.div>
 
-            <Tabs defaultValue="geral" className="w-full">
-                <TabsList className="bg-white/5 border border-white/10 p-1 mb-8 h-auto flex flex-wrap gap-2 backdrop-blur-xl rounded-2xl w-fit">
+            <Tabs defaultValue="geral" className="flex-1 min-h-0 flex flex-col">
+                <TabsList className="bg-white/5 border border-white/10 p-1 mb-8 h-auto flex flex-wrap gap-2 backdrop-blur-xl rounded-2xl w-fit shrink-0">
                     <TabsTrigger
                         value="geral"
                         className="data-[state=active]:bg-primary data-[state=active]:text-background-dark text-slate-400 py-2.5 px-6 rounded-xl font-bold transition-all flex items-center gap-2"

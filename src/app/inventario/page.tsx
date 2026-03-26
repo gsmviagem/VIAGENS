@@ -29,7 +29,7 @@ export default async function InventarioPage() {
     const gridLayout = "grid-cols-[2fr_1.5fr_2fr_1fr_1.5fr]";
 
     return (
-        <div className="flex flex-col w-full h-[calc(100vh-11rem)] pt-2 text-[#e5e2e1] font-['Inter']">
+        <div className="flex flex-col w-full h-full pt-2 text-[#e5e2e1] font-['Inter'] overflow-hidden">
             
             <header className="mb-6 shrink-0 flex flex-col md:flex-row justify-between items-end gap-6">
                 <div className="space-y-1">

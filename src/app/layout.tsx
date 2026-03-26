@@ -24,8 +24,8 @@ export default async function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
       </head>
-      <body className={`${inter.className} bg-background-dark font-display text-slate-100 min-h-screen antialiased overflow-x-hidden`}>
-        <div className="relative flex min-h-screen w-full flex-col bg-background-dark group/design-root overflow-x-hidden">
+      <body className={`${inter.className} bg-background-dark font-display text-slate-100 h-screen antialiased overflow-hidden`}>
+        <div className="relative flex h-screen w-full flex-col bg-background-dark group/design-root overflow-hidden">
           {/* Background Decorative Elements (3D lighting feel) */}
           <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-white opacity-[0.02] blur-[150px] -z-10 rounded-full pointer-events-none"></div>
           <div className="fixed bottom-0 left-0 w-[800px] h-[800px] bg-secondary opacity-[0.01] blur-[200px] -z-10 rounded-full pointer-events-none"></div>
@@ -39,13 +39,10 @@ export default async function RootLayout({
             />
           </div>
 
-          <div className="relative z-50">
-            <Navbar />
-          </div>
-
-
-          <main className="flex-1 relative z-10 pt-20 px-8 pb-12 min-h-screen">
-            <div className="w-full max-w-[1600px] mx-auto">
+          <Navbar />
+          
+          <main className="flex-1 overflow-hidden relative z-10">
+            <div className="w-full max-w-[1600px] mx-auto h-full p-4 md:p-8">
               {children}
             </div>
           </main>

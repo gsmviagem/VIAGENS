@@ -80,9 +80,9 @@ export default function FornecedoresPage() {
     }
 
     return (
-        <div className="space-y-3 pb-2">
+        <div className="space-y-4 w-full h-full overflow-hidden flex flex-col">
             {/* Page Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-1">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-1 shrink-0">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-black/10 rounded-xl border border-black/10 backdrop-blur-md">
                         <span className="material-symbols-outlined text-white text-2xl font-bold">handshake</span>
@@ -96,256 +96,259 @@ export default function FornecedoresPage() {
                 </div>
             </div>
 
-            {/* Filter Controls */}
-            <Card className="bg-black/20 border-white/10 backdrop-blur-xl rounded-[1rem] shadow-2xl">
-                <CardContent className="px-4 py-2.5">
-                    <form onSubmit={handleFilterSubmit} className="grid grid-cols-2 md:grid-cols-6 gap-3 items-end">
-                        <div className="space-y-1 w-full">
-                            <label className="text-[10px] font-black text-white/70 uppercase tracking-widest pl-1">Data Início</label>
-                            <Input 
-                                type="date" 
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                className="bg-black/30 border-white/5 text-white fill-white rounded-lg h-9 text-xs w-full" 
-                            />
-                        </div>
-                        <div className="space-y-1 w-full">
-                            <label className="text-[10px] font-black text-white/70 uppercase tracking-widest pl-1">Data Final</label>
-                            <Input 
-                                type="date" 
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                className="bg-black/30 border-white/5 text-white fill-white rounded-lg h-9 text-xs w-full" 
-                            />
-                        </div>
-                        <div className="space-y-1 w-full">
-                            <label className="text-[10px] font-black text-white/70 uppercase tracking-widest pl-1">Fornecedor</label>
-                            <Select value={supplier} onValueChange={(val) => setSupplier(val || "TODOS")}>
-                                <SelectTrigger className="bg-black/30 border-white/5 text-white rounded-lg h-9 text-xs w-full">
-                                    <SelectValue placeholder="Todos" />
-                                </SelectTrigger>
-                                <SelectContent className="bg-black/90 border-white/10 text-white rounded-lg backdrop-blur-3xl">
-                                    <SelectItem value="TODOS">TODOS</SelectItem>
-                                    {uniqueSuppliers.map(s => (
-                                        <SelectItem key={s} value={s}>{s}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-1 w-full">
-                            <label className="text-[10px] font-black text-white/70 uppercase tracking-widest pl-1">Buscar LOC</label>
-                            <Input 
-                                type="text" 
-                                placeholder="Ex: ABC123"
-                                value={locator}
-                                onChange={(e) => setLocator(e.target.value)}
-                                className="bg-black/30 border-white/5 text-white uppercase placeholder:normal-case placeholder:text-white/30 rounded-lg h-9 text-xs w-full" 
-                            />
-                        </div>
-                        <div className="space-y-1 w-full flex flex-col justify-end">
-                            <label className="text-[10px] font-black text-white/70 uppercase tracking-widest text-center hidden md:block">&nbsp;</label>
-                            <Button 
-                                type="button"
-                                onClick={(e) => { e.preventDefault(); setPendingOnly(!pendingOnly); }}
-                                className={cn("w-full h-9 rounded-lg font-black text-[10px] transition-all", pendingOnly ? "bg-amber-500 hover:bg-amber-400 text-white shadow-[0_0_10px_rgba(245,158,11,0.3)]" : "bg-black/30 border border-white/5 text-white/50 hover:bg-white/10 hover:text-white")}
-                            >
-                                {pendingOnly ? "SÓ PENDENTES" : "TODOS"}
-                            </Button>
-                        </div>
-                        <div className="w-full flex flex-col justify-end space-y-1">
-                            <label className="text-[10px] font-black text-white/70 uppercase tracking-widest text-center hidden md:block">&nbsp;</label>
-                            <Button 
-                                type="submit"
-                                disabled={loading}
-                                className="w-full bg-black hover:bg-black/80 text-white font-black text-xs h-9 rounded-lg shadow-lg transition-all"
-                            >
-                                <span className={`material-symbols-outlined text-sm mr-1.5 ${loading ? 'animate-spin' : ''}`}>
-                                    {loading ? 'refresh' : 'filter_list'}
-                                </span> 
-                                Aplicar
-                            </Button>
-                        </div>
-                    </form>
-                </CardContent>
-            </Card>
-
-            {/* Metrics Overview */}
-            <div className="grid gap-3 md:grid-cols-2">
-                <Card className="bg-black/20 border-white/10 backdrop-blur-xl rounded-[1rem] shadow-xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-3xl -z-10 group-hover:bg-white/10 transition-all"></div>
-                    <CardHeader className="pb-0 pt-2.5 px-5">
-                        <CardTitle className="text-[10px] font-black text-white/60 uppercase tracking-widest">Total Filtrado nas Saídas</CardTitle>
-                    </CardHeader>
-                    <CardContent className="px-5 pb-2.5">
-                        <div className="text-xl font-black text-white tracking-tighter flex items-center gap-2">
-                            {data?.summary?.totalValue}
-                            {loading && <span className="material-symbols-outlined text-sm animate-spin text-white">refresh</span>}
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-black/20 border-white/10 backdrop-blur-xl rounded-[1rem] shadow-xl">
-                    <CardHeader className="pb-0 pt-2.5 px-5">
-                        <CardTitle className="text-[10px] font-black text-white/60 uppercase tracking-widest">Créditos Ativos</CardTitle>
-                    </CardHeader>
-                    <CardContent className="px-5 pb-2.5">
-                        <div className="text-xl font-black text-white tracking-tighter">
-                            {data?.suppliers?.length} <span className="text-xs text-white/50 font-medium ml-1">Fornecedores Vinculados</span>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            <div className="grid gap-3 lg:grid-cols-12">
-                {/* Suppliers List */}
-                <div className="lg:col-span-4 space-y-2">
-                    <div className="flex items-center gap-1.5 mb-0.5 px-2">
-                        <span className="material-symbols-outlined text-white text-base">account_balance_wallet</span>
-                        <h2 className="font-bold text-white uppercase tracking-widest text-xs">Créditos e Saldos</h2>
-                    </div>
-                    <div className="bg-black/20 backdrop-blur-xl border border-white/10 p-1.5 rounded-[1rem] shadow-2xl">
-                        <div className="space-y-1.5 min-h-[150px] max-h-[450px] overflow-y-auto pr-1 flex flex-col custom-scrollbar">
-                            {data?.suppliers?.length === 0 ? (
-                                <div className="p-4 text-center text-white/50 text-xs font-mono mt-4">Nenhum fornecedor registrado.</div>
-                            ) : null}
-                            
-                            {data?.suppliers?.map((s: any, idx: number) => (
-                                <div 
-                                    key={idx} 
-                                    className={cn(
-                                        "flex flex-col p-2 rounded-xl border transition-all cursor-pointer",
-                                        supplier === s.name
-                                            ? "bg-white/20 border-white/30 shadow-lg" 
-                                            : "bg-black/10 border-white/5 hover:bg-black/30"
-                                    )}
-                                    onClick={() => setSupplier(s.name)}
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-4 min-h-0">
+                {/* Filter Controls */}
+                <Card className="bg-black/20 border-white/10 backdrop-blur-xl rounded-[1rem] shadow-2xl">
+                    <CardContent className="px-4 py-2.5">
+                        <form onSubmit={handleFilterSubmit} className="grid grid-cols-2 md:grid-cols-6 gap-3 items-end">
+                            <div className="space-y-1 w-full">
+                                <label className="text-[10px] font-black text-white/70 uppercase tracking-widest pl-1">Data Início</label>
+                                <Input 
+                                    type="date" 
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className="bg-black/30 border-white/5 text-white fill-white rounded-lg h-9 text-xs w-full" 
+                                />
+                            </div>
+                            <div className="space-y-1 w-full">
+                                <label className="text-[10px] font-black text-white/70 uppercase tracking-widest pl-1">Data Final</label>
+                                <Input 
+                                    type="date" 
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="bg-black/30 border-white/5 text-white fill-white rounded-lg h-9 text-xs w-full" 
+                                />
+                            </div>
+                            <div className="space-y-1 w-full">
+                                <label className="text-[10px] font-black text-white/70 uppercase tracking-widest pl-1">Fornecedor</label>
+                                <Select value={supplier} onValueChange={(val) => setSupplier(val || "TODOS")}>
+                                    <SelectTrigger className="bg-black/30 border-white/5 text-white rounded-lg h-9 text-xs w-full">
+                                        <SelectValue placeholder="Todos" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-black/90 border-white/10 text-white rounded-lg backdrop-blur-3xl">
+                                        <SelectItem value="TODOS">TODOS</SelectItem>
+                                        {uniqueSuppliers.map(s => (
+                                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1 w-full">
+                                <label className="text-[10px] font-black text-white/70 uppercase tracking-widest pl-1">Buscar LOC</label>
+                                <Input 
+                                    type="text" 
+                                    placeholder="Ex: ABC123"
+                                    value={locator}
+                                    onChange={(e) => setLocator(e.target.value)}
+                                    className="bg-black/30 border-white/5 text-white uppercase placeholder:normal-case placeholder:text-white/30 rounded-lg h-9 text-xs w-full" 
+                                />
+                            </div>
+                            <div className="space-y-1 w-full flex flex-col justify-end">
+                                <label className="text-[10px] font-black text-white/70 uppercase tracking-widest text-center hidden md:block">&nbsp;</label>
+                                <Button 
+                                    type="button"
+                                    onClick={(e) => { e.preventDefault(); setPendingOnly(!pendingOnly); }}
+                                    className={cn("w-full h-9 rounded-lg font-black text-[10px] transition-all", pendingOnly ? "bg-amber-500 hover:bg-amber-400 text-white shadow-[0_0_10px_rgba(245,158,11,0.3)]" : "bg-black/30 border border-white/5 text-white/50 hover:bg-white/10 hover:text-white")}
                                 >
-                                    <div className="flex justify-between items-center mb-1.5">
-                                        <span className={cn("text-[11px] font-black uppercase tracking-wide", supplier === s.name ? "text-white" : "text-white/80")}>
-                                            {s.name}
-                                        </span>
-                                        <Badge className={cn("text-[9px] font-black uppercase px-1.5 py-0 rounded", 
-                                            s.saldoType === 'POSITIVE' ? 'bg-emerald-500/20 text-emerald-300' :
-                                            s.saldoType === 'NEGATIVE' ? 'bg-blue-500/20 text-blue-300' : 'bg-white/10 text-white/50'
-                                        )}>
-                                            {s.saldoType === 'POSITIVE' ? 'CRÉDITO' : s.saldoType === 'NEGATIVE' ? 'DÍVIDA' : 'ZERADO'}
-                                        </Badge>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-1.5 text-[11px] font-mono">
-                                        <div className="bg-black/20 p-1 rounded-lg flex flex-col items-center">
-                                            <span className="text-[9px] text-white/40 uppercase font-black mb-0">Pago (OK)</span>
-                                            <span className="text-emerald-400 font-bold leading-tight">{s.creditOk}</span>
-                                        </div>
-                                        <div className="bg-black/20 p-1 rounded-lg flex flex-col items-center">
-                                            <span className="text-[9px] text-white/40 uppercase font-black mb-0">Devendo</span>
-                                            <span className="text-blue-400 font-bold leading-tight">{s.debt}</span>
-                                        </div>
-                                    </div>
-                                    <div className="mt-1.5 text-center bg-white/5 border border-white/10 p-1 rounded-lg flex justify-between items-center px-2">
-                                        <span className="text-[9px] text-white/60 uppercase font-black">Saldo Líquido</span>
-                                        <span className="text-white font-black text-xs leading-none py-0.5">{s.saldoType === 'NEGATIVE' ? '-' : ''}{s.saldo}</span>
-                                    </div>
-                                    {(s.creditPending && s.creditPending !== 'R$ 0,00') && (
-                                        <div className="mt-1 text-center text-[9px] text-amber-200/60 uppercase font-black">
-                                            + {s.creditPending} pendente
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                                    {pendingOnly ? "SÓ PENDENTES" : "TODOS"}
+                                </Button>
+                            </div>
+                            <div className="w-full flex flex-col justify-end space-y-1">
+                                <label className="text-[10px] font-black text-white/70 uppercase tracking-widest text-center hidden md:block">&nbsp;</label>
+                                <Button 
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full bg-black hover:bg-black/80 text-white font-black text-xs h-9 rounded-lg shadow-lg transition-all"
+                                >
+                                    <span className={`material-symbols-outlined text-sm mr-1.5 ${loading ? 'animate-spin' : ''}`}>
+                                        {loading ? 'refresh' : 'filter_list'}
+                                    </span> 
+                                    Aplicar
+                                </Button>
+                            </div>
+                        </form>
+                    </CardContent>
+                </Card>
+
+                {/* Metrics Overview */}
+                <div className="grid gap-3 md:grid-cols-2">
+                    <Card className="bg-black/20 border-white/10 backdrop-blur-xl rounded-[1rem] shadow-xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-3xl -z-10 group-hover:bg-white/10 transition-all"></div>
+                        <CardHeader className="pb-0 pt-2.5 px-5">
+                            <CardTitle className="text-[10px] font-black text-white/60 uppercase tracking-widest">Total Filtrado nas Saídas</CardTitle>
+                        </CardHeader>
+                        <CardContent className="px-5 pb-2.5">
+                            <div className="text-xl font-black text-white tracking-tighter flex items-center gap-2">
+                                {data?.summary?.totalValue}
+                                {loading && <span className="material-symbols-outlined text-sm animate-spin text-white">refresh</span>}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-black/20 border-white/10 backdrop-blur-xl rounded-[1rem] shadow-xl">
+                        <CardHeader className="pb-0 pt-2.5 px-5">
+                            <CardTitle className="text-[10px] font-black text-white/60 uppercase tracking-widest">Créditos Ativos</CardTitle>
+                        </CardHeader>
+                        <CardContent className="px-5 pb-2.5">
+                            <div className="text-xl font-black text-white tracking-tighter">
+                                {data?.suppliers?.length} <span className="text-xs text-white/50 font-medium ml-1">Fornecedores Vinculados</span>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
 
-                {/* Main Ledger Table and Text Generators */}
-                <div className="lg:col-span-8 flex flex-col gap-3">
-                    {/* Generative Texts */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
-                        <div className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-[1rem] p-2 shadow-2xl flex flex-col">
-                            <div className="flex justify-between items-center mb-1.5 px-1">
-                                <span className="text-[10px] uppercase font-black text-white/60 tracking-widest flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[13px]">subject</span> Detalhado
-                                </span>
-                                <Button size="sm" variant="ghost" className="h-5 px-1.5 text-[9px] text-white/50 hover:text-white hover:bg-white/10 rounded-md" onClick={() => copyToClipboard(data?.generated?.full)}>
-                                    <span className="material-symbols-outlined text-[11px] mr-1">content_copy</span> COPIAR
-                                </Button>
-                            </div>
-                            <textarea 
-                                readOnly 
-                                value={data?.generated?.full || ''} 
-                                className="w-full flex-grow min-h-[75px] h-[75px] bg-black/40 border-none rounded-lg text-white/80 text-[11px] font-mono p-2 focus:outline-none resize-none custom-scrollbar leading-tight"
-                                placeholder="..."
-                            ></textarea>
+                <div className="grid gap-3 lg:grid-cols-12 min-h-0">
+                    {/* Suppliers List */}
+                    <div className="lg:col-span-4 space-y-2 flex flex-col">
+                        <div className="flex items-center gap-1.5 mb-0.5 px-2 shrink-0">
+                            <span className="material-symbols-outlined text-white text-base">account_balance_wallet</span>
+                            <h2 className="font-bold text-white uppercase tracking-widest text-xs">Créditos e Saldos</h2>
                         </div>
-                        <div className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-[1rem] p-2 shadow-2xl flex flex-col">
-                            <div className="flex justify-between items-center mb-1.5 px-1">
-                                <span className="text-[10px] uppercase font-black text-white/60 tracking-widest flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[13px]">short_text</span> Resumo
-                                </span>
-                                <Button size="sm" variant="ghost" className="h-5 px-1.5 text-[9px] text-white/50 hover:text-white hover:bg-white/10 rounded-md" onClick={() => copyToClipboard(data?.generated?.summary)}>
-                                    <span className="material-symbols-outlined text-[11px] mr-1">content_copy</span> COPIAR
-                                </Button>
+                        <div className="bg-black/20 backdrop-blur-xl border border-white/10 p-1.5 rounded-[1rem] shadow-2xl flex-1 overflow-hidden flex flex-col min-h-[300px]">
+                            <div className="space-y-1.5 overflow-y-auto pr-1 flex flex-col flex-1 custom-scrollbar">
+                                {data?.suppliers?.length === 0 ? (
+                                    <div className="p-4 text-center text-white/50 text-xs font-mono mt-4">Nenhum fornecedor registrado.</div>
+                                ) : null}
+                                
+                                {data?.suppliers?.map((s: any, idx: number) => (
+                                    <div 
+                                        key={idx} 
+                                        className={cn(
+                                            "flex flex-col p-2 rounded-xl border transition-all cursor-pointer",
+                                            supplier === s.name
+                                                ? "bg-white/20 border-white/30 shadow-lg" 
+                                                : "bg-black/10 border-white/5 hover:bg-black/30"
+                                        )}
+                                        onClick={() => setSupplier(s.name)}
+                                    >
+                                        <div className="flex justify-between items-center mb-1.5">
+                                            <span className={cn("text-[11px] font-black uppercase tracking-wide", supplier === s.name ? "text-white" : "text-white/80")}>
+                                                {s.name}
+                                            </span>
+                                            <Badge className={cn("text-[9px] font-black uppercase px-1.5 py-0 rounded", 
+                                                s.saldoType === 'POSITIVE' ? 'bg-emerald-500/20 text-emerald-300' :
+                                                s.saldoType === 'NEGATIVE' ? 'bg-blue-500/20 text-blue-300' : 'bg-white/10 text-white/50'
+                                            )}>
+                                                {s.saldoType === 'POSITIVE' ? 'CRÉDITO' : s.saldoType === 'NEGATIVE' ? 'DÍVIDA' : 'ZERADO'}
+                                            </Badge>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-1.5 text-[11px] font-mono">
+                                            <div className="bg-black/20 p-1 rounded-lg flex flex-col items-center">
+                                                <span className="text-[9px] text-white/40 uppercase font-black mb-0">Pago (OK)</span>
+                                                <span className="text-emerald-400 font-bold leading-tight">{s.creditOk}</span>
+                                            </div>
+                                            <div className="bg-black/20 p-1 rounded-lg flex flex-col items-center">
+                                                <span className="text-[9px] text-white/40 uppercase font-black mb-0">Devendo</span>
+                                                <span className="text-blue-400 font-bold leading-tight">{s.debt}</span>
+                                            </div>
+                                        </div>
+                                        <div className="mt-1.5 text-center bg-white/5 border border-white/10 p-1 rounded-lg flex justify-between items-center px-2">
+                                            <span className="text-[9px] text-white/60 uppercase font-black">Saldo Líquido</span>
+                                            <span className="text-white font-black text-xs leading-none py-0.5">{s.saldoType === 'NEGATIVE' ? '-' : ''}{s.saldo}</span>
+                                        </div>
+                                        {(s.creditPending && s.creditPending !== 'R$ 0,00') && (
+                                            <div className="mt-1 text-center text-[9px] text-amber-200/60 uppercase font-black">
+                                                + {s.creditPending} pendente
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
-                            <textarea 
-                                readOnly 
-                                value={data?.generated?.summary || ''} 
-                                className="w-full flex-grow min-h-[75px] h-[75px] bg-black/40 border-none rounded-lg text-white/80 text-[11px] font-mono p-2 focus:outline-none resize-none custom-scrollbar leading-tight"
-                                placeholder="..."
-                            ></textarea>
                         </div>
                     </div>
 
-                    {/* Ledger Table */}
-                    <div className="flex-grow flex flex-col space-y-1.5">
-                        <div className="flex items-center justify-between gap-2 px-1">
-                            <div className="flex items-center gap-1.5">
-                                <span className="material-symbols-outlined text-white text-base">payments</span>
-                                <h2 className="font-bold text-white uppercase tracking-widest text-xs">Registros</h2>
+                    {/* Main Ledger Table and Text Generators */}
+                    <div className="lg:col-span-8 flex flex-col gap-3">
+                        {/* Generative Texts */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5 shrink-0">
+                            <div className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-[1rem] p-2 shadow-2xl flex flex-col">
+                                <div className="flex justify-between items-center mb-1.5 px-1">
+                                    <span className="text-[10px] uppercase font-black text-white/60 tracking-widest flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-[13px]">subject</span> Detalhado
+                                    </span>
+                                    <Button size="sm" variant="ghost" className="h-5 px-1.5 text-[9px] text-white/50 hover:text-white hover:bg-white/10 rounded-md" onClick={() => copyToClipboard(data?.generated?.full)}>
+                                        <span className="material-symbols-outlined text-[11px] mr-1">content_copy</span> COPIAR
+                                    </Button>
+                                </div>
+                                <textarea 
+                                    readOnly 
+                                    value={data?.generated?.full || ''} 
+                                    className="w-full min-h-[75px] h-[75px] bg-black/40 border-none rounded-lg text-white/80 text-[11px] font-mono p-2 focus:outline-none resize-none custom-scrollbar leading-tight"
+                                    placeholder="..."
+                                ></textarea>
                             </div>
-                            <Badge className="bg-black text-white hover:bg-black/80 font-black px-2 py-0 rounded text-[10px]">
-                                {data?.ledger?.length || 0} SAÍDAS
-                            </Badge>
+                            <div className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-[1rem] p-2 shadow-2xl flex flex-col">
+                                <div className="flex justify-between items-center mb-1.5 px-1">
+                                    <span className="text-[10px] uppercase font-black text-white/60 tracking-widest flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-[13px]">short_text</span> Resumo
+                                    </span>
+                                    <Button size="sm" variant="ghost" className="h-5 px-1.5 text-[9px] text-white/50 hover:text-white hover:bg-white/10 rounded-md" onClick={() => copyToClipboard(data?.generated?.summary)}>
+                                        <span className="material-symbols-outlined text-[11px] mr-1">content_copy</span> COPIAR
+                                    </Button>
+                                </div>
+                                <textarea 
+                                    readOnly 
+                                    value={data?.generated?.summary || ''} 
+                                    className="w-full min-h-[75px] h-[75px] bg-black/40 border-none rounded-lg text-white/80 text-[11px] font-mono p-2 focus:outline-none resize-none custom-scrollbar leading-tight"
+                                    placeholder="..."
+                                ></textarea>
+                            </div>
                         </div>
-                        
-                        <div className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-[1rem] overflow-hidden shadow-2xl flex-grow">
-                            <div className="overflow-x-auto min-h-[200px] max-h-[350px] custom-scrollbar">
-                                <table className="w-full text-left text-[11px]">
-                                    <thead>
-                                        <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-white/50 bg-black/30 sticky top-0 z-10 backdrop-blur-md">
-                                            <th className="px-3 py-2 font-black">Data</th>
-                                            <th className="px-3 py-2 font-black">LOC</th>
-                                            <th className="px-3 py-2 font-black">Fornecedor</th>
-                                            <th className="px-3 py-2 font-black text-right">Total</th>
-                                            <th className="px-3 py-2 font-black text-center">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-white/5 font-medium">
-                                        {data?.ledger?.map((row: any, i: number) => (
-                                            <tr key={i} className="hover:bg-white/5 transition-colors group">
-                                                <td className="px-3 py-1.5 text-white/60 font-mono whitespace-nowrap">{row.date}</td>
-                                                <td className="px-3 py-1.5 text-white font-black group-hover:text-amber-200 transition-colors whitespace-nowrap">{row.loc}</td>
-                                                <td className="px-3 py-1.5 text-white/80 text-[10px] uppercase max-w-[120px] truncate" title={row.supplier}>{row.supplier || row.product}</td>
-                                                <td className="px-3 py-1.5 text-right text-white font-black whitespace-nowrap">{row.total !== '0' && row.total !== '' ? `R$ ${row.total}` : '-'}</td>
-                                                <td className="px-3 py-1.5 text-center">
-                                                    <Badge 
-                                                        className={cn(
-                                                            "text-[9px] font-black uppercase h-5 rounded px-1.5 flex items-center justify-center w-fit mx-auto",
-                                                            row.issueStatus === 'PENDENTE' 
-                                                                ? "bg-amber-500 text-white border-none" 
-                                                                : "bg-emerald-500 text-white border-none"
-                                                        )}
-                                                    >
-                                                        {row.issueStatus}
-                                                    </Badge>
-                                                </td>
+
+                        {/* Ledger Table */}
+                        <div className="flex-1 flex flex-col space-y-1.5 min-h-0">
+                            <div className="flex items-center justify-between gap-2 px-1 shrink-0">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="material-symbols-outlined text-white text-base">payments</span>
+                                    <h2 className="font-bold text-white uppercase tracking-widest text-xs">Registros</h2>
+                                </div>
+                                <Badge className="bg-black text-white hover:bg-black/80 font-black px-2 py-0 rounded text-[10px]">
+                                    {data?.ledger?.length || 0} SAÍDAS
+                                </Badge>
+                            </div>
+                            
+                            <div className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-[1rem] overflow-hidden shadow-2xl flex-1 flex flex-col min-h-[250px]">
+                                <div className="overflow-y-auto custom-scrollbar flex-1">
+                                    <table className="w-full text-left text-[11px]">
+                                        <thead className="sticky top-0 z-10 bg-black/80 backdrop-blur-md">
+                                            <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-white/50">
+                                                <th className="px-3 py-2 font-black">Data</th>
+                                                <th className="px-3 py-2 font-black">LOC</th>
+                                                <th className="px-3 py-2 font-black">Fornecedor</th>
+                                                <th className="px-3 py-2 font-black text-right">Total</th>
+                                                <th className="px-3 py-2 font-black text-center">Status</th>
                                             </tr>
-                                        ))}
-                                        {data?.ledger?.length === 0 && (
-                                            <tr>
-                                                <td colSpan={5} className="text-center py-8 text-white/30 font-mono text-[11px]">Ajuste os filtros.</td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="divide-y divide-white/5 font-medium">
+                                            {data?.ledger?.map((row: any, i: number) => (
+                                                <tr key={i} className="hover:bg-white/5 transition-colors group">
+                                                    <td className="px-3 py-1.5 text-white/60 font-mono whitespace-nowrap">{row.date}</td>
+                                                    <td className="px-3 py-1.5 text-white font-black group-hover:text-amber-200 transition-colors whitespace-nowrap">{row.loc}</td>
+                                                    <td className="px-3 py-1.5 text-white/80 text-[10px] uppercase max-w-[120px] truncate" title={row.supplier}>{row.supplier || row.product}</td>
+                                                    <td className="px-3 py-1.5 text-right text-white font-black whitespace-nowrap">{row.total !== '0' && row.total !== '' ? `R$ ${row.total}` : '-'}</td>
+                                                    <td className="px-3 py-1.5 text-center">
+                                                        <Badge 
+                                                            className={cn(
+                                                                "text-[9px] font-black uppercase h-5 rounded px-1.5 flex items-center justify-center w-fit mx-auto",
+                                                                row.issueStatus === 'PENDENTE' 
+                                                                    ? "bg-amber-500 text-white border-none" 
+                                                                    : "bg-emerald-500 text-white border-none"
+                                                            )}
+                                                        >
+                                                            {row.issueStatus}
+                                                        </Badge>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {data?.ledger?.length === 0 && (
+                                                <tr>
+                                                    <td colSpan={5} className="text-center py-8 text-white/30 font-mono text-[11px]">Ajuste os filtros.</td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
