@@ -93,9 +93,9 @@ export default function DashboardPage() {
     }, []);
 
     return (
-        <div className="flex flex-col relative bg-transparent text-[#e5e2e1] font-['Inter']">
+        <div className="flex flex-col relative bg-transparent text-[#e5e2e1] font-['Inter'] h-[calc(100vh-5rem)] overflow-hidden">
             {/* Header Section */}
-            <header className="mb-12 flex flex-col md:flex-row justify-between items-end gap-6">
+            <header className="mb-4 flex flex-col md:flex-row justify-between items-end gap-4 shrink-0">
                 <div className="space-y-1">
                     <h1 className="text-4xl font-bold tracking-[0.05em] text-white">Executive Cockpit</h1>
                     <p className="text-outline font-light tracking-wide max-w-md">Precision monitoring of global assets and automated flight paths.</p>
@@ -112,7 +112,7 @@ export default function DashboardPage() {
             </header>
 
             {/* Bento Grid Layout */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 flex-1 overflow-y-auto custom-scrollbar pb-4">
                 
                 {/* SECTION: Cancel Requests Tracking (Moved to top) */}
                 <section className="col-span-1 md:col-span-12">
@@ -357,15 +357,6 @@ export default function DashboardPage() {
                     </div>
                 </section>
             </div>
-            
-            <footer className="mt-12 pt-8 pb-4 flex justify-between items-center text-outline text-[10px] font-bold uppercase tracking-widest border-t border-[#474747]/30">
-                <div className="flex items-center gap-4">
-                    <span>CHRONOS OS V3.0.1</span>
-                    <span className="w-1 h-1 bg-secondary rounded-full"></span>
-                    <span>ALL SYSTEMS NOMINAL</span>
-                </div>
-                <div>SECURE CONNECTION ESTABLISHED</div>
-            </footer>
-        </div>
+            </div>
     );
 }

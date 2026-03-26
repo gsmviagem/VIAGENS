@@ -136,113 +136,102 @@ export default function InvoicePage() {
         const PRIMARY_BLUE: [number, number, number] = [0, 43, 92]; // #002b5c
         const ACCENT_COLOR: [number, number, number] = [16, 185, 129]; // Emerald
 
-        // --- 1. COMPLEX HEADER DESIGN ---
-        // Main dark blue banner
+        // --- 1. COMPACT HEADER DESIGN ---
+        // Main dark blue banner (compact)
         doc.setFillColor(PRIMARY_BLUE[0], PRIMARY_BLUE[1], PRIMARY_BLUE[2]);
-        doc.rect(0, 0, pageWidth, 45, 'F');
+        doc.rect(0, 0, pageWidth, 28, 'F');
         
-        // Secondary subtle diagonal polygon for texture sensation
+        // Subtle diagonal polygon for depth
         doc.setFillColor(0, 35, 75);
-        doc.triangle(pageWidth - 120, 0, pageWidth, 0, pageWidth, 45, 'F');
+        doc.triangle(pageWidth - 80, 0, pageWidth, 0, pageWidth, 28, 'F');
 
-        // Thin emerald accent ribbon below the header
+        // Thin emerald accent ribbon
         doc.setFillColor(ACCENT_COLOR[0], ACCENT_COLOR[1], ACCENT_COLOR[2]);
-        doc.rect(0, 45, pageWidth, 2, 'F');
+        doc.rect(0, 28, pageWidth, 1.5, 'F');
 
         // Company Name
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(26);
+        doc.setFontSize(16);
         doc.setFont('helvetica', 'bold');
-        doc.text('DIMAIS CORP', 20, 30);
+        doc.text('DIMAIS CORP', 15, 18);
 
-        // "INVOICE" Pill/Badge
+        // "INVOICE" badge
         doc.setFillColor(255, 255, 255);
-        doc.roundedRect(pageWidth - 45, 16, 25, 14, 2, 2, 'F');
+        doc.roundedRect(pageWidth - 38, 9, 23, 10, 1.5, 1.5, 'F');
         doc.setTextColor(PRIMARY_BLUE[0], PRIMARY_BLUE[1], PRIMARY_BLUE[2]);
-        doc.setFontSize(10);
+        doc.setFontSize(7);
         doc.setFont('helvetica', 'bold');
-        doc.text('INVOICE', pageWidth - 32.5, 25, { align: 'center' });
+        doc.text('INVOICE', pageWidth - 26.5, 15.5, { align: 'center' });
 
-        // --- 2. BILLING & INVOICE DETAILS GRID ---
-        const contentStartY = 65;
-
-        // Billed To Card (Left)
+        // --- 2. COMPACT INFO ROW ---
+        const infoY = 38;
+        
+        // Left: Billed to (compact card)
         doc.setFillColor(248, 250, 252);
-        doc.roundedRect(20, contentStartY, 100, 35, 2, 2, 'F');
+        doc.roundedRect(15, infoY, 85, 18, 1.5, 1.5, 'F');
         doc.setFillColor(PRIMARY_BLUE[0], PRIMARY_BLUE[1], PRIMARY_BLUE[2]);
-        // Vertical accent bar inside the card
-        doc.rect(20, contentStartY + 5, 3, 25, 'F');
-
-        doc.setFontSize(8);
+        doc.rect(15, infoY + 3, 2, 12, 'F');
+        
+        doc.setFontSize(6);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(140, 140, 140);
-        doc.text('BILLED TO', 30, contentStartY + 12);
-        
-        doc.setTextColor(40, 40, 40);
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text((selectedClient.company || selectedClient.broker).toUpperCase(), 30, contentStartY + 24);
+        doc.text('BILLED TO', 22, infoY + 7);
 
-        // Invoice Meta Info (Right)
+        doc.setTextColor(40, 40, 40);
         doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        const clientName = (selectedClient.company || selectedClient.broker).toUpperCase();
+        doc.text(clientName.length > 22 ? clientName.substring(0, 22) + '...' : clientName, 22, infoY + 13);
+
+        // Center: Meta info
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
         doc.setTextColor(150, 150, 150);
-        doc.text('Invoice Number:', 135, contentStartY + 12);
+        doc.text('No:', 108, infoY + 7);
         doc.setTextColor(40, 40, 40);
         doc.setFont('helvetica', 'bold');
-        doc.text(`# ${Math.floor(Math.random() * 900000) + 100000}`, 165, contentStartY + 12);
+        doc.text(`# ${Math.floor(Math.random() * 900000) + 100000}`, 115, infoY + 7);
 
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(150, 150, 150);
-        doc.text('Date of Issue:', 135, contentStartY + 24);
+        doc.text('Date:', 108, infoY + 13);
         doc.setTextColor(40, 40, 40);
         doc.setFont('helvetica', 'bold');
-        doc.text(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }), 165, contentStartY + 24);
+        doc.text(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }), 118, infoY + 13);
 
-        // --- 3. STYLIZED FINANCIAL SUMMARY CARD ---
-        const sumBoxY = contentStartY + 50;
-        
-        // Card Background
+        // Right: Financial summary (compact card)
+        const sumBoxX = pageWidth - 60;
         doc.setFillColor(255, 255, 255);
         doc.setDrawColor(220, 225, 230);
-        doc.setLineWidth(0.5);
-        doc.roundedRect(pageWidth - 110, sumBoxY, 90, 45, 3, 3, 'FD');
+        doc.setLineWidth(0.3);
+        doc.roundedRect(sumBoxX, infoY, 45, 18, 1.5, 1.5, 'FD');
 
-        const sumRight = pageWidth - 28;
-        const sumLeft = pageWidth - 100;
-        
-        doc.setFontSize(10);
+        doc.setFontSize(7);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(100, 100, 100);
-        doc.text('Bookings', sumLeft, sumBoxY + 12);
+        doc.text('Bookings', sumBoxX + 3, infoY + 6);
         doc.setTextColor(40, 40, 40);
         doc.setFont('helvetica', 'bold');
-        doc.text(`$ ${totalEmissions.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumRight, sumBoxY + 12, { align: 'right' });
-
-        let currentSumY = sumBoxY + 12;
+        doc.text(`$ ${totalEmissions.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumBoxX + 42, infoY + 6, { align: 'right' });
 
         if (totalSelectedCredits > 0) {
-            currentSumY += 8;
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(100, 100, 100);
-            doc.text('Credits', sumLeft, currentSumY);
-            doc.setTextColor(220, 38, 38); // Red
+            doc.text('Credits', sumBoxX + 3, infoY + 10.5);
+            doc.setTextColor(220, 38, 38);
             doc.setFont('helvetica', 'bold');
-            doc.text(`- $ ${totalSelectedCredits.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumRight, currentSumY, { align: 'right' });
+            doc.text(`-$ ${totalSelectedCredits.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumBoxX + 42, infoY + 10.5, { align: 'right' });
         }
 
-        // Heavy "TOTAL" Footer of the Summary Card
+        // TOTAL footer strip
         const finalColor = finalTotal <= 0 ? ACCENT_COLOR : PRIMARY_BLUE;
         doc.setFillColor(finalColor[0], finalColor[1], finalColor[2]);
-        // Draw the bottom block, overriding the rounded rect bottom part
-        doc.rect(pageWidth - 110, sumBoxY + 30, 90, 15, 'F');
-        // Add tiny bottom rounded corners back (by redrawing a filled small corner box if necessary, or leave square for edge-to-edge block feel)
-        
-        doc.setFontSize(11);
+        doc.rect(sumBoxX, infoY + 13, 45, 5, 'F');
+        doc.setFontSize(7);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(255, 255, 255);
-        doc.text('TOTAL', sumLeft, sumBoxY + 40);
-        doc.setFontSize(12);
-        doc.text(`$ ${Math.abs(finalTotal).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumRight, sumBoxY + 40, { align: 'right' });
+        doc.text('TOTAL', sumBoxX + 3, infoY + 16.5);
+        doc.text(`$ ${Math.abs(finalTotal).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumBoxX + 42, infoY + 16.5, { align: 'right' });
 
         // --- 4. PREMIER DATA TABLES ---
         const emissionsRows = data.emissions.map(e => [
@@ -254,7 +243,7 @@ export default function InvoicePage() {
         ]);
 
         autoTable(doc, {
-            startY: sumBoxY + 60,
+            startY: infoY + 28,
             head: [['Date', 'Passenger', 'Loc', 'Route', 'Price']],
             body: emissionsRows,
             theme: 'grid',
@@ -309,8 +298,8 @@ export default function InvoicePage() {
     };
 
     return (
-        <div className="space-y-8 max-w-[1700px] mx-auto px-6">
-            <header className="flex justify-between items-end">
+        <div className="space-y-8 max-w-[1700px] mx-auto px-6 h-[calc(100vh-5rem)] overflow-hidden flex flex-col">
+            <header className="flex justify-between items-end shrink-0">
                 <div>
                     <h1 className="text-4xl font-black tracking-tighter text-white uppercase font-display italic">Invoice Center</h1>
                     <p className="text-[#a19f9d] mt-2 font-mono uppercase text-[10px] tracking-widest">Dimais Corp Portfolio Billing System</p>
@@ -321,9 +310,9 @@ export default function InvoicePage() {
                 </div>
             </header>
 
-            <div className="flex flex-col xl:flex-row gap-10">
+            <div className="flex flex-col xl:flex-row gap-10 flex-1 overflow-hidden">
                 {/* SEARCH & FILTERS */}
-                <div className="w-full xl:w-[400px] space-y-6 flex-shrink-0">
+                <div className="w-full xl:w-[400px] space-y-6 flex-shrink-0 overflow-y-auto custom-scrollbar">
                     <div className="glass-panel p-8 space-y-8">
                         <section className="space-y-3">
                             <label className="text-[10px] font-black text-outline uppercase tracking-widest">Client Name or Company</label>

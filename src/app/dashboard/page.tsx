@@ -104,9 +104,9 @@ export default function FinancialsPage() {
     }
 
     return (
-        <div className="space-y-4 pb-4">
+        <div className="space-y-4 pb-4 h-[calc(100vh-5rem)] overflow-hidden flex flex-col">
             {/* Cabeçalho */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-1">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-1 shrink-0">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-gradient-to-br from-emerald-500/20 to-emerald-900/40 rounded-xl border border-emerald-500/30 backdrop-blur-md">
                         <span className="material-symbols-outlined text-emerald-400 text-2xl font-bold">query_stats</span>
@@ -136,7 +136,7 @@ export default function FinancialsPage() {
             </div>
 
             {/* Filtros */}
-            <Card className="bg-black/20 border-white/10 backdrop-blur-xl rounded-[1rem] shadow-2xl">
+            <Card className="bg-black/20 border-white/10 backdrop-blur-xl rounded-[1rem] shadow-2xl shrink-0">
                 <CardContent className="px-4 py-3">
                     <form onSubmit={handleFilterSubmit} className="grid grid-cols-2 md:grid-cols-6 gap-3 items-end">
                         <div className="space-y-1 w-full">
@@ -212,6 +212,7 @@ export default function FinancialsPage() {
                 </CardContent>
             </Card>
 
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pb-4">
             {/* KPIs Principais (4 cards grandes) */}
             <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="bg-black/20 border-white/10 backdrop-blur-xl rounded-[1rem] shadow-xl relative overflow-hidden group">
@@ -405,6 +406,7 @@ export default function FinancialsPage() {
 
                 </div>
 
+            </div>
             </div>
         </div>
     );

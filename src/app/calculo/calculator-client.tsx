@@ -210,9 +210,9 @@ export default function CalculatorClient({
     }, [rows, dolar, rateUpTo50k, rateOver50k, azulRoutes]);
 
     return (
-        <div className="flex flex-col xl:flex-row gap-6 items-start">
+        <div className="flex flex-col xl:flex-row gap-6 items-start h-[calc(100vh-5rem)] overflow-hidden">
             {/* Variables Sidebar */}
-            <div className="w-full xl:w-80 shrink-0 space-y-6">
+            <div className="w-full xl:w-80 shrink-0 space-y-6 overflow-y-auto custom-scrollbar xl:max-h-full">
 
                 {/* Rates Panel */}
                 <div className="bg-[#0e0e0e]/50 border border-white/5 rounded-2xl p-6 backdrop-blur-md">
@@ -368,7 +368,7 @@ export default function CalculatorClient({
             </div>
 
             {/* Main Table */}
-            <div className="flex-1 w-full bg-[#0e0e0e]/50 border border-white/5 rounded-2xl p-6 backdrop-blur-md overflow-hidden">
+            <div className="flex-1 w-full bg-[#0e0e0e]/50 border border-white/5 rounded-2xl p-6 backdrop-blur-md overflow-y-auto custom-scrollbar">
                 <div className="flex justify-between items-center mb-4">
                     <div>
                         <h2 className="text-white font-bold tracking-widest text-xs uppercase flex items-center gap-2 border-l-[3px] border-white pl-3">
