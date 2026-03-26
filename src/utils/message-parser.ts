@@ -23,6 +23,8 @@ export interface ProcessedData {
     hasFlightData?: boolean;
 }
 
+import { GENDER_DICT } from './gender-dict';
+
 const MONTHS_MAP: { [key: string]: string } = {
     jan: '01', january: '01', janeiro: '01',
     feb: '02', february: '02', fevereiro: '02',
@@ -252,7 +254,17 @@ function addPassenger(data: ProcessedData, fName: string, lName: string, day: st
     else data.infants++;
 
     const femaleNames = new Set(['maria', 'ana', 'julia', 'lucia', 'carla', 'fernanda', 'andressa', 'alicia', 'beatriz', 'camila', 'clara', 'daniela', 'elisa', 'gabriela', 'isabela', 'laura', 'livia', 'luiza', 'manuela', 'mariana', 'nicole', 'paola', 'rafaela', 'sophia', 'valentina', 'conceição', 'vitoria', 'vitória', 'gitty', 'pessy', 'chaya', 'rivka', 'leah', 'rachel', 'sarah', 'miriam', 'esther', 'shoshana', 'tamar', 'yehudit', 'chana', 'devorah', 'malka', 'shira', 'yael', 'hannah', 'abigail', 'emma', 'olivia', 'ava', 'mia', 'charlotte', 'amelia', 'harper', 'evelyn', 'grace', 'zoe', 'chloe', 'penelope', 'riley', 'nora', 'lily', 'eleanor', 'avery', 'ella', 'scarlett', 'aria', 'lucy', 'mila', 'sofia', 'aline', 'bruna', 'carolina', 'diana', 'eduarda', 'flavia', 'giovanna', 'heloisa', 'isadora', 'joana', 'karina', 'leticia', 'marcela', 'natalia', 'patricia', 'renata', 'simone', 'tatiana', 'vanessa', 'yasmin', 'zilda', 'amanda', 'barbara']);
-    const gender = femaleNames.has(fName.toLowerCase()) ? 'Feminino' : 'Masculino';
+    
+    let gender = 'Masculino'; // Default
+    const lowerName = fName.toLowerCase();
+    
+    if (GENDER_DICT[lowerName] === 'Feminino') {
+        gender = 'Feminino';
+    } else if (GENDER_DICT[lowerName] === 'Masculino') {
+        gender = 'Masculino';
+    } else if (femaleNames.has(lowerName)) {
+        gender = 'Feminino';
+    }
 
     data.passengers.push({
         firstName, lastName, gender, birthDate,
