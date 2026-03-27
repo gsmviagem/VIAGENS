@@ -69,50 +69,91 @@ export function parseMRZ(ocrText: string): PassengerData | null {
     // We use a loose digit matcher [\dOISB] because O/0, I/1, S/5, B/8 are common OCR errors
     const mrz2Regex = /[A-Z<]{3}[\dOISBQ]{6}[\dOISBQ][MF<X][\dOISBQ]{6}/;
 
-    // Try finding by strict properties first
-    mrzLine1 = cleanedLines.find(l => (l.startsWith('P') || l.startsWith('V') || l.startsWith('A')) && l.includes('<<')) || '';
-    mrzLine2 = cleanedLines.find(l => mrz2Regex.test(l)) || '';
+    const line2Index = cleanedLines.findIndex(l => mrz2Regex.test(l));
 
-    if (!mrzLine1 || !mrzLine2) {
-        // Fallback sequentially (ensure we don't assign the same line to both)
-        for (let i = 0; i < cleanedLines.length; i++) {
-            let line = cleanedLines[i];
-            if (!mrzLine1 && (line.startsWith('P') || line.startsWith('V') || line.startsWith('A')) && line.includes('<<')) {
-                mrzLine1 = line;
-            } else if (mrzLine1 && !mrzLine2 && line !== mrzLine1 && line.split('<').length > 3) {
-                 // The line right after mrzLine1, or any subsequent line that looks MRZ-ish
-                 mrzLine2 = line;
-                 break;
-            }
+    if (line2Index >= 0) {
+        mrzLine2 = cleanedLines[line2Index];
+        if (line2Index > 0) {
+            mrzLine1 = cleanedLines[line2Index - 1];
         }
     }
 
     if (!mrzLine1 || !mrzLine2) {
-        // Ultimate fallback
-        const mrzLikeLines = cleanedLines.filter(l => l.split('<').length > 4);
-        if (mrzLikeLines.length >= 2) {
-            mrzLine1 = mrzLikeLines[0];
-            mrzLine2 = mrzLikeLines[1];
-        } else if (mrzLikeLines.length === 1 && !mrzLine1) {
-            mrzLine1 = mrzLikeLines[0];
+        // Fallback: Pick the last two lines that look long enough
+        // Passports always have the MRZ at the very bottom
+        const longLines = cleanedLines.filter(l => l.length > 35);
+        if (longLines.length >= 2) {
+            mrzLine1 = longLines[longLines.length - 2];
+            mrzLine2 = longLines[longLines.length - 1];
+        } else if (cleanedLines.length >= 2) {
+            mrzLine1 = cleanedLines[cleanedLines.length - 2];
+            mrzLine2 = cleanedLines[cleanedLines.length - 1];
         }
     }
 
     if (!mrzLine1 || !mrzLine2) return null;
 
-    // Pad or trim to 44 chars just in case (OCR might miss trailing <)
-    mrzLine1 = (mrzLine1 + '<'.repeat(44)).substring(0, 44);
-    // Don't truncate mrzLine2 just yet, we'll use regex.
+    // Clean Line 1 of common OCR mistakes for the '<' separator ONLY if they are very long sequences
+    mrzLine1 = mrzLine1.replace(/[CLSK]{5,}/g, match => '<'.repeat(match.length));
 
-
+    // We don't blindly pad yet, we extract as is
     try {
         // Line 1: P<ISSLASTNAME<<FIRSTNAME<<<<<<<<<<<<<
-        const issuingCountry = mrzLine1.substring(2, 5).replace(/</g, '');
-        const namesPart = mrzLine1.substring(5);
-        const nameSplit = namesPart.split('<<');
+        let issuingCountry = 'N/A';
+        let namesPart = mrzLine1.toUpperCase();
+
+        // Strip prefix (e.g. P<USA, P<FRA, V<GBR)
+        const prefixMatch = namesPart.match(/^[^PVA<]*([PVA])[<SKLCO0]?([A-Z<]{3})/i);
+        if (prefixMatch) {
+            issuingCountry = prefixMatch[2].replace(/</g, '');
+            namesPart = namesPart.substring(prefixMatch[0].length);
+        } else {
+            // Strict fallback
+            issuingCountry = namesPart.substring(2, 5).replace(/</g, '');
+            namesPart = namesPart.substring(5);
+        }
+
+        // Tesseract often reads trailing <<<<<< as LLLLLL, SSSSSS, CCCCCC, KKKKKK.
+        const paddingMatch = namesPart.match(/[SCLK]{4,}/);
+        if (paddingMatch) {
+            namesPart = namesPart.substring(0, paddingMatch.index);
+        }
+
+        // Find padding: < repeated 3 or more times. Chop everything from there to the end.
+        const paddingAngleMatch = namesPart.match(/<{3,}/);
+        if (paddingAngleMatch) {
+            namesPart = namesPart.substring(0, paddingAngleMatch.index);
+        }
         
-        let lastName = nameSplit[0] ? nameSplit[0].replace(/</g, ' ').trim() : '';
-        let firstName = nameSplit[1] ? nameSplit[1].replace(/</g, ' ').trim() : '';
+        // Strip non-alpha trailing noise
+        namesPart = namesPart.replace(/[^A-Z]+$/, '');
+
+        let lastName = '';
+        let firstName = '';
+
+        if (namesPart.includes('<<')) {
+            const nameSplit = namesPart.split('<<');
+            lastName = nameSplit[0].replace(/</g, ' ').trim();
+            firstName = nameSplit.slice(1).join(' ').replace(/</g, ' ').trim();
+        } else if (namesPart.includes('<')) {
+            const firstAngle = namesPart.indexOf('<');
+            lastName = namesPart.substring(0, firstAngle).replace(/</g, ' ').trim();
+            firstName = namesPart.substring(firstAngle + 1).replace(/</g, ' ').trim();
+        } else {
+            // Tesseract missed the double << entirely. Look for common broken separators
+            const separatorMatch = namesPart.match(/SS|LL|CC|KK/);
+            if (separatorMatch) {
+                const sepIndex = separatorMatch.index!;
+                lastName = namesPart.substring(0, sepIndex).replace(/</g, ' ').trim();
+                firstName = namesPart.substring(sepIndex + 2).replace(/</g, ' ').trim();
+            } else {
+                lastName = namesPart;
+            }
+        }
+        
+        // Strip OCR padding characters that got attached to the end of the name
+        firstName = firstName.replace(/[SCLK]+$/, '').trim();
+        lastName = lastName.replace(/[SCLK]+$/, '').trim();
         
         // Capitalize nicely
         const formatName = (n: string) => n.split(' ').map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join(' ');

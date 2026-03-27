@@ -1,0 +1,780 @@
+
+====================
+FILE: WhatsApp Image 2026-03-15 at 14.47.17.jpeg
+--- RAW OCR ---
+Ba 7 — — ey —
+& -— -
+! Sa —— Wrens Tapermpce.
+ey 7 Opontbe / Ds=meaesinniiie Oper - Obseranion:
+3 pr < § Tass
+= LJ u
+iv ¢ 3 > FY <
+rt A 2 -= #8 Fy
+eee W@W 4 :
+Al , 35 FEN RES spsa0s J 1
+es . 2 $9 . aE b
+- - . = Ray »» y Ed
+Ar y FIV a Rasy 2 4
+’ g a Wn, a] x X45 TS ava 4
+TL Beg 4 a ell 1 A 4
+=k =a i . tig Dosen 4
+EES Sa er cra
+CEE ae ae EE ge
+= ps =o
+TT | aay
+§ pasipassporypPassepoit Eire/ireland/Irlande a
+J SGHAS/TYPE/TYPE TIR/COUNTRY/PAYS +as wim passvont woiwo. rasseront 5 Ee
+1 P IRL LT2430197 £. 4
+1 SLOTNNE/SURNANE/ NOK Fo -)
+SOKUNBI ihe
+He
+| = Ae
+EEE NIvi OLUFENI
+EIREANNACH/IRISH 13 SA/NOV 1997
+| M BAILE ATHA CLIATH/DUBLIN
+| 4 3 BATA E1S1NA(DATE OF 18SUE/PATE DoE GRLIVRANCE 8 AS PEIDHMDATE OF EXPIRY] DATE DEXPIRATION
+IRL 10 AIB/APR 2024 09 AIB/APR 2034
+Bo aksimmboRiviATORIT
+0ifig na bPasanna,
+r Baile Atha Cliath 4
+1 sil passport office, Dublin
+N P<IRLSOKUNBI<<N 1Y J COLUFERI<LLLLLLeeeeeeeeess | -
+LT24301974IRLIT1 14 5 BM3404090<LLLLLLLLLLeLech -
+Y .
+N
+~
+
+--- PARSED ---
+null
+
+====================
+FILE: WhatsApp Image 2026-03-24 at 15.37.55.jpeg
+--- RAW OCR ---
+B
+
+=
+
+Joc:
+
+ol
+
+sure! Sgnoture du total GION
+
+;
+
+oh _
+
+SSEPORT P GBR 120352752 A ot
+
+p LOCKLEY ALY
+
+YS MASON er
+
+a BRITISH CITIZEN 06/12/99 gan
+
+- § 06 DEC /DEC 99 LE
+
+y 2 M LIVERPOO ;
+31 L JUIL 20 HMPO
+
+7a ‘WIL 30 i
+
+RLOCKLEY <<< LLL LLL LLL LLL LLL <a
+
+527527GBRY 061M3007310<<<<<<<<<<<<<<0
+
+AANAAA | | | 4
+
+--- PARSED ---
+{
+  "firstName": "Lllllllllllllll A",
+  "lastName": "Ley",
+  "gender": "Masculino",
+  "birthDate": "73/00/NaN",
+  "passportNumber": "527527GBR",
+  "nationality": "061",
+  "passportExpiry": "<</<</NaN",
+  "passportIssuanceCountry": "OCK"
+}
+
+====================
+FILE: WhatsApp Image 2026-03-24 at 15.37.56.jpeg
+--- RAW OCR ---
+/ pr
+/ 7 i
+=» fs
+PP NLD NUHB7DsHg
+Yildiz
+Dilan Bergin" Be
+Srk= 02 MEIMAY 1555 ON eicriondse
+5 iE Amsterdam ¥ V/F
+Th Phan #4 REE 2 Datum van agit Date of asuq Date do dbiyrance wide cu
+sar B Soe (REC a5 - A 315376
+Ee DEC/DEC 3035 ogy) Amstelveen
+190 RY
+: Br A LANBERnccccrcqececesesetas
+NUHB7D5H50NLD 950505 F351 ghbdbob Lid {3 PURE
+
+--- PARSED ---
+null
+
+====================
+FILE: WhatsApp Image 2026-03-25 at 14.26.16.jpeg
+--- RAW OCR ---
+Page réservée aux autorités compétentes
+pour délivrer le passeport
+Pagina reservada a las autoridades competentes
+para expedir el pasaporte / Forbeholdt de posudstedende
+myndigheder / Amtliche Vermerke
+TIpoopiZetas yia Tig apyEG oY £1val GPHODIEG ia Ty
+£xdoan tou dlaBarnpiou / Page reserved for issuing authorities
+Leathanaigh in dirithe d"Udardis eisitind
+Pagina riservata all‘autoritd Se
+Opmerkingen van bevoegde instanties pis
+Pagina reservada os entidades competentes ST
+para emitir o passaporte / Varattu passinantoviranomaisille ula”
+Forbehdllet utlomnande myndighet ilk
+Ce passeport contient un composant électronique. Signature du titulaire/Holder's signatu ie
+Il convient den prendre soin, et en particulier Ty feed
+de ne pas le plier, le perforer, |exposer a des températures 7
+extrémes ou a une humidité excessive. 711.2 SAT
+7 SE
+his passport contains sensitive electronics srg
+PASSEPORT Type Code du !
+PASSPORT P RA 25D149388 3) Co
+Nom. a
+ZEMRL a=
+Prénoms. [aR H §
+Amine LTR
+— Nationalité /i ® lle leur d LAY
+£7 Franca M 165m MARRON RA
+. a 12 03 200% LE HAVRE f
+N I
+H : i hice omic FRAN
+VL al 02 062025 HGNC
+et 95520 OSNY HN
+Ba Altar FRANCE ws
+a Si, Préfecture du Val-
+gpa d’Olsel GERGY FONTOISE A
+> =! Date "expiration. Cote of gig Ah
+Pp
+FS 01062035 tiny
+TL CGPUBIAE TAANCIS4 uF | AEPUIOUR PHAN FALE ih
+PSFRAZEMRISSAMINESLLLLLLLLLLLLLLLLLLLLLLLKLKL
+Q<¢
+25D01493882FRA0403128M3506019<<<<<<<<<<<<<<!
+Lv. rpm i
+\ RNY Wiig TTTTIIRISs sei
+aildg diary, VITA IL
+
+--- PARSED ---
+{
+  "firstName": "Desconhecido",
+  "lastName": "493882fra0403128m3506019",
+  "gender": "Masculino",
+  "birthDate": "12/03/2004",
+  "passportNumber": "25D0149388",
+  "nationality": "França",
+  "passportExpiry": "01/06/2035",
+  "passportIssuanceCountry": "D01"
+}
+
+====================
+FILE: WhatsApp Image 2026-03-25 at 14.32.47.jpeg
+--- RAW OCR ---
+REPUBLIQU E FRANCAISE
+PASSEPO RT Type/Type Code du pays p Passeport n® /Passport no
+fer 5 P FRA 25EH59081 is
+gma oc TANGUYE De LI
+\  Gabin, louis, Valentin seca
+ol Tera | aeety - 2
+Ci - ch Nationalit deat amn ) Bw (3) Taille/Height (12). Couleur des yeux/Colou of eyes SU
+a | Francalle © M 185m  GRIS-VERT NE
+ - : wie ¥ Date de nlssance/ ole dFbiry (4) Liew de naissance/Place of birth (4 ee
+F - ER 1110102006 © LORIENT Sik
+Cu ok S| Dave de déllvance Dore of ste (7). LE Domicile/Residence (11 hia
+i Sie. Bopmals a. 7 RUE DE POULBRETION
+Fra RRR 1A
+Lava ; Autorité/Authority (9) eye Shiie
+nse ie Préfecture du MORBIHAN Vannes Sa
+wo Gis BS he 2 2 hee
+i ry i: Date d"expiration/Date of expiry (8) hi
+5 ERR Sa 4 ;
+/ EPUBLIOUE FRANGAISE iF REPUB IoUE FRANCAISE — 22 07 2035 ces 3
+: <
+P<FRATANGUY<<GABINKLOUISKVALENTIN<<<L<L<LLL<LK
+<<<06
+25EH590811FRA0610102M3507223<<<<<<<<<<<
+
+--- PARSED ---
+{
+  "firstName": "Gabinklouiskvalentin",
+  "lastName": "Tanguy",
+  "gender": "Masculino",
+  "birthDate": "10/10/2006",
+  "passportNumber": "25EH59081",
+  "nationality": "França",
+  "passportExpiry": "22/07/2035",
+  "passportIssuanceCountry": "França"
+}
+
+====================
+FILE: WhatsApp Image 2026-03-26 at 15.29.31.jpeg
+--- RAW OCR ---
+Ba 7 — — ey —
+& -— -
+! Sa —— Wrens Tapermpce.
+ey 7 Opontbe / Ds=meaesinniiie Oper - Obseranion:
+3 pr < § Tass
+= LJ u
+iv ¢ 3 > FY <
+rt A 2 -= #8 Fy
+eee W@W 4 :
+Al , 35 FEN RES spsa0s J 1
+es . 2 $9 . aE b
+- - . = Ray »» y Ed
+Ar y FIV a Rasy 2 4
+’ g a Wn, a] x X45 TS ava 4
+TL Beg 4 a ell 1 A 4
+=k =a i . tig Dosen 4
+EES Sa er cra
+CEE ae ae EE ge
+= ps =o
+TT | aay
+§ pasipassporypPassepoit Eire/ireland/Irlande a
+J SGHAS/TYPE/TYPE TIR/COUNTRY/PAYS +as wim passvont woiwo. rasseront 5 Ee
+1 P IRL LT2430197 £. 4
+1 SLOTNNE/SURNANE/ NOK Fo -)
+SOKUNBI ihe
+He
+| = Ae
+EEE NIvi OLUFENI
+EIREANNACH/IRISH 13 SA/NOV 1997
+| M BAILE ATHA CLIATH/DUBLIN
+| 4 3 BATA E1S1NA(DATE OF 18SUE/PATE DoE GRLIVRANCE 8 AS PEIDHMDATE OF EXPIRY] DATE DEXPIRATION
+IRL 10 AIB/APR 2024 09 AIB/APR 2034
+Bo aksimmboRiviATORIT
+0ifig na bPasanna,
+r Baile Atha Cliath 4
+1 sil passport office, Dublin
+N P<IRLSOKUNBI<<N 1Y J COLUFERI<LLLLLLeeeeeeeeess | -
+LT24301974IRLIT1 14 5 BM3404090<LLLLLLLLLLeLech -
+Y .
+N
+~
+
+--- PARSED ---
+null
+
+====================
+FILE: WhatsApp Image 2026-03-26 at 18.02.17 (1).jpeg
+--- RAW OCR ---
+Kah ha & |
+q ATS Af iff
+BR ( 7 he Pi y
+RB Rg L- 5 No
+Ch eis Sha he Lo
+AY Te 3a
+1 Fasstromr UNTITRIDRSF PAV TRS (DFR AITO CATON
+BB rasarorTe nin lO ae 3, vn
+ER, ae 674896869
+0) ETEREET NEMETSKY
+EN ied 2 rven Hames /Prénoms / Noro:
+bic ~~ ABRAHAM
+i £ Watigraity / Navonalié / Hacionahdad
+. i | UNITED STATES OF AMERICA
+NE -A De 1 tn te a rage {Fs oer
+5 + Gale TF Fre 3 $ =
+ie CT birth Le de raisaas@ALagal oe nacimierto Sex/ Sone (5x5. %
+a9 “NEW YORK, USA: Mf
+# . ue lO ct rt. Ahly (ork [Rnd
+el 3 08 Mar 2022 A + United States 5 |
+- BLE Cll nomes onan Department of State"
+SEE PAGE 27.
+| PUSANEMETSKY<<ABRAHANSCSCLCLLLLLeeeeeses :
+| 674896869" ~19606106M3203075691686277<704610 -
+
+--- PARSED ---
+null
+
+====================
+FILE: WhatsApp Image 2026-03-26 at 18.02.48.jpeg
+--- RAW OCR ---
+Tl LTA
+Nl ge oy
+> A OW i
+4 Brenna i") |} 3 1 { 24) 2
+—_— ¥IGNATURE OF BEARER /siGvam E27 RE / FIRMA DEL TITULAR =
+PASSERGRY UNITE DESTAVITRE 05m myo te
+PASAPORTE
+ea Tope Type / TRRNORR Loot Foi is gis
+. US 0 TET 674896868 :
+Ba P NEMETSKY
+7% Gienlames / Prénoms  Nogibres
+7 ‘SARAH
+: = Ea / Nationalté -Nagionalidad:
+Gt A UNITED STATES OF AMERICA bg A
+He - \ Oaloolith Date 0 naked fees oipirto Se
+of ole TR. i EE
+_ A 4 se |
+4 = _ i Ui chs oé pedi Ne don Jaiforisas___
+a 7 oma doz was | United States
+He | Dte of arson Dt oii Fecha dec b er
+07 Mar 208° Department of State
+- Eosauimets ions Shi Anais ix A
+A SEEPAGE27 7
+; TS sete ie]
+: -
+| P<USANEMETSKY<<SARAHSSSSCCL<<<<<<<<<<<<cc<<
+4 = =
+674 8968688US™ sus “172F3203075691 686276<893658
+
+--- PARSED ---
+null
+
+====================
+FILE: WhatsApp Image 2026-03-26 at 18.04.25.jpeg
+--- RAW OCR ---
+Cn ST JERR & Eg
+{a Ww ON NPA | Ji
+fi), RRS EEE pe FS
+Eo hd ro :
+
+i | 5 p
+SIGNATURE OF = 2
+Smo pEIERUIN IY 2D) STINE OIF ANMTBRICA
+TopeTypeMipo  CodelCodaiCotive Passport No oda Ahoosis”
+Usa RT TENT
+NEMETSKY § ‘Sa
+pm Given names/PrénomsiNombras. R, FRR)
+Po HENNY B, 5 2H
+7 UNITED STATES OF pA 4 a
+; TRE a
+i 13 JAN 2023 Task iE
+Be ill 25
+saunas Lid Wo: 5
+16 FEB 2028 mn 2d
+UNITED STATES DEPARTMENT OF STATE 5)
+P<USANEMETSKY<<KHENNY<<<KKLLLLLLLLLLLLLLLLLLLK
+AD43451261USA2301136F2802161719787785<112070
+
+--- PARSED ---
+{
+  "firstName": "Khenny",
+  "lastName": "Nemetsky",
+  "gender": "Feminino",
+  "birthDate": "13/01/2023",
+  "passportNumber": "AD4345126",
+  "nationality": "Estados Unidos",
+  "passportExpiry": "16/02/2028",
+  "passportIssuanceCountry": "Estados Unidos"
+}
+
+====================
+FILE: WhatsApp Image 2026-03-27 at 10.56.46 (1).jpeg
+--- RAW OCR ---
+— Cate sess
+52 rae RBar BR MB toxftad comphtentes @
+pour adiver le son 08
+lina reservada 0 los autoridades competentes @ [ee
+para expedir el pasaporte / forbeholdt de posudstedende fenshes
+myndigheder / Amtliche Vermerke | Il, i Wing
+meta i oh
+xboan tou Biasampiou / Page reserved for ssuing authorities i sili
+Credle ii ir fees
+paginariservato allautoriea. | [111 AA { | a [EE
+Opmerkingen van ie nstonties. \ sii Ge
+Pagina reservada ds entidades competentes. ANA \ \ WES ts
+para emitiro passaporte / Varattu passinantoviranomaisille | ||| 11111 SEE
+Forbehdllet utlamnande myndighet. Hin) h ez Er
+/ J
+(lt [ A ri
+\ fie EE
+Ce passeport contient un composant électronique. Signature du titulaire/Holder s signature SLE PERE
+: 1 convient den prendre soin, et en particulier FE 2s CE
+de ne pas le plier, le perforer, I"exposer a des températures 15 yi
+extrémes ou 3 une humidité excessive. iii
+(isn
+This passport contains sensitive electronics, MOTE ll Ee Jess
+be For best performance please do not bend, { 2a
+: perforale orexpose to extreme temperallres =
+or excess moisture: iy ei Sa
+3 REPUBLIQUE FRANCAISE Es
+23 PASSEPORT | mei | cosines ren i Ee
+EB PASSPORT BERETA RR 24FK62414 3 Bins
+= ha) i se ER
+* Nom/Sumeme ig en
+5 sre sense. PROUSTIED: BOUALIS |
+ee ali / el
+il ms a ooh
+(i 4 a il es roel] RE
+HH = | Natoraite Reson (Ee Le Couleur des yeux Colour of eyes (3) Bh
+ied | Rrarcar en ar 1,89m | VERTE TEL
+Ji: bode sans BAY) is de raisncs cob 6) seal) EE
+i | 20071984 VERNEULL-SUR-AVRE Jit
+57; Jo one de ance Dt ||| ome esd 1) lr NE
+fh P- | 12087 826 lid il || ALWASL - CITY WALK RESIDENTIAL Sd
+tl fret TTT | rua ss ton NES
+{ie & Auortésautoriy 9) | A A ARE CEO
+Ge Fm sere TUE
+dined lid ota IY sree TS
+Ch i 082034 | i i ae
+at a Mim ml i i fini / ihn
+i fi fit lie | x
+Het if ili i de t
+J :
+
+A SHINY INWBHBIEGG (3
+P<FRAPROUSTSSCHARLOTTE<GABRIELLEC<<<<<<<<< |
+THE HEI RTT ’
+PRL Sa EE HEH :
+24FK624146FRAB407203F3408113<<<<<<<<<<00  ¢
+JRIER ET HUEE PERO RETR HEE >
+
+--- PARSED ---
+{
+  "firstName": "Desconhecido",
+  "lastName": "Proustsscharlotte Gabriellec",
+  "gender": "Feminino",
+  "birthDate": "20/07/1984",
+  "passportNumber": "24FK62414",
+  "nationality": "França",
+  "passportExpiry": "11/08/2034",
+  "passportIssuanceCountry": "França"
+}
+
+====================
+FILE: WhatsApp Image 2026-03-27 at 10.56.47 (1).jpeg
+--- RAW OCR ---
+/ Lhd rE a aad QF TE Eo Sas SY MELEE i ¢ pee TTL beter
+Page réservée aux autorités compétentes Sa
+pour délivrer le passeport (
+Pégina reservada a los autoridades competentes 03
+para expedir el posaporte / Forbeholdt de posudstedende
+myndigheder / Amtliche Vermerke
+TipoopiZetar yia 1g apxeG Tou Eva) GRIOIES 1a ty: 1
+Exo tou Slasatplou / Page reserved for issuing authorities mY
+Leathanaigh in dirithe dats elsiind ir f i
+Pagina riservata all'autoritd ) wit aa
+Opmerkingen van bevoegde instanties \ Ei
+Pagina reservado &s entidades competentes AA \ Ee
+para emir o passaporte / Verattu possinentoviranomasile || I ;
+Forbehdlet utiomnande myndighet. J / hel
+
+Ce passeport contient un composant électronique. Signature du titulaire Holder's signoture. Te .
+Ii convient d’en prendre soin, et en particulier SE 1 HE
+de ne pas le plier, le perforer, I'exposer 3 des température [ 14
+extrémes ou 4 une humidité excessive. | Teles
+This passport contains sensitive electronics. ial : bs
+For best performance please do riot bend, Fre
+perforate or expose to extreme temperatures i Sed
+OF excess moisture, 1
+|
+TE AT SA A I Ea Sree ©
+REPUBLIQUE FRANCAISE
+PASSEPORT vee Code du pays Cova oe respon ato AE
+PASSPORT P FRA 2AFKGLA0S I 8 Nag
+Nom/Surorme nia
+“w+; BOUA : / i
+\ adem Wilemel sna
+Tol © RR :
+A \ A SH ry A S FC Tobe ee 02) Couleur des yeux Colour of eyes (13) IY
+Franca A | 149m MARRON RAE
+owes re scot A) teu de raissance pice of Be (4) Ahi
+i , 2903201 Rh RMONT'))))) li
+S. <p 111 / id!
+Es 5 2 082024 i THR | soo ho
+3 sy) Bi ets on HH:
+5 | | Blu cenenat > ER) i AY A See
+ . | oncom il i ji il ot
+LL ER 11 08 2029 / i i Hid
+li ii we i.
+{ith Hetil fil
+a
+P<FRABOUALI<SADEMLLLLLLLLLLLLLLLLLLLLLLLLRRKL
+24 FK624054FRA1503298M2908111<<<<<<L<LLL<LL02
+
+--- PARSED ---
+{
+  "firstName": "Desconhecido",
+  "lastName": "24054fra1503298m2908111",
+  "gender": "Masculino",
+  "birthDate": "29/03/2015",
+  "passportNumber": "24FK62405",
+  "nationality": "França",
+  "passportExpiry": "11/08/2029",
+  "passportIssuanceCountry": "FK6"
+}
+
+====================
+FILE: WhatsApp Image 2026-03-27 at 10.56.47.jpeg
+--- RAW OCR ---
+I St Se Pe RRR a RRS SR Sk A A DS RS RTH 0d Poy Poy
+Ca EEC RR
+"°° Page réservée aux autorités compétente: BRR
+ome S| CAAT
+Ji pour délivrer le passeport ~ ERE
+SHES Pagina reservada a las outoridades coy SAR
+Lae Ta petentes Ne i
+Ry para expedi el posaporte / Forbeholdt de posudstedende 103 i Sok
+a myndgheder / Amtliche Vermerke SN BA
+= Toopigaar a yi ou Sha iis my ill Be Os
+& 1 tou SiaBatnpiol / Page res Ii ii lll f py
+i Leanranasy ln Arse oa CE ee vo
+x Pagina riservata all‘autorita, (ite fit i fi 7 hess
+Opmerkingen Silda \ \ oe
+; menudo des competentes WN = i i
+ir 0 passaporte /\Varattt i i isi \ \ (A EE
+Forhehalen ama ji i Ee
+\ \\ ies a
+Ce passeport conti \ i (HR fi Koes
+i ovine hes id (Empat Signature du titulaire/Holder's sinoture HE La
+le ne pas le plier, le perforer, I y / Er EE
+=a dition hi Z fers
+/ i a REE
+This passport contains sensitive electronics, : Ae
+= fe
+perforole orexpose to extreme temperatures. [£ ie
+OLE OBIE. es
+: \ AE SE
+EEE
+2 EL fo
+5 7 CESIER 2 ak Ry
+ok REPUBLIQUE FRANCAISE ud
+5 PASSEPORT peat ee de Passport ni /Rsport 0 nS
+g ENA pIRHIRITINERANN 24FK62406 A SS
+E> J i Nom Simone 0) SUE | \ IME NT TEE
+Ji BouAL rn
+ES EE iff re
+J SET rss 7 “oe CER
+iiss) gl rénoms Ciaans ©) i / h He. Serie
+ities nama RE ( fi See
+ities Vo ly dl i NEE
+i EEE do meee LTE
+iy i Pt Francaise BRE || 174m | MARRON ui REE
+pr ome ce mga emis eben) Lu)
+pi: 03102010 1 ERMONT tly 2
+Ji: EE Le do or ay Ris
+fi £0 Wait tet L111] omicie/iesigeace 1) inl Ns
+is pill 1208 2024 [1 As cmv son Sl 3
+i TT ee “i. (HE
+ - £0 Rei LL aw ss IR i
+Am Blarameiotianee NN
+Ho Sommers) Tet
+SEE. "7 | nn ii
+mm TI, fii / i
+gm
+fl HH LH
+PERIBLISN URSA pi \ 1s
+P<FRABOUALI<SHAL MACLLELLLELLLRRLLLREReses
+Bi i MRE
+ECD N 1c’
+24FK624065FRA1010031F2908111<<LL<<LLLLLLLL<08
+if HE,
+(HHI
+QL rR EP LB EA ; y ’
+
+--- PARSED ---
+{
+  "firstName": "Ll",
+  "lastName": "24065fra1010031f2908111",
+  "gender": "Feminino",
+  "birthDate": "03/10/2010",
+  "passportNumber": "24FK62406",
+  "nationality": "França",
+  "passportExpiry": "11/08/2029",
+  "passportIssuanceCountry": "FK6"
+}
+
+====================
+FILE: WhatsApp Image 2026-03-27 at 10.56.48.jpeg
+--- RAW OCR ---
+a RT i i IE iI rE ry Ry [Is avery mrarryeee rrr reree= 1,
+% Ril
+Page réservée aux autorités compétentes LR
+| pour délivrer le passeport 08 RL
+| Pdgina reservada a Jos outoridades competentes @ hi
+| para expedir el posaporte / Forbeholdt de pasudstedende gel
+| myndigheder / Amtliche Vermerke di i
+TIpoopiZetal ya Tig apYeG Tou Val apiiodIés ia Ty. ni i Ji 22
+£xoon tou SlaBatnpiou / Page reserved for [suing authorities. HHH i 5
+Leathanaigh in diithe dudards eisiina de fli a
+Pagina riservata all‘autoritd HL \ Hi ARRAS Sis i,
+Opmerkingen van bevoegde instonties Mi ® pe ela
+Pagina reservado ¢s entidades competentes A \ WT WE oy
+para emit o passaporte /\Varattu passinantoviranomaisile ||| ||| If ii fii Hee
+Forbehdllet utlamnande myndighet. il i! Wi lh ess ro 2
+f fie i i thi lee
+i Ee
+Ce passeport contient un composant électronique. Signature du thulaire ode berate ct EL
+Il convient d’en prendre soin, et en particulier SEA 7 Ait
+de ne pas le plier, le perforer, I'exposer a des températures mill i
+extrémes ou 3 une humidité excessive. { | Lr BE
+This passport contains sensitive electronics. Li EE
+For best performance please do not bend, | C Wl jes an
+perforate or expose to extreme temperaties. | © mere. el
+Of. excess moisture. RITES BE bets
+Heer
+EE PE
+IT fol
+isi re pr cms rm GR
+TTT TT iE
+REPUBLIQUE FRANCAISE i
+\ It XY TRIED
+PASSEPORT Type/Tipe Code du pays County ce passeportt Peper 0 | fr
+\ 62407 i Ea
+PASSPORT PARI ERA \ ZAR a
+Nom/Surmame (1) & i iit ok
+— BOUALLA Y Trine
+Ea lie i wi
+7 go ji se i iti LL
+Le OE i 5
+} Tl hii oe San) Toe oh 2) Cole ds Ca fe 0) RI {
+i || Francaise | ~M 157m | MARRON AR §
+| | pe ci
+Ri en as Oh RIS
+Cf i 27 01202 i HAR
+i | poe de delgamce EERE il ||| Abo! cry WA ResmETAL A
+[iad 7 1208 seo deen
+ih ER | HRI 8
+i Jomo Ee .
+ain, [| Bwewsimana | Hi
+ie 5 tu d expiration Date 0 8 HHI
+aad mine mi Jib lig
+Se :
+7 TL HE
+AE fi fi fl fifth
+i HHI HI LL \
+pe EERE
+he UALI<<IMN ANCES LLRLLLRELRRLLeeses :
+P<FRABOL ALIS Med (hd Ti
+BE Ay <<<<L<LLLL<LLL<<00
+ IN7AERA 7 08111
+24FK624076FRA1201273MH29
+| wy |
+\ TT -
+
+--- PARSED ---
+null
+
+====================
+FILE: WhatsApp Image 2026-03-27 at 10.56.57.jpeg
+--- RAW OCR ---
+Sg tama ee PIERS
+
+“| page réservée aux autorités compétentes a Gani
+
+pour délivrer le passeport 08 per
+
+SU pégina reservada a los outoridodes competentes 1 Sasa
+
+ed para expedir el pasaporte /. Forbeholdt de pasudstedende 5 Eins
+
+Ly myndigheder / Amtliche Vermerke I azn,
+
+: TpoopiZeta yia 1 Gpyés HOV Elva GoUODIES ia env mn) / pees
+
+S xBoon tou Siaarmpiou / Page reserved for ssuing althorttes 11 1111] Him ii RLS Xe
+
+: Leathanaigh In Girithe didaras eisiind Att f Ce SEES
+
+$e Pagina riservato all‘autoritd HR \ col EE
+
+Opmerkingen van bevoegde instonties AHA \ WeeEd
+
+A Pdgina reservada és entidades competentes EEA mr
+
+para emitiro passaporte / Varattu passinantoviranomaisle | ||| 1111} 11) \ Le
+
+: Forbehdlet utlémnande myndighet. i) I hm | / di
+
+i lr
+
+: (te fi G11 SE
+
+; AN A \ es EE
+
+Ce passeport contient un composant électronique. | || Signa Hu srullre Holders snare || 177n [tote
+
+i convient d’en prendre soin, et en particulier ee ST av
+
+de ne pas le plier, le perforer, |’exposera des températures ii) |i: eld
+
+extrémes ou 3 une humidité excessive. ii Er
+
+Ths passport conto srsitve electronic. | | Pr MR
+
+For best performance please do not bend, [od YR
+
+perforate Or expose {0 extreme temperatures, fois bf Te FE
+
+; or excess moisture: | Hal 3
+
+J a 9:28
+
+AFT at
+
+Se gr is pL GRELCR el OSA o i
+
+; REPUBLIQUE FRANCAISE | © fix
+
+: PASSEPORT Typesiipe Cade du py Con a Passeport nt FEO. SL “
+
+PASSPORT, EAR ERA RN 23091 % po
+
+\ a RN So
+
+1 mines) 11) ans) EE
+
+Ue asa) Hi
+
+TEE mem
+
+IT a > Nabi dn (0 i iid el
+
+fl vai 0 (ae
+
+HE BEET) | fl a To spain Couleur des yen Cour ates 3) 34 és
+
+is ARIE | LAN \ \ I
+
+ie i ‘Fran aise jis. LM i 179m | MARRON. RR 2
+
+I Dh eo URN
+
+| ow iss pouch A
+
+J d ir midie/esierce (1) a
+
+i pi! 0 il fla CITY WALK RESIDENTIAL MERE
+
+J L(Y mn WW EY A a
+
+: + CARN WR
+
+kK: © TE i HY HN A A AR uns SN
+
+a L CONSULAT GEN I Hi i HIRT HN
+
+PR ri Ld fil I ot
+
+= weszew HH) ie
+
+" adam ura Ler HHT ITT PERRY ;
+
+ii i iil)
+
+P<FRABOUALI<SNABILSLLLSLLLLLLLLLLLLLLLRLR |
+23FV191118FRA7712038M340811 3<<<<<<L<LL<<k02
+
+--- PARSED ---
+{
+  "firstName": "Desconhecido",
+  "lastName": "91118fra7712038m3408113",
+  "gender": "Masculino",
+  "birthDate": "03/12/1977",
+  "passportNumber": "23FV19111",
+  "nationality": "França",
+  "passportExpiry": "11/08/2034",
+  "passportIssuanceCountry": "FV1"
+}
