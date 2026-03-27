@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { toast } from "sonner";
-import { parseFlightMessage, ProcessedData } from '@/utils/message-parser';
+import { parseFlightMessage, ProcessedData, PassengerData } from '@/utils/message-parser';
 import Tesseract from 'tesseract.js';
 import { parseMRZ } from '@/utils/mrz-parser';
 
@@ -83,6 +83,37 @@ export default function BookPage() {
         toast.success("Copiado!");
     };
 
+    const checkPaxHistory = async (passengersToCheck: PassengerData[]) => {
+        try {
+            const names = passengersToCheck.map(p => `${p.firstName} ${p.lastName}`.trim());
+            const res = await fetch('/api/sheets/check-pax', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ passengers: names })
+            });
+            const data = await res.json();
+            
+            if (data.success && Object.keys(data.data).length > 0) {
+                setResult(prev => {
+                    if (!prev) return prev;
+                    const updatedPassengers = prev.passengers.map(p => {
+                        const fullName = `${p.firstName} ${p.lastName}`.trim().toUpperCase();
+                        // Also try format without spaces in case Tesseract combined them or different parsing
+                        const foundAccount = data.data[fullName];
+                        if (foundAccount) {
+                            return { ...p, previousAccount: foundAccount };
+                        }
+                        return p;
+                    });
+                    return { ...prev, passengers: updatedPassengers };
+                });
+                toast.success('Alguns passageiros já possuem emissão no histórico!');
+            }
+        } catch (e) {
+            console.error('Falha ao verificar histórico:', e);
+        }
+    };
+
     const handleProcess = (mode: 'full' | 'simple') => {
         if (!input.trim()) {
             toast.error("Insira uma mensagem para processar");
@@ -94,6 +125,9 @@ export default function BookPage() {
             setResult(data);
             setOutputMode(mode);
             toast.success(`Dados processados (${mode === 'full' ? 'Completo' : 'Simplificado'})`);
+            
+            // Verificação automática de Pax Async
+            checkPaxHistory(data.passengers);
         } catch (err) {
             toast.error("Erro ao processar mensagem");
         }
@@ -148,6 +182,8 @@ export default function BookPage() {
                         infants: current.infants + newInfants
                     };
                 });
+                
+                checkPaxHistory(extractedPassengers);
             }
         } catch (err) {
             console.error(err);
@@ -181,7 +217,11 @@ export default function BookPage() {
         }
 
         const passengerBlocks = data.passengers.map(p => {
-            return `\nDADOS DO PASSAGEIRO\n➔ Primeiro nome: ${p.firstName}\n➔ Último nome: ${p.lastName}\n➔ Gênero: ${p.gender}\n➔ Data de nascimento: ${p.birthDate}\n➔ Número do passaporte: ${p.passportNumber}\n➔ Nacionalidade: ${p.nationality}\n➔ Data de validade do passaporte: ${p.passportExpiry}\n➔ País de emissão do passaporte: ${p.passportIssuanceCountry}`;
+            let block = `\nDADOS DO PASSAGEIRO\n➔ Primeiro nome: ${p.firstName}\n➔ Último nome: ${p.lastName}\n➔ Gênero: ${p.gender}\n➔ Data de nascimento: ${p.birthDate}\n➔ Número do passaporte: ${p.passportNumber}\n➔ Nacionalidade: ${p.nationality}\n➔ Data de validade do passaporte: ${p.passportExpiry}\n➔ País de emissão do passaporte: ${p.passportIssuanceCountry}`;
+            if (p.previousAccount) {
+                block += `\n➔ Emissão Anterior: ${p.previousAccount}`;
+            }
+            return block;
         }).join('\n');
 
         parts.push(passengerBlocks);
