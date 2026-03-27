@@ -35,7 +35,7 @@ function parseDate(mrzDate: string): string {
     if (mrzDate.length !== 6) return '';
     
     // Clean potential numbers OCR issues
-    let cleanDate = mrzDate.replace(/O/g, '0').replace(/I/g, '1').replace(/L/g, '1').replace(/S/g, '5').replace(/B/g, '8');
+    let cleanDate = mrzDate.toUpperCase().replace(/O/g, '0').replace(/Q/g, '0').replace(/I/g, '1').replace(/L/g, '1').replace(/S/g, '5').replace(/B/g, '8');
 
     const yearStr = cleanDate.substring(0, 2);
     const month = cleanDate.substring(2, 4);
@@ -65,28 +65,36 @@ export function parseMRZ(ocrText: string): PassengerData | null {
     let mrzLine1 = '';
     let mrzLine2 = '';
 
+    // Regex to match the core MRZ Line 2 structure: Nat(3) + DOB(6) + Check(1) + Sex(1) + Exp(6)
+    // We use a loose digit matcher [\dOISB] because O/0, I/1, S/5, B/8 are common OCR errors
+    const mrz2Regex = /[A-Z<]{3}[\dOISBQ]{6}[\dOISBQ][MF<X][\dOISBQ]{6}/;
+
     // Try finding by strict properties first
-    mrzLine1 = cleanedLines.find(l => l.startsWith('P') && l.includes('<<')) || '';
-    mrzLine2 = cleanedLines.find(l => /[A-Z<]{3}\d{6}\d[MF<]\d{6}/.test(l)) || '';
+    mrzLine1 = cleanedLines.find(l => (l.startsWith('P') || l.startsWith('V') || l.startsWith('A')) && l.includes('<<')) || '';
+    mrzLine2 = cleanedLines.find(l => mrz2Regex.test(l)) || '';
 
     if (!mrzLine1 || !mrzLine2) {
-        // Fallback sequentially
+        // Fallback sequentially (ensure we don't assign the same line to both)
         for (let i = 0; i < cleanedLines.length; i++) {
             let line = cleanedLines[i];
-            if (!mrzLine1 && (line.startsWith('P<') || line.startsWith('P') && line.includes('<<'))) {
+            if (!mrzLine1 && (line.startsWith('P') || line.startsWith('V') || line.startsWith('A')) && line.includes('<<')) {
                 mrzLine1 = line;
-                if (i + 1 < cleanedLines.length) mrzLine2 = cleanedLines[i + 1];
+            } else if (mrzLine1 && !mrzLine2 && line !== mrzLine1 && line.split('<').length > 3) {
+                 // The line right after mrzLine1, or any subsequent line that looks MRZ-ish
+                 mrzLine2 = line;
+                 break;
             }
         }
     }
 
     if (!mrzLine1 || !mrzLine2) {
         // Ultimate fallback
-        for (let line of cleanedLines) {
-            if (line.split('<').length > 5) {
-                if (!mrzLine1) mrzLine1 = line;
-                else if (!mrzLine2) mrzLine2 = line;
-            }
+        const mrzLikeLines = cleanedLines.filter(l => l.split('<').length > 4);
+        if (mrzLikeLines.length >= 2) {
+            mrzLine1 = mrzLikeLines[0];
+            mrzLine2 = mrzLikeLines[1];
+        } else if (mrzLikeLines.length === 1 && !mrzLine1) {
+            mrzLine1 = mrzLikeLines[0];
         }
     }
 
@@ -113,20 +121,21 @@ export function parseMRZ(ocrText: string): PassengerData | null {
         firstName = formatName(firstName);
 
         // Robust Line 2 matching: (Nat 3) (DOB 6) (Check 1) (Sex 1) (Expiry 6)
-        const coreMatch = mrzLine2.match(/([A-Z<]{3})(\d{6})\d([MF<])(\d{6})/);
+        // Note: we use loose digit matchers because Tesseract often misreads 0 as O, 8 as B, etc.
+        const coreMatchMatch = mrzLine2.match(/([A-Z<]{3})([\dOISBQ]{6})[\dOISBQ]([MF<X])([\dOISBQ]{6})/);
         let nationalityCode = 'N/A';
         let dobRaw = '';
         let sexRaw = '';
         let expiryRaw = '';
         let passportNumber = '';
 
-        if (coreMatch) {
-            nationalityCode = coreMatch[1].replace(/</g, '');
-            dobRaw = coreMatch[2];
-            sexRaw = coreMatch[3];
-            expiryRaw = coreMatch[4];
+        if (coreMatchMatch) {
+            nationalityCode = coreMatchMatch[1].replace(/</g, '');
+            dobRaw = coreMatchMatch[2];
+            sexRaw = coreMatchMatch[3];
+            expiryRaw = coreMatchMatch[4];
             
-            const matchIndex = mrzLine2.indexOf(coreMatch[0]);
+            const matchIndex = mrzLine2.indexOf(coreMatchMatch[0]);
             if (matchIndex > 0) {
                 // Everything before the core match (minus 1 for the passport check digit) is the passport number
                 passportNumber = mrzLine2.substring(0, matchIndex - 1).replace(/</g, '').replace(/O/g, '0');
