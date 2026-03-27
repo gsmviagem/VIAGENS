@@ -20,46 +20,46 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: 'Google Sheets não está configurado.' }, { status: 500 });
         }
 
-        // Fetch BASE G:M (G=Pax, M=Conta) or just read BASE!G3:M since we only need pax and account.
-        // Wait, reading a smaller range is faster.
-        // Column G is 0, H=1, I=2, J=3, K=4, L=5, M=6
+        // Column G=Pax names, M=Conta (index 6 from G)
         const rawData = await sheetsService.readSheetData('BASE!G3:M');
 
         if (!rawData) {
             return NextResponse.json({ success: false, error: 'Falha ao ler dados da planilha BASE' }, { status: 500 });
         }
 
-        const results: Record<string, string> = {};
+        // results: { "JOHN DOE": ["CONTA1", "CONTA2", ...] }
+        const results: Record<string, string[]> = {};
         
-        // Normalize search names to upper case
-        const searchNames = passengers.map(p => p.toUpperCase().trim());
+        const searchNames = passengers.map((p: string) => p.toUpperCase().trim());
+        for (const name of searchNames) results[name] = [];
 
-        // Reverse iterate to find the MOST RECENT emission if duplicated
-        for (let i = rawData.length - 1; i >= 0; i--) {
-            const row = rawData[i];
+        for (const row of rawData) {
             if (!row || !row[0]) continue;
             
-            const paxCell = row[0].toUpperCase(); // Column G (Pax names, separated by comma maybe)
-            const accountCell = (row[6] || '').trim(); // Column M (Conta)
+            const paxCell = row[0].toUpperCase(); // Column G
+            const accountCell = (row[6] || '').trim(); // Column M
             
             if (!accountCell) continue;
 
             for (const searchName of searchNames) {
-                // If this search names hasn't been found yet, and cell contains it
-                if (!results[searchName] && paxCell.includes(searchName)) {
-                    results[searchName] = accountCell;
+                if (paxCell.includes(searchName)) {
+                    // Add account only if not already listed (avoid duplicates)
+                    if (!results[searchName].includes(accountCell)) {
+                        results[searchName].push(accountCell);
+                    }
                 }
             }
-            
-            // If we found all of them, break early to save time
-            if (Object.keys(results).length === searchNames.length) {
-                break;
-            }
+        }
+
+        // Remove empty entries
+        const filtered: Record<string, string[]> = {};
+        for (const [name, accounts] of Object.entries(results)) {
+            if (accounts.length > 0) filtered[name] = accounts;
         }
 
         return NextResponse.json({
             success: true,
-            data: results
+            data: filtered
         });
 
     } catch (error: any) {
@@ -67,3 +67,4 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
+

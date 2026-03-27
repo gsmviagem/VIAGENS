@@ -7,7 +7,7 @@ export interface PassengerData {
     nationality: string;
     passportExpiry: string;
     passportIssuanceCountry: string;
-    previousAccount?: string;
+    previousAccount?: string[];
 }
 
 export interface ProcessedData {

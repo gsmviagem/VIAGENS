@@ -91,23 +91,22 @@ export default function BookPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ passengers: names })
             });
-            const data = await res.json();
+            const json = await res.json();
             
-            if (data.success && Object.keys(data.data).length > 0) {
+            if (json.success && Object.keys(json.data).length > 0) {
                 setResult(prev => {
                     if (!prev) return prev;
                     const updatedPassengers = prev.passengers.map(p => {
                         const fullName = `${p.firstName} ${p.lastName}`.trim().toUpperCase();
-                        // Also try format without spaces in case Tesseract combined them or different parsing
-                        const foundAccount = data.data[fullName];
-                        if (foundAccount) {
-                            return { ...p, previousAccount: foundAccount };
+                        const foundAccounts: string[] = json.data[fullName];
+                        if (foundAccounts && foundAccounts.length > 0) {
+                            return { ...p, previousAccount: foundAccounts };
                         }
                         return p;
                     });
                     return { ...prev, passengers: updatedPassengers };
                 });
-                toast.success('Alguns passageiros já possuem emissão no histórico!');
+                toast.success('Passageiro(s) com emissão anterior encontrados!');
             }
         } catch (e) {
             console.error('Falha ao verificar histórico:', e);
@@ -203,7 +202,11 @@ export default function BookPage() {
             }
 
             const passengerBlocks = data.passengers.map(p => {
-                return `${p.firstName}\n${p.lastName}\n${p.birthDate}\n${p.gender}`;
+                let block = `${p.firstName}\n${p.lastName}\n${p.birthDate}\n${p.gender}`;
+                if (p.previousAccount && p.previousAccount.length > 0) {
+                    block += `\nEmissão Anterior: ${p.previousAccount.join(', ')}`;
+                }
+                return block;
             }).join('\n\n');
 
             parts.push(passengerBlocks);
@@ -218,8 +221,8 @@ export default function BookPage() {
 
         const passengerBlocks = data.passengers.map(p => {
             let block = `\nDADOS DO PASSAGEIRO\n➔ Primeiro nome: ${p.firstName}\n➔ Último nome: ${p.lastName}\n➔ Gênero: ${p.gender}\n➔ Data de nascimento: ${p.birthDate}\n➔ Número do passaporte: ${p.passportNumber}\n➔ Nacionalidade: ${p.nationality}\n➔ Data de validade do passaporte: ${p.passportExpiry}\n➔ País de emissão do passaporte: ${p.passportIssuanceCountry}`;
-            if (p.previousAccount) {
-                block += `\n➔ Emissão Anterior: ${p.previousAccount}`;
+            if (p.previousAccount && p.previousAccount.length > 0) {
+                block += `\n➔ Emissão Anterior: ${p.previousAccount.join(', ')}`;
             }
             return block;
         }).join('\n');
