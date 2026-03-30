@@ -350,12 +350,12 @@ export default function BookPage() {
                             <p className="font-black uppercase tracking-widest text-[9px] opacity-40">Aguardando sinal...</p>
                         </div>
                     ) : (
-                        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-0">
+                        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
 
                             {/* BLOCO VOO */}
                             {result.hasFlightData && (
-                                <div className="border-b border-white/5">
-                                    <div className="flex items-center justify-between px-5 py-2.5 bg-white/[0.02]">
+                                <div className="flex flex-col min-h-0 border-b border-white/5" style={{ flex: result.passengers.length > 0 ? '0 0 auto' : '1 1 0' }}>
+                                    <div className="flex items-center justify-between px-5 py-2.5 bg-white/[0.02] shrink-0">
                                         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/50">
                                             <span className="material-symbols-outlined text-[14px]">flight</span>
                                             VOO
@@ -368,7 +368,7 @@ export default function BookPage() {
                                             COPIAR
                                         </button>
                                     </div>
-                                    <div className="px-5 pb-4 pt-1 font-mono text-[11px] text-[#a19f9d] whitespace-pre-wrap leading-relaxed">
+                                    <div className="overflow-y-auto custom-scrollbar px-5 pb-4 pt-1 font-mono text-[11px] text-[#a19f9d] whitespace-pre-wrap leading-relaxed">
                                         {formatFlightBlock(result)}
                                     </div>
                                 </div>
@@ -376,8 +376,8 @@ export default function BookPage() {
 
                             {/* BLOCO PAX */}
                             {result.passengers.length > 0 && (
-                                <div>
-                                    <div className="flex items-center justify-between px-5 py-2.5 bg-white/[0.02]">
+                                <div className="flex flex-col flex-1 min-h-0">
+                                    <div className="flex items-center justify-between px-5 py-2.5 bg-white/[0.02] shrink-0">
                                         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/50">
                                             <span className="material-symbols-outlined text-[14px]">group</span>
                                             PASSAGEIROS · {result.passengers.length} ({result.adults}A {result.children}C {result.infants}I)
@@ -390,7 +390,7 @@ export default function BookPage() {
                                             COPIAR
                                         </button>
                                     </div>
-                                    <div className="px-5 pb-4 pt-1 font-mono text-[11px] text-[#a19f9d] whitespace-pre-wrap leading-relaxed">
+                                    <div className="overflow-y-auto custom-scrollbar flex-1 min-h-0 px-5 pb-4 pt-1 font-mono text-[11px] text-[#a19f9d] whitespace-pre-wrap leading-relaxed">
                                         {formatPassengerBlock(result)}
                                     </div>
                                 </div>
@@ -398,6 +398,7 @@ export default function BookPage() {
 
                         </div>
                     )}
+
                 </div>
 
                 {/* 3. ATALHOS */}
