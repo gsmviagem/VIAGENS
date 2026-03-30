@@ -130,6 +130,10 @@ export function parseFlightMessage(message: string, isAmericanFormat: boolean = 
             birthYear = match[14];
         }
 
+        // Reject match if any name token is a known non-name word (time suffix, connector, etc.)
+        const nameStopWords = new Set(['am', 'pm', 'vs', 'and', 'or', 'to', 'via', 'the', 'dep', 'arr']);
+        if (names.some(n => nameStopWords.has(n.toLowerCase()))) continue;
+
         if (names.length >= 2 && birthYear) {
             // firstName = everything except the last token; lastName = last token only
             const fName = names.slice(0, -1).join(' ');
@@ -143,6 +147,7 @@ export function parseFlightMessage(message: string, isAmericanFormat: boolean = 
                 addPassenger(data, fName, lName, birthDay, birthMonth, yearNum.toString());
                 passengersToRemove.push(fullMatch);
             }
+
         }
     }
 
