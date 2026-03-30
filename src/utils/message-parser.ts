@@ -14,6 +14,9 @@ export interface ProcessedData {
     origin: string;
     destination: string;
     date: string;
+    returnDate: string;
+    returnDestination: string;
+    returnFlightTime: string;
     classType: string;
     partner: string;
     adults: number;
@@ -44,12 +47,17 @@ const MONTHS_MAP: { [key: string]: string } = {
 export function parseFlightMessage(message: string, isAmericanFormat: boolean = false): ProcessedData {
     // 0. Initial Sanitization
     let msg = message.toLowerCase().replace(/\t/g, ' '); // Replace tabs with spaces
-    msg = msg.replace(/\b(?:pls|please)\b/g, ' '); // Remove noise
+    msg = msg.replace(/\b(?:pls|please)\b/g, ' '); // Remove noise words
+    // Remove 'for' as a standalone connector word (e.g. "...flight for Leah..." → "...flight  Leah...")
+    msg = msg.replace(/\bfor\b/g, ' ');
     
     const data: ProcessedData = {
         origin: '',
         destination: '',
         date: '',
+        returnDate: '',
+        returnDestination: '',
+        returnFlightTime: '',
         classType: '',
         partner: '',
         adults: 0,
@@ -70,7 +78,9 @@ export function parseFlightMessage(message: string, isAmericanFormat: boolean = 
     const namePart = /([a-zÀ-ÿ]{2,}(?:\s+[a-zÀ-ÿ]{2,})+)/.source;
     const datePart = new RegExp(
         `(?:` +
-        `(\\d{1,2})[/-](\\d{1,2})[/-](\\d{2,4})` + // 02/02/1982
+        `(\\d{1,2})[/\\-.](\\d{1,2})[/\\-.](\\d{2,4})` + // 02/02/1982 or 02.02.1982
+        `|` +
+        `(\\d{1,2})\\s+(\\d{1,2})\\s+(\\d{2,4})` +       // 10 31 04 (space-separated)
         `|` +
         `(${monthNames})[a-z.]*\\s*(?:(\\d{1,2})[\\s,]+)?(?:(\\d{1,2})[\\s,]+)?(\\d{4})` + // Nov. 28, 1981 or Jan 21 2007
         `|` +
@@ -92,7 +102,7 @@ export function parseFlightMessage(message: string, isAmericanFormat: boolean = 
         let birthMonth = '';
         let birthYear = '';
 
-        if (match[2]) { // Slashed: DD/MM/YYYY or MM/DD/YYYY
+        if (match[2]) { // Slashed or dotted: DD/MM/YYYY, DD.MM.YYYY
             if (isAmericanFormat) {
                 birthMonth = match[2];
                 birthDay = match[3];
@@ -101,19 +111,29 @@ export function parseFlightMessage(message: string, isAmericanFormat: boolean = 
                 birthMonth = match[3];
             }
             birthYear = match[4];
-        } else if (match[5]) { // Month-first: Nov. 28, 1981
-            birthMonth = MONTHS_MAP[match[5].toLowerCase()];
-            birthDay = match[6] || match[7] || '01'; // Handle Month Year or Month Day Year
-            birthYear = match[8];
-        } else if (match[9]) { // Day-first textual: 16 Feb 2021
-            birthDay = match[9];
-            birthMonth = MONTHS_MAP[match[10].toLowerCase()];
+        } else if (match[5]) { // Space-separated numeric: 10 31 04
+            if (isAmericanFormat) {
+                birthMonth = match[5];
+                birthDay = match[6];
+            } else {
+                birthDay = match[5];
+                birthMonth = match[6];
+            }
+            birthYear = match[7];
+        } else if (match[8]) { // Month-first: Nov. 28, 1981
+            birthMonth = MONTHS_MAP[match[8].toLowerCase()];
+            birthDay = match[9] || match[10] || '01';
             birthYear = match[11];
+        } else if (match[12]) { // Day-first textual: 16 Feb 2021
+            birthDay = match[12];
+            birthMonth = MONTHS_MAP[match[13].toLowerCase()];
+            birthYear = match[14];
         }
 
         if (names.length >= 2 && birthYear) {
-            const fName = names[0];
-            const lName = names.slice(1).join(' ');
+            // firstName = everything except the last token; lastName = last token only
+            const fName = names.slice(0, -1).join(' ');
+            const lName = names[names.length - 1];
             
             // Validate if it looks like a birth year (typically < current year - 1)
             const yearNum = parseInt(birthYear.length === 2 ? (parseInt(birthYear) > 25 ? `19${birthYear}` : `20${birthYear}`) : birthYear);
@@ -146,61 +166,85 @@ export function parseFlightMessage(message: string, isAmericanFormat: boolean = 
         flightInfoPool = flightInfoPool.replace(pStr, ' ');
     }
 
-    // --- 2. ROUTE EXTRACTION ---
+    // --- 2. ROUTE EXTRACTION (supports round-trips) ---
+    // e.g. "lhr-jfk vs 6:35pm, and apr13 jfk-lhr 11:40pm"
     const routeRegex = /\b([a-z]{3})\s*(?:-|to|\/|\s+)\s*([a-z]{3})\b/g;
-    const excludedWords = new Set(['eco', 'for', 'pax', 'via', 'the', 'and', 'dep', 'arr', 'pls', 'now', 'day']);
+    const excludedWords = new Set(['eco', 'pax', 'via', 'the', 'and', 'dep', 'arr', 'pls', 'now', 'day']);
     
     let routeMatch;
+    const foundRoutes: { code1: string; code2: string; raw: string }[] = [];
     while ((routeMatch = routeRegex.exec(flightInfoPool)) !== null) {
         const code1 = routeMatch[1].toLowerCase();
         const code2 = routeMatch[2].toLowerCase();
         if (!excludedWords.has(code1) && !excludedWords.has(code2)) {
-            data.origin = code1.toUpperCase();
-            data.destination = code2.toUpperCase();
-            flightInfoPool = flightInfoPool.replace(routeMatch[0], ' ');
-            break;
+            foundRoutes.push({ code1, code2, raw: routeMatch[0] });
         }
     }
 
-    // --- 3. FLIGHT DATE EXTRACTION ---
-    // Search in the cleaned pool
-    const slashDateMatch = flightInfoPool.match(/(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?/);
-    const textualDateMatch = flightInfoPool.match(new RegExp(`(\\d{1,2})\\s*(?:de\\s+)?(${monthNames})[a-z.]*(?:[\\s,]*(\\d{4}))?`, 'i'));
-    const monthFirstMatch = flightInfoPool.match(new RegExp(`(${monthNames})[a-z.]*\\s*(\\d{1,2})(?:[\\s,]*(\\d{4}))?`, 'i'));
-
-    if (slashDateMatch) {
-        data.date = normalizeDate(slashDateMatch[1], slashDateMatch[2], slashDateMatch[3]);
-        flightInfoPool = flightInfoPool.replace(slashDateMatch[0], ' ');
-    } else if (textualDateMatch) {
-        data.date = normalizeDate(textualDateMatch[1], MONTHS_MAP[textualDateMatch[2].toLowerCase()], textualDateMatch[3]);
-        flightInfoPool = flightInfoPool.replace(textualDateMatch[0], ' ');
-    } else if (monthFirstMatch) {
-        data.date = normalizeDate(monthFirstMatch[2], MONTHS_MAP[monthFirstMatch[1].toLowerCase()], monthFirstMatch[3]);
-        flightInfoPool = flightInfoPool.replace(monthFirstMatch[0], ' ');
+    if (foundRoutes.length >= 1) {
+        data.origin = foundRoutes[0].code1.toUpperCase();
+        data.destination = foundRoutes[0].code2.toUpperCase();
+        flightInfoPool = flightInfoPool.replace(foundRoutes[0].raw, ' ');
+    }
+    if (foundRoutes.length >= 2) {
+        // Return leg — returnDestination is the 2nd route's destination
+        data.returnDestination = foundRoutes[1].code2.toUpperCase();
+        flightInfoPool = flightInfoPool.replace(foundRoutes[1].raw, ' ');
     }
 
-    // --- 4. TIME EXTRACTION ---
-    const timeMatch = flightInfoPool.match(/\b(\d{1,2}:\d{2})\s*(am|pm)?\b|\b(\d{1,2})\s*(am|pm)\b/i);
-    if (timeMatch) {
-        let hour = 0;
-        let minutes = '00';
-        let period = '';
+    // --- 3. FLIGHT DATE EXTRACTION (outbound + return) ---
+    // Helper: extract first date from a string, returns [normalizedDate, rawMatch] or null
+    const extractDate = (pool: string): [string, string] | null => {
+        const slashMatch = pool.match(/(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?/);
+        const textualMatch = pool.match(new RegExp(`(\\d{1,2})\\s*(?:de\\s+)?(${monthNames})[a-z.]*(?:[\\s,]*(\\d{4}))?`, 'i'));
+        const monthFirst = pool.match(new RegExp(`(${monthNames})[a-z.]*\\s*(\\d{1,2})(?:[\\s,]*(\\d{4}))?`, 'i'));
 
-        if (timeMatch[1]) {
-            const parts = timeMatch[1].split(':');
+        if (slashMatch) return [normalizeDate(slashMatch[1], slashMatch[2], slashMatch[3]), slashMatch[0]];
+        if (textualMatch) return [normalizeDate(textualMatch[1], MONTHS_MAP[textualMatch[2].toLowerCase()], textualMatch[3]), textualMatch[0]];
+        if (monthFirst) return [normalizeDate(monthFirst[2], MONTHS_MAP[monthFirst[1].toLowerCase()], monthFirst[3]), monthFirst[0]];
+        return null;
+    };
+
+    const firstDate = extractDate(flightInfoPool);
+    if (firstDate) {
+        data.date = firstDate[0];
+        flightInfoPool = flightInfoPool.replace(firstDate[1], ' ');
+        // Try to find a second date for the return leg
+        const secondDate = extractDate(flightInfoPool);
+        if (secondDate) {
+            data.returnDate = secondDate[0];
+            flightInfoPool = flightInfoPool.replace(secondDate[1], ' ');
+        }
+    }
+
+    // --- 4. TIME EXTRACTION (outbound + return) ---
+    const parseTime = (pool: string): [string, string] | null => {
+        const m = pool.match(/\b(\d{1,2}:\d{2})\s*(am|pm)?\b|\b(\d{1,2})\s*(am|pm)\b/i);
+        if (!m) return null;
+        let hour = 0, minutes = '00', period = '';
+        if (m[1]) {
+            const parts = m[1].split(':');
             hour = parseInt(parts[0]);
             minutes = parts[1];
-            period = timeMatch[2]?.toLowerCase() || '';
+            period = m[2]?.toLowerCase() || '';
         } else {
-            hour = parseInt(timeMatch[3]);
-            period = timeMatch[4].toLowerCase();
+            hour = parseInt(m[3]);
+            period = m[4].toLowerCase();
         }
-
         if (period === 'pm' && hour < 12) hour += 12;
         if (period === 'am' && hour === 12) hour = 0;
-        
-        data.flightTime = `${hour.toString().padStart(2, '0')}:${minutes}`;
-        flightInfoPool = flightInfoPool.replace(timeMatch[0], ' ');
+        return [`${hour.toString().padStart(2, '0')}:${minutes}`, m[0]];
+    };
+
+    const firstTime = parseTime(flightInfoPool);
+    if (firstTime) {
+        data.flightTime = firstTime[0];
+        flightInfoPool = flightInfoPool.replace(firstTime[1], ' ');
+        const secondTime = parseTime(flightInfoPool);
+        if (secondTime) {
+            data.returnFlightTime = secondTime[0];
+            flightInfoPool = flightInfoPool.replace(secondTime[1], ' ');
+        }
     }
 
     // --- 5. CLASS & PARTNER ---
@@ -245,7 +289,8 @@ function normalizeDate(day: string, month: string, year?: string): string {
 }
 
 function addPassenger(data: ProcessedData, fName: string, lName: string, day: string, month: string, year: string) {
-    const firstName = fName.charAt(0).toUpperCase() + fName.slice(1);
+    // fName may contain multiple words (all names except last); lName is always just the last name
+    const firstName = fName.split(' ').map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(' ');
     const lastName = lName.charAt(0).toUpperCase() + lName.slice(1);
     const birthDate = `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
     

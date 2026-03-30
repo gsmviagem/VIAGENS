@@ -164,7 +164,9 @@ export default function BookPage() {
 
                 setResult(prev => {
                     const current = prev || {
-                        origin: '', destination: '', date: '', classType: '', partner: '',
+                        origin: '', destination: '', date: '',
+                        returnDate: '', returnDestination: '', returnFlightTime: '',
+                        classType: '', partner: '',
                         adults: 0, children: 0, infants: 0,
                         flightTime: '', passengers: [], hasFlightData: false
                     };
@@ -216,7 +218,11 @@ export default function BookPage() {
         const parts: string[] = [];
 
         if (data.hasFlightData) {
-            parts.push(`Gostaria de emitir em tabela fixa:\n⇾ Origem e Destino: ${data.origin} - ${data.destination}\n⇾ Data de ida: ${data.date}\n⇾ Classe: ${data.classType}\n⇾ Companhia parceira: ${data.partner}\n⇾ Adultos: ${data.adults}\n⇾ Crianças: ${data.children}\n⇾ Bebês: ${data.infants}\n⇾ Voo: ${data.flightTime}`);
+            let flightBlock = `Gostaria de emitir em tabela fixa:\n⇾ Origem e Destino: ${data.origin} - ${data.destination}\n⇾ Data de ida: ${data.date}\n⇾ Classe: ${data.classType}\n⇾ Companhia parceira: ${data.partner}\n⇾ Adultos: ${data.adults}\n⇾ Crianças: ${data.children}\n⇾ Bebês: ${data.infants}\n⇾ Voo: ${data.flightTime}`;
+            if (data.returnDate || data.returnFlightTime) {
+                flightBlock += `\n\n⇾ VOLTA:\n⇾ Origem e Destino: ${data.destination} - ${data.returnDestination || data.origin}\n⇾ Data de volta: ${data.returnDate}\n⇾ Voo: ${data.returnFlightTime}`;
+            }
+            parts.push(flightBlock);
         }
 
         const passengerBlocks = data.passengers.map(p => {
