@@ -10,8 +10,8 @@ export async function GET() {
             return NextResponse.json({ success: false, error: 'Not configured' }, { status: 500 });
         }
 
-        // Read CALC!D18:D (Checks column D starting from row 18)
-        const data = await sheetsService.readSheetData('CALC!D18:D100'); // Reading a reasonable range to avoid timeout, or just D18:D if the service handles it
+        // Read single cell PRICE!C3
+        const data = await sheetsService.readSheetData('PRICE!C3:C3');
         
         let hasContent = false;
         if (data && data.length > 0) {

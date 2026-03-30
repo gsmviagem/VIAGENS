@@ -96,7 +96,7 @@ export default function DashboardPage() {
                             className="bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-md flex items-center gap-2 shadow-[0_0_15px_rgba(239,68,68,0.1)]"
                         >
                             <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping"></span>
-                            <span className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">Calc.Alert: Active</span>
+                            <span className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">PRECIFICAÇÃO</span>
                         </motion.div>
                     )}
                     <div className="text-right">
