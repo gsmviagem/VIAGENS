@@ -4,7 +4,7 @@ import { searchAmadeus } from '@/connectors/quotation/amadeus-client';
 export interface QuotationResult {
     site: string;
     price: number | string;
-    currency: 'miles' | 'brl';
+    currency: 'miles' | 'brl' | 'usd';
     success: boolean;
     error?: string;
     searchUrl?: string;
