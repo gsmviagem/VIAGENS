@@ -75,7 +75,8 @@ export function parseFlightMessage(message: string, isAmericanFormat: boolean = 
     const monthNames = Object.keys(MONTHS_MAP).join('|');
     
     // Regex components
-    const namePart = /([a-zÀ-ÿ]{2,}(?:\s+[a-zÀ-ÿ]{2,})+)/.source;
+    // Allow middle initials (1 char) like "Chaim B Ungar" or "Mary J Smith"
+    const namePart = /([a-zÀ-ÿ]{2,}(?:\s+[a-zÀ-ÿ]+)+)/.source;
     const datePart = new RegExp(
         `(?:` +
         `(\\d{1,2})[/\\-.](\\d{1,2})[/\\-.](\\d{2,4})` + // 02/02/1982 or 02.02.1982
@@ -143,6 +144,9 @@ export function parseFlightMessage(message: string, isAmericanFormat: boolean = 
             // firstName = everything except the last token; lastName = last token only
             const fName = names.slice(0, -1).join(' ');
             const lName = names[names.length - 1];
+
+            // Last name must be a real word (not a single initial)
+            if (lName.length < 2) continue;
             
             // Validate if it looks like a birth year (typically < current year - 1)
             const yearNum = parseInt(birthYear.length === 2 ? (parseInt(birthYear) > 25 ? `19${birthYear}` : `20${birthYear}`) : birthYear);
