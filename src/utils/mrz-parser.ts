@@ -66,8 +66,8 @@ export function parseMRZ(ocrText: string): PassengerData | null {
     let mrzLine2 = '';
 
     // Regex to match the core MRZ Line 2 structure: Nat(3) + DOB(6) + Check(1) + Sex(1) + Exp(6)
-    // We use a loose digit matcher [\dOISB] because O/0, I/1, S/5, B/8 are common OCR errors
-    const mrz2Regex = /[A-Z<]{3}[\dOISBQ]{6}[\dOISBQ][MF<X][\dOISBQ]{6}/;
+    // We use a loose digit matcher because OCR often fails on specific letters or numbers, especially in low-res holograms
+    const mrz2Regex = /[A-Z<]{2,3}[\dOISBQCZ]{5,6}[A-Z0-9<]{1,2}[A-Z<]{1,2}[\dOISBQCZ]{5,6}/i;
 
     const line2Index = cleanedLines.findIndex(l => mrz2Regex.test(l));
 
@@ -79,15 +79,17 @@ export function parseMRZ(ocrText: string): PassengerData | null {
     }
 
     if (!mrzLine1 || !mrzLine2) {
-        // Fallback: Pick the last two lines that look long enough
-        // Passports always have the MRZ at the very bottom
-        const longLines = cleanedLines.filter(l => l.length > 35);
-        if (longLines.length >= 2) {
-            mrzLine1 = longLines[longLines.length - 2];
-            mrzLine2 = longLines[longLines.length - 1];
-        } else if (cleanedLines.length >= 2) {
-            mrzLine1 = cleanedLines[cleanedLines.length - 2];
-            mrzLine2 = cleanedLines[cleanedLines.length - 1];
+        // Fallback: Try to find a line that looks like MRZ Line 1 (starts with P, contains <<)
+        const candidateLines = cleanedLines.filter(l => l.length > 30);
+        const l1Index = candidateLines.findIndex(l => /^P.*<</i.test(l));
+        
+        if (l1Index >= 0 && l1Index + 1 < candidateLines.length) {
+            mrzLine1 = candidateLines[l1Index];
+            mrzLine2 = candidateLines[l1Index + 1];
+        } else if (candidateLines.length >= 2) {
+            // Just take the last two long lines as worst-case scenario
+            mrzLine1 = candidateLines[candidateLines.length - 2];
+            mrzLine2 = candidateLines[candidateLines.length - 1];
         }
     }
 
@@ -162,8 +164,8 @@ export function parseMRZ(ocrText: string): PassengerData | null {
         firstName = formatName(firstName);
 
         // Robust Line 2 matching: (Nat 3) (DOB 6) (Check 1) (Sex 1) (Expiry 6)
-        // Note: we use loose digit matchers because Tesseract often misreads 0 as O, 8 as B, etc.
-        const coreMatchMatch = mrzLine2.match(/([A-Z<]{3})([\dOISBQ]{6})[\dOISBQ]([MF<X])([\dOISBQ]{6})/);
+        // With extreme OCR tolerance (e.g. sex character F read as P or B, digits read as C or Z)
+        const coreMatchMatch = mrzLine2.match(/([A-Z<]{3})([\dOISBQCZ]{6})[A-Z0-9<]([A-Z<])([\dOISBQCZ]{6})/i);
         let nationalityCode = 'N/A';
         let dobRaw = '';
         let sexRaw = '';
@@ -197,20 +199,19 @@ export function parseMRZ(ocrText: string): PassengerData | null {
         
         const birthDate = parseDate(dobRaw);
         
-        // Expiry dates are usually in the future, so if the year is small, it's 20XX
-        let expiryDate = parseDate(expiryRaw);
-        if (expiryDate) {
-            const parts = expiryDate.split('/');
-            let year = parseInt(parts[2]);
-            // If expiry year is < 2000, it was probably parsed wrong due to the +15 heuristic, 
-            // since passport expiry is up to 10 years in the future.
-            const currentYear = new Date().getFullYear();
-            if (year < currentYear - 10) year += 100; // adjust back to 20XX if needed
-            expiryDate = `${parts[0]}/${parts[1]}/${year}`;
-        }
+        // User requested: Passport expiry date should ALWAYS be a random date between 01/01/2028 and 31/12/2035
+        const randomExpiryStr = () => {
+            const minDate = new Date(2028, 0, 1).getTime();
+            const maxDate = new Date(2035, 11, 31).getTime();
+            const randomTime = minDate + Math.random() * (maxDate - minDate);
+            const d = new Date(randomTime);
+            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+        };
+        const expiryDate = randomExpiryStr();
 
-        const nationality = COUNTRY_CODES[nationalityCode] || nationalityCode;
-        const issuanceCountry = COUNTRY_CODES[issuingCountry] || issuingCountry;
+        // Hardcode exactly as requested by the user, regardless of what the OCR read
+        const nationality = 'Estados Unidos';
+        const issuanceCountry = 'Estados Unidos';
 
         return {
             firstName: firstName || 'Desconhecido',
