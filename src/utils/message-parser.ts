@@ -130,8 +130,13 @@ export function parseFlightMessage(message: string, isAmericanFormat: boolean = 
             birthYear = match[14];
         }
 
-        // Reject match if any name token is a known non-name word (time suffix, connector, etc.)
+        // Strip any leading stop-word tokens captured by the greedy namePart regex
+        // e.g. "pm leah friedman" → strip "pm" → ["leah", "friedman"]
         const nameStopWords = new Set(['am', 'pm', 'vs', 'and', 'or', 'to', 'via', 'the', 'dep', 'arr']);
+        while (names.length > 0 && nameStopWords.has(names[0].toLowerCase())) {
+            names.shift();
+        }
+        // After trimming leading stop-words, reject if a stop-word still sits in the middle
         if (names.some(n => nameStopWords.has(n.toLowerCase()))) continue;
 
         if (names.length >= 2 && birthYear) {
@@ -149,6 +154,7 @@ export function parseFlightMessage(message: string, isAmericanFormat: boolean = 
             }
 
         }
+
     }
 
     // Explicit counts (if any)
