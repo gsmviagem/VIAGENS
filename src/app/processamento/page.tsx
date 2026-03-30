@@ -214,18 +214,14 @@ export default function BookPage() {
         return `Gostaria de emitir em tabela fixa:\n⇾ Origem e Destino: ${route}\n⇾ Data: ${data.date}\n⇾ Voo: ${data.flightTime}\n⇾ Classe: ${data.classType}\n⇾ Companhia parceira: ${data.partner}\n⇾ Adultos: ${data.adults}\n⇾ Crianças: ${data.children}\n⇾ Bebês: ${data.infants}`;
     };
 
-    const formatPassengerBlock = (data: ProcessedData, forCopy = false): string => {
+    const formatPassengerBlock = (data: ProcessedData): string => {
         if (outputMode === 'simple') {
             return data.passengers.map(p => {
-                let block = `${p.firstName}\n${p.lastName}\n${p.birthDate}\n${p.gender}`;
-                if (!forCopy && p.previousAccount && p.previousAccount.length > 0) block += `\nEmissão Anterior: ${p.previousAccount.join(', ')}`;
-                return block;
+                return `${p.firstName}\n${p.lastName}\n${p.birthDate}\n${p.gender}`;
             }).join('\n\n');
         }
         return data.passengers.map(p => {
-            let block = `DADOS DO PASSAGEIRO\n➔ Primeiro nome: ${p.firstName}\n➔ Último nome: ${p.lastName}\n➔ Gênero: ${p.gender}\n➔ Data de nascimento: ${p.birthDate}\n➔ Número do passaporte: ${p.passportNumber}\n➔ Nacionalidade: ${p.nationality}\n➔ Data de validade do passaporte: ${p.passportExpiry}\n➔ País de emissão do passaporte: ${p.passportIssuanceCountry}`;
-            if (!forCopy && p.previousAccount && p.previousAccount.length > 0) block += `\n➔ Emissão Anterior: ${p.previousAccount.join(', ')}`;
-            return block;
+            return `DADOS DO PASSAGEIRO\n➔ Primeiro nome: ${p.firstName}\n➔ Último nome: ${p.lastName}\n➔ Gênero: ${p.gender}\n➔ Data de nascimento: ${p.birthDate}\n➔ Número do passaporte: ${p.passportNumber}\n➔ Nacionalidade: ${p.nationality}\n➔ Data de validade do passaporte: ${p.passportExpiry}\n➔ País de emissão do passaporte: ${p.passportIssuanceCountry}`;
         }).join('\n\n');
     };
 
@@ -239,7 +235,7 @@ export default function BookPage() {
 
     const handleCopyPax = () => {
         if (!result) return;
-        navigator.clipboard.writeText(formatPassengerBlock(result, true));
+        navigator.clipboard.writeText(formatPassengerBlock(result));
         toast.success('Passageiro(s) copiado(s)!');
         setIsCopyingPax(true);
         setTimeout(() => setIsCopyingPax(false), 2000);
@@ -390,8 +386,27 @@ export default function BookPage() {
                                             COPIAR
                                         </button>
                                     </div>
-                                    <div className="overflow-y-auto custom-scrollbar flex-1 min-h-0 px-5 pb-4 pt-1 font-mono text-[11px] text-[#a19f9d] whitespace-pre-wrap leading-relaxed">
-                                        {formatPassengerBlock(result)}
+                                    <div className="overflow-y-auto custom-scrollbar flex-1 min-h-0 px-5 pb-4 pt-4 flex flex-col gap-6">
+                                        {result.passengers.map((p, idx) => (
+                                            <div key={idx} className="flex flex-col gap-3">
+                                                <div className="font-mono text-[11px] text-[#a19f9d] whitespace-pre-wrap leading-relaxed">
+                                                    {outputMode === 'simple'
+                                                        ? `${p.firstName}\n${p.lastName}\n${p.birthDate}\n${p.gender}`
+                                                        : `DADOS DO PASSAGEIRO\n➔ Primeiro nome: ${p.firstName}\n➔ Último nome: ${p.lastName}\n➔ Gênero: ${p.gender}\n➔ Data de nascimento: ${p.birthDate}\n➔ Número do passaporte: ${p.passportNumber}\n➔ Nacionalidade: ${p.nationality}\n➔ Data de validade do passaporte: ${p.passportExpiry}\n➔ País de emissão do passaporte: ${p.passportIssuanceCountry}`
+                                                    }
+                                                </div>
+                                                {p.previousAccount && p.previousAccount.length > 0 && (
+                                                    <div className="bg-amber-500/10 border border-amber-500/20 px-3 py-2 rounded-md flex items-start gap-2 shadow-[0_0_15px_rgba(245,158,11,0.05)] w-full max-w-sm">
+                                                        <span className="material-symbols-outlined text-amber-500 text-[14px] mt-0.5">warning</span>
+                                                        <div>
+                                                            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-0.5">Pax Emitido Anteriormente</p>
+                                                            <p className="text-[10px] text-amber-500/80 font-mono tracking-wider">{p.previousAccount.join(', ')}</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {idx < result.passengers.length - 1 && <div className="h-px border-b border-white/5 border-dashed mt-2"></div>}
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             )}
