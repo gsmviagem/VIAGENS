@@ -180,17 +180,17 @@ async function getSession(user: string, pass: string): Promise<SessionCache> {
 function parseFlightResults(html: string): BuscaIdealOffer[] {
     const offers: BuscaIdealOffer[] = [];
 
-    // Cada voo está em um bloco com classe voo_ida_X
-    // Usamos regex para extrair os dados sem precisar de DOM
-    const vooBlocks = html.split(/class="voo_ida_\d+"/);
+    // Cada voo está em um bloco com identificador voo_ida_X
+    // Usamos regex mais flexível para extrair os dados
+    const vooBlocks = html.split(/voo_ida_\d+/i);
     if (vooBlocks.length <= 1) return offers;
 
     for (let i = 1; i < vooBlocks.length; i++) {
         const block = vooBlocks[i];
 
-        // Código do voo (ex: AV0086, G30561, LA3532)
-        const flightMatch = block.match(/>\s*([A-Z]{2}\d{3,5})\s*</);
-        const flightCode = flightMatch?.[1] ?? '';
+        // Código do voo (ex: AV0086, G30561, LA3532, AD 4321)
+        const flightMatch = block.match(/>\s*([A-Z]{2}\s*\d{2,5})\s*</);
+        const flightCode = flightMatch ? flightMatch[1].replace(/\s+/g, '') : '';
 
         // Horário de partida (ex: 07:35) e data (ex: 20/05/2026)
         const partMatch = block.match(/(\d{2}\/\d{2}\/\d{4})\s+(\d{2}:\d{2})\s+([A-Z]{3})/);
@@ -252,8 +252,9 @@ export async function searchBuscaIdeal(
     dateISO: string, // YYYY-MM-DD
     passengers: number = 1,
 ): Promise<BuscaIdealResult> {
-    // Formata data para YYYY/MM/DD (formato do Busca Ideal)
-    const dateFmt = dateISO.replace(/-/g, '/');
+    // Formata data para DD/MM/YYYY (padrão Brasil esperado pela plataforma)
+    const [y, m, d] = dateISO.split('-');
+    const dateFmt = `${d}/${m}/${y}`;
     const searchUrl = `${BASE}/busca/index?executar=1&o=${origin}&d=${destination}&di=${dateFmt}&df=${dateFmt}&pa=${passengers}&pc=0&pb=0&ida=true&af=${origin}&at=${destination}&azul=1&gol=1&latam=1&tap=1&outros=1`;
 
     const user = process.env.BUSCA_IDEAL_USER;
@@ -333,6 +334,7 @@ export async function searchBuscaIdeal(
         const offers = parseFlightResults(html);
 
         if (offers.length === 0) {
+            console.log(`[BUSCA-IDEAL] 0 offers parsing. Check date format ou HTML changes. Data requisitda: ${dateFmt}. HTML Preview: ${html.substring(0, 500).replace(/\n/g, '')}`);
             return {
                 site: 'Busca Ideal',
                 price: 'N/A',
