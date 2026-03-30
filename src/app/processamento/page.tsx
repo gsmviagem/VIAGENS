@@ -15,7 +15,8 @@ type Shortcut = {
 export default function BookPage() {
     const [input, setInput] = useState('');
     const [result, setResult] = useState<ProcessedData | null>(null);
-    const [isCopying, setIsCopying] = useState(false);
+    const [isCopyingFlight, setIsCopyingFlight] = useState(false);
+    const [isCopyingPax, setIsCopyingPax] = useState(false);
     const [outputMode, setOutputMode] = useState<'full' | 'simple'>('full');
     const [isAmericanFormat, setIsAmericanFormat] = useState(false);
     
@@ -195,54 +196,53 @@ export default function BookPage() {
         }
     };
 
-    const formatOutput = (data: ProcessedData) => {
+    const formatFlightBlock = (data: ProcessedData): string => {
+        if (!data.hasFlightData) return '';
+        const isRoundTrip = !!(data.returnDate || data.returnFlightTime);
+        const route = `${data.origin} - ${data.destination}`;
+
         if (outputMode === 'simple') {
-            const parts: string[] = [];
-
-            if (data.hasFlightData) {
-                parts.push(`${data.origin} - ${data.destination}\n${data.date}\n${data.classType}`);
+            if (isRoundTrip) {
+                return `${route}\nIda: ${data.date} ${data.flightTime}\nVolta: ${data.returnDate} ${data.returnFlightTime}\n${data.classType}`.trim();
             }
-
-            const passengerBlocks = data.passengers.map(p => {
-                let block = `${p.firstName}\n${p.lastName}\n${p.birthDate}\n${p.gender}`;
-                if (p.previousAccount && p.previousAccount.length > 0) {
-                    block += `\nEmissão Anterior: ${p.previousAccount.join(', ')}`;
-                }
-                return block;
-            }).join('\n\n');
-
-            parts.push(passengerBlocks);
-            return parts.filter(Boolean).join('\n\n');
+            return `${route}\n${data.date}\n${data.classType}`.trim();
         }
 
-        const parts: string[] = [];
-
-        if (data.hasFlightData) {
-            let flightBlock = `Gostaria de emitir em tabela fixa:\n⇾ Origem e Destino: ${data.origin} - ${data.destination}\n⇾ Data de ida: ${data.date}\n⇾ Classe: ${data.classType}\n⇾ Companhia parceira: ${data.partner}\n⇾ Adultos: ${data.adults}\n⇾ Crianças: ${data.children}\n⇾ Bebês: ${data.infants}\n⇾ Voo: ${data.flightTime}`;
-            if (data.returnDate || data.returnFlightTime) {
-                flightBlock += `\n\n⇾ VOLTA:\n⇾ Origem e Destino: ${data.destination} - ${data.returnDestination || data.origin}\n⇾ Data de volta: ${data.returnDate}\n⇾ Voo: ${data.returnFlightTime}`;
-            }
-            parts.push(flightBlock);
+        if (isRoundTrip) {
+            return `Gostaria de emitir em tabela fixa:\n⇾ Origem e Destino: ${route}\n⇾ Data de ida: ${data.date}\n⇾ Voo da ida: ${data.flightTime}\n⇾ Data de volta: ${data.returnDate}\n⇾ Voo da volta: ${data.returnFlightTime}\n⇾ Classe: ${data.classType}\n⇾ Companhia parceira: ${data.partner}\n⇾ Adultos: ${data.adults}\n⇾ Crianças: ${data.children}\n⇾ Bebês: ${data.infants}`;
         }
-
-        const passengerBlocks = data.passengers.map(p => {
-            let block = `\nDADOS DO PASSAGEIRO\n➔ Primeiro nome: ${p.firstName}\n➔ Último nome: ${p.lastName}\n➔ Gênero: ${p.gender}\n➔ Data de nascimento: ${p.birthDate}\n➔ Número do passaporte: ${p.passportNumber}\n➔ Nacionalidade: ${p.nationality}\n➔ Data de validade do passaporte: ${p.passportExpiry}\n➔ País de emissão do passaporte: ${p.passportIssuanceCountry}`;
-            if (p.previousAccount && p.previousAccount.length > 0) {
-                block += `\n➔ Emissão Anterior: ${p.previousAccount.join(', ')}`;
-            }
-            return block;
-        }).join('\n');
-
-        parts.push(passengerBlocks);
-        return parts.filter(Boolean).join('\n');
+        return `Gostaria de emitir em tabela fixa:\n⇾ Origem e Destino: ${route}\n⇾ Data: ${data.date}\n⇾ Voo: ${data.flightTime}\n⇾ Classe: ${data.classType}\n⇾ Companhia parceira: ${data.partner}\n⇾ Adultos: ${data.adults}\n⇾ Crianças: ${data.children}\n⇾ Bebês: ${data.infants}`;
     };
 
-    const handleCopy = () => {
+    const formatPassengerBlock = (data: ProcessedData): string => {
+        if (outputMode === 'simple') {
+            return data.passengers.map(p => {
+                let block = `${p.firstName}\n${p.lastName}\n${p.birthDate}\n${p.gender}`;
+                if (p.previousAccount && p.previousAccount.length > 0) block += `\nEmissão Anterior: ${p.previousAccount.join(', ')}`;
+                return block;
+            }).join('\n\n');
+        }
+        return data.passengers.map(p => {
+            let block = `DADOS DO PASSAGEIRO\n➔ Primeiro nome: ${p.firstName}\n➔ Último nome: ${p.lastName}\n➔ Gênero: ${p.gender}\n➔ Data de nascimento: ${p.birthDate}\n➔ Número do passaporte: ${p.passportNumber}\n➔ Nacionalidade: ${p.nationality}\n➔ Data de validade do passaporte: ${p.passportExpiry}\n➔ País de emissão do passaporte: ${p.passportIssuanceCountry}`;
+            if (p.previousAccount && p.previousAccount.length > 0) block += `\n➔ Emissão Anterior: ${p.previousAccount.join(', ')}`;
+            return block;
+        }).join('\n\n');
+    };
+
+    const handleCopyFlight = () => {
         if (!result) return;
-        setIsCopying(true);
-        navigator.clipboard.writeText(formatOutput(result));
-        toast.success("Copiado!");
-        setTimeout(() => setIsCopying(false), 2000);
+        navigator.clipboard.writeText(formatFlightBlock(result));
+        toast.success('Voo copiado!');
+        setIsCopyingFlight(true);
+        setTimeout(() => setIsCopyingFlight(false), 2000);
+    };
+
+    const handleCopyPax = () => {
+        if (!result) return;
+        navigator.clipboard.writeText(formatPassengerBlock(result));
+        toast.success('Passageiro(s) copiado(s)!');
+        setIsCopyingPax(true);
+        setTimeout(() => setIsCopyingPax(false), 2000);
     };
 
     return (
@@ -339,53 +339,63 @@ export default function BookPage() {
 
                 {/* 2. RESULTADO */}
                 <div className="glass-panel flex flex-col h-full overflow-hidden">
-                    <div className="titanium-gradient text-white font-['Inter'] font-bold py-4 border-b border-outline-variant/30 uppercase tracking-[0.1em] text-[11px] shrink-0 flex items-center justify-between px-5">
-                        <div className="flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[16px]">view_quilt</span>
-                            RESULTADO
+                    <div className="titanium-gradient text-white font-['Inter'] font-bold py-4 border-b border-outline-variant/30 uppercase tracking-[0.1em] text-[11px] shrink-0 flex items-center justify-center gap-2 px-5">
+                        <span className="material-symbols-outlined text-[16px]">view_quilt</span>
+                        RESULTADO
+                    </div>
+
+                    {!result ? (
+                        <div className="flex-1 flex flex-col items-center justify-center text-[#555] gap-4 bg-[#0e0e0e]/40">
+                            <span className="material-symbols-outlined text-[40px] opacity-30">hourglass_empty</span>
+                            <p className="font-black uppercase tracking-widest text-[9px] opacity-40">Aguardando sinal...</p>
                         </div>
-                        {result && (
-                            <button
-                                onClick={handleCopy}
-                                className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-[#a19f9d] hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-md"
-                            >
-                                <span className="material-symbols-outlined text-[14px]">
-                                    {isCopying ? 'check' : 'content_copy'}
-                                </span>
-                                COPIAR
-                            </button>
-                        )}
-                    </div>
+                    ) : (
+                        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-0">
 
-                    <div className="flex-1 overflow-y-auto bg-[#0e0e0e]/40 p-5 font-mono text-[11px] text-[#a19f9d] whitespace-pre-wrap leading-relaxed custom-scrollbar">
-                        {!result ? (
-                            <div className="h-full flex flex-col items-center justify-center text-[#555] gap-4">
-                                <span className="material-symbols-outlined text-[40px] opacity-30">hourglass_empty</span>
-                                <p className="font-black uppercase tracking-widest text-[9px] opacity-40">Aguardando sinal...</p>
-                            </div>
-                        ) : (
-                            <div>{formatOutput(result)}</div>
-                        )}
-                    </div>
-
-                    {result && (
-                        <div className={`grid ${result.hasFlightData ? 'grid-cols-2' : 'grid-cols-1'} gap-3 p-4 shrink-0 border-t border-white/5`}>
-                            <div className="p-3 rounded-lg bg-white/5 border border-white/5 flex items-center gap-3 overflow-hidden">
-                                <span className="material-symbols-outlined text-[16px] text-white/40">group</span>
-                                <div className="text-[9px] font-bold text-[#a19f9d] uppercase tracking-wider truncate">
-                                    <span className="block text-white font-black">PASSAGEIROS</span>
-                                    {result.passengers.length} ({result.adults}A, {result.children}C, {result.infants}I)
-                                </div>
-                            </div>
+                            {/* BLOCO VOO */}
                             {result.hasFlightData && (
-                                <div className="p-3 rounded-lg bg-white/5 border border-white/5 flex items-center gap-3 overflow-hidden">
-                                    <span className="material-symbols-outlined text-[16px] text-white/40">flight</span>
-                                    <div className="text-[9px] font-bold text-[#a19f9d] uppercase tracking-wider truncate">
-                                        <span className="block text-white font-black">ROTA</span>
-                                        {result.origin || 'N/A'} → {result.destination || 'N/A'}
+                                <div className="border-b border-white/5">
+                                    <div className="flex items-center justify-between px-5 py-2.5 bg-white/[0.02]">
+                                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/50">
+                                            <span className="material-symbols-outlined text-[14px]">flight</span>
+                                            VOO
+                                        </div>
+                                        <button
+                                            onClick={handleCopyFlight}
+                                            className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-[#a19f9d] hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-2.5 py-1.5 rounded-md"
+                                        >
+                                            <span className="material-symbols-outlined text-[13px]">{isCopyingFlight ? 'check' : 'content_copy'}</span>
+                                            COPIAR
+                                        </button>
+                                    </div>
+                                    <div className="px-5 pb-4 pt-1 font-mono text-[11px] text-[#a19f9d] whitespace-pre-wrap leading-relaxed">
+                                        {formatFlightBlock(result)}
                                     </div>
                                 </div>
                             )}
+
+                            {/* BLOCO PAX */}
+                            {result.passengers.length > 0 && (
+                                <div>
+                                    <div className="flex items-center justify-between px-5 py-2.5 bg-white/[0.02]">
+                                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/50">
+                                            <span className="material-symbols-outlined text-[14px]">group</span>
+                                            PASSAGEIROS · {result.passengers.length} ({result.adults}A {result.children}C {result.infants}I)
+                                        </div>
+                                        <button
+                                            onClick={handleCopyPax}
+                                            className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-[#a19f9d] hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-2.5 py-1.5 rounded-md"
+                                        >
+                                            <span className="material-symbols-outlined text-[13px]">{isCopyingPax ? 'check' : 'content_copy'}</span>
+                                            COPIAR
+                                        </button>
+                                    </div>
+                                    <div className="px-5 pb-4 pt-1 font-mono text-[11px] text-[#a19f9d] whitespace-pre-wrap leading-relaxed">
+                                        {formatPassengerBlock(result)}
+                                    </div>
+                                </div>
+                            )}
+
                         </div>
                     )}
                 </div>
