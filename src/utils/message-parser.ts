@@ -327,11 +327,19 @@ function addPassenger(data: ProcessedData, fName: string, lName: string, day: st
         gender = 'Feminino';
     }
 
+    const randomExpiryStr = () => {
+        const minDate = new Date(2028, 0, 1).getTime();
+        const maxDate = new Date(2035, 11, 31).getTime();
+        const randomTime = minDate + Math.random() * (maxDate - minDate);
+        const d = new Date(randomTime);
+        return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+    };
+
     data.passengers.push({
         firstName, lastName, gender, birthDate,
         passportNumber: Math.floor(10000000 + Math.random() * 90000000).toString(),
         nationality: 'Estados Unidos',
-        passportExpiry: `01/01/${2030 + Math.floor(Math.random() * 5)}`,
+        passportExpiry: randomExpiryStr(),
         passportIssuanceCountry: 'Estados Unidos'
     });
 }
