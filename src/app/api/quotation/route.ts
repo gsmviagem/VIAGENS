@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { searchDuffel } from '@/connectors/quotation/duffel-client';
+import { searchBuscaIdeal } from '@/connectors/quotation/busca-ideal-fetch';
 
 export interface QuotationResult {
     site: string;
     price: number | string;
-    currency: 'miles' | 'brl' | 'usd';
+    currency: 'miles' | 'brl';
     success: boolean;
     error?: string;
     searchUrl?: string;
@@ -252,7 +252,7 @@ export async function POST(req: Request) {
             searchSmiles(opts, dateISO),
             searchAzul(opts, dateISO),
             searchLatam(opts, dateISO),
-            searchDuffel(opts.origin, opts.destination, dateISO, opts.passengers ?? 1),
+            searchBuscaIdeal(opts.origin, opts.destination, dateISO, opts.passengers ?? 1),
         ]);
 
         // Store in cache

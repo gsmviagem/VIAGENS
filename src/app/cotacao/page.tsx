@@ -10,7 +10,7 @@ const sites = [
     { id: 'smiles', name: 'Smiles Rewards', color: 'border-orange-500/30 text-orange-400' },
     { id: 'latam', name: 'LATAM Pass', color: 'border-purple-500/30 text-purple-400' },
     { id: 'azul', name: 'Azul Rewards', color: 'border-blue-500/30 text-blue-400' },
-    { id: 'duffel', name: 'Duffel (300+ Cias)', color: 'border-sky-500/30 text-sky-400' },
+    { id: 'busca-ideal', name: 'Busca Ideal (Multi-cia)', color: 'border-cyan-500/30 text-cyan-400' },
 ];
 
 interface HistoryEntry {
@@ -53,7 +53,7 @@ export default function CotacaoPage() {
         smiles: 'idle',
         latam: 'idle',
         azul: 'idle',
-        duffel: 'idle',
+        'busca-ideal': 'idle',
     });
     const [history, setHistory] = useState<HistoryEntry[]>([]);
     const [iataError, setIataError] = useState('');
@@ -178,7 +178,7 @@ export default function CotacaoPage() {
                 smiles: 'https://www.smiles.com.br',
                 latam: 'https://www.latamairlines.com/br/pt',
                 azul: 'https://azulpelomundo.voeazul.com.br',
-                duffel: 'https://app.duffel.com',
+                'busca-ideal': 'https://busca.buscaideal.com.br',
             };
             window.open(fallbacks[siteId] || '#', '_blank', 'noopener,noreferrer');
         }
@@ -404,63 +404,68 @@ export default function CotacaoPage() {
                                 </div>
 
                                 <div className="mt-4">
-                                    {site.id === 'duffel' && searchStatus[site.id] === 'done' ? (
-                                        // Amadeus: show airline breakdown
-                                        (() => {
-                                            const amRes = results.find(r => r.site === 'Duffel');
+                                    {(() => {
+                                        const res = results.find(r => r.site.toLowerCase().replace(/\s+/g, '-').includes(site.id));
+                                        const isBuscaIdeal = site.id === 'busca-ideal';
+                                        const isDone = searchStatus[site.id] === 'done';
+
+                                        // Busca Ideal: mostra breakdown por cia quando tem resultado
+                                        if (isBuscaIdeal && isDone && res?.airlineBreakdown?.length > 0) {
                                             return (
-                                                <div className="space-y-1">
-                                                    {amRes?.airlineBreakdown?.map((b: any, i: number) => (
+                                                <div className="space-y-1.5">
+                                                    {res.airlineBreakdown.map((b: any, i: number) => (
                                                         <div key={i} className="flex items-center justify-between text-[11px]">
                                                             <span className="text-slate-400 font-bold">{b.airline}</span>
                                                             <span className="font-black text-white">{b.price}</span>
                                                         </div>
                                                     ))}
-                                                    <div className="flex justify-end mt-1">
+                                                    <div className="flex justify-end pt-1">
                                                         <Button variant="ghost" size="sm" onClick={() => openViewBoard(site.id)} className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-white">
-                                                            View Board
+                                                            Ver Site
                                                         </Button>
                                                     </div>
                                                 </div>
                                             );
-                                        })()
-                                    ) : (
-                                        <div className="flex items-end justify-between">
-                                            <div className="h-10 flex items-center">
-                                                {searchStatus[site.id] === 'searching' ? (
-                                                    <div className="flex gap-1">
-                                                        {[1, 2, 3].map(i => (
-                                                            <motion.div
-                                                                key={i}
-                                                                animate={{ height: [4, 16, 4] }}
-                                                                transition={{ repeat: Infinity, duration: 1, delay: i * 0.2 }}
-                                                                className="w-1 bg-primary/40 rounded-full"
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <p className="text-3xl font-black tracking-tighter text-white">
-                                                        {results.find(r => r.site.toLowerCase().includes(site.id))?.price !== undefined
-                                                            ? typeof results.find(r => r.site.toLowerCase().includes(site.id))?.price === 'number'
-                                                                ? results.find(r => r.site.toLowerCase().includes(site.id))?.price.toLocaleString('pt-BR')
-                                                                : results.find(r => r.site.toLowerCase().includes(site.id))?.price
-                                                            : '---'}
-                                                        <span className="text-xs uppercase ml-1 opacity-50">
-                                                            {results.find(r => r.site.toLowerCase().includes(site.id))?.currency === 'miles' ? 'mi' : 'brl'}
-                                                        </span>
-                                                    </p>
-                                                )}
+                                        }
+
+                                        return (
+                                            <div className="flex items-end justify-between">
+                                                <div className="h-10 flex items-center">
+                                                    {searchStatus[site.id] === 'searching' ? (
+                                                        <div className="flex gap-1">
+                                                            {[1, 2, 3].map(i => (
+                                                                <motion.div
+                                                                    key={i}
+                                                                    animate={{ height: [4, 16, 4] }}
+                                                                    transition={{ repeat: Infinity, duration: 1, delay: i * 0.2 }}
+                                                                    className="w-1 bg-primary/40 rounded-full"
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-3xl font-black tracking-tighter text-white">
+                                                            {res?.price !== undefined
+                                                                ? typeof res.price === 'number'
+                                                                    ? res.price.toLocaleString('pt-BR')
+                                                                    : res.price
+                                                                : '---'}
+                                                            <span className="text-xs uppercase ml-1 opacity-50">
+                                                                {res?.currency === 'miles' ? 'mi' : 'brl'}
+                                                            </span>
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => openViewBoard(site.id)}
+                                                    className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-white"
+                                                >
+                                                    View Board
+                                                </Button>
                                             </div>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => openViewBoard(site.id)}
-                                                className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-white"
-                                            >
-                                                View Board
-                                            </Button>
-                                        </div>
-                                    )}
+                                        );
+                                    })()}
                                 </div>
                             </motion.div>
                         ))}
@@ -486,7 +491,6 @@ export default function CotacaoPage() {
                                         <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-slate-500">
                                             <th className="px-6 py-4 font-bold">Source</th>
                                             <th className="px-6 py-4 font-bold">Protocol</th>
-                                            <th className="px-6 py-4 font-bold">Detail</th>
                                             <th className="px-6 py-4 font-bold text-right">Extracted Value</th>
                                             <th className="px-6 py-4 font-bold text-right">Action</th>
                                         </tr>
@@ -494,12 +498,7 @@ export default function CotacaoPage() {
                                     <tbody className="divide-y divide-white/5 font-medium">
                                         {results.map((res: any) => (
                                             <tr key={res.site} className="hover:bg-white/[0.02] transition-colors">
-                                                <td className="px-6 py-4 text-white font-bold">
-                                                    {res.site}
-                                                    {res.site === 'Duffel' && (
-                                                        <span className="ml-1.5 text-[9px] font-bold text-sky-500/60 uppercase">300+ cias</span>
-                                                    )}
-                                                </td>
+                                                <td className="px-6 py-4 text-white font-bold">{res.site}</td>
                                                 <td className="px-6 py-4">
                                                     <span className={cn(
                                                         "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
@@ -507,11 +506,6 @@ export default function CotacaoPage() {
                                                     )}>
                                                         {res.success ? "Optimised" : "Fault"}
                                                     </span>
-                                                </td>
-                                                <td className="px-6 py-4 text-slate-500 text-[11px]">
-                                                    {res.site === 'Duffel' && res.airlineBreakdown?.length > 0
-                                                        ? res.airlineBreakdown.map((b: any) => b.airline).join(' · ')
-                                                        : res.error ?? ''}
                                                 </td>
                                                 <td className="px-6 py-4 text-right text-primary font-black">
                                                     {typeof res.price === 'number' ? res.price.toLocaleString('pt-BR') : res.price}{' '}
