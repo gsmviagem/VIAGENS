@@ -259,9 +259,9 @@ export function parseFlightMessage(message: string, isAmericanFormat: boolean = 
     }
 
     // --- 5. CLASS & PARTNER ---
-    if (/\bpremium\s*(?:economy|eco)\b/i.test(msg)) data.classType = 'PREMIUM ECONOMY';
+    if (/\bbusiness\b|\bbiz\b|\bexecutiva\b|\bexe\b/i.test(msg)) data.classType = 'EXECUTIVA';
+    else if (/\bpremium\b/i.test(msg)) data.classType = 'ECONOMICA PREMIUM';
     else if (/\beconomy\b|\beconomica\b|\beco\b/i.test(msg)) data.classType = 'ECONOMICA';
-    else if (/\bbusiness\b|\bexecutiva\b|\bbiz\b/i.test(msg)) data.classType = 'EXECUTIVA';
     else if (/\bfirst\b|\bprimeira\b/i.test(msg)) data.classType = 'PRIMEIRA';
 
     const partnerMap: { [key: string]: string } = { vs: 'Virgin', dl: 'Delta', la: 'LATAM', ad: 'Azul', af: 'Air France', kl: 'KLM', ib: 'Iberia', tp: 'TAP' };
