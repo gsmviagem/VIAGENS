@@ -11,6 +11,7 @@ const sites = [
     { id: 'latam', name: 'LATAM Pass', color: 'border-purple-500/30 text-purple-400' },
     { id: 'azul', name: 'Azul Rewards', color: 'border-blue-500/30 text-blue-400' },
     { id: 'busca-ideal', name: 'Busca Ideal (Multi-cia)', color: 'border-cyan-500/30 text-cyan-400' },
+    { id: 'kiwi', name: 'Kiwi (Global BRL)', color: 'border-green-500/30 text-green-400' },
 ];
 
 interface HistoryEntry {
@@ -54,6 +55,7 @@ export default function CotacaoPage() {
         latam: 'idle',
         azul: 'idle',
         'busca-ideal': 'idle',
+        kiwi: 'idle',
     });
     const [history, setHistory] = useState<HistoryEntry[]>([]);
     const [iataError, setIataError] = useState('');
@@ -179,6 +181,7 @@ export default function CotacaoPage() {
                 latam: 'https://www.latamairlines.com/br/pt',
                 azul: 'https://azulpelomundo.voeazul.com.br',
                 'busca-ideal': 'https://busca.buscaideal.com.br',
+                kiwi: 'https://www.kiwi.com/',
             };
             window.open(fallbacks[siteId] || '#', '_blank', 'noopener,noreferrer');
         }
@@ -406,11 +409,11 @@ export default function CotacaoPage() {
                                 <div className="mt-4">
                                     {(() => {
                                         const res = results.find(r => r.site.toLowerCase().replace(/\s+/g, '-').includes(site.id));
-                                        const isBuscaIdeal = site.id === 'busca-ideal';
+                                        const isMultiCia = site.id === 'busca-ideal' || site.id === 'kiwi';
                                         const isDone = searchStatus[site.id] === 'done';
 
-                                        // Busca Ideal: mostra breakdown por cia quando tem resultado
-                                        if (isBuscaIdeal && isDone && res?.airlineBreakdown?.length > 0) {
+                                        // Busca Ideal e Kiwi: mostra breakdown por cia quando tem resultado
+                                        if (isMultiCia && isDone && res?.airlineBreakdown?.length > 0) {
                                             return (
                                                 <div className="space-y-1.5">
                                                     {res.airlineBreakdown.map((b: any, i: number) => (

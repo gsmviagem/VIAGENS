@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
 import { searchBuscaIdeal } from '@/connectors/quotation/busca-ideal-fetch';
+import { searchKiwi } from '@/connectors/quotation/kiwi-client';
 
 export interface QuotationResult {
     site: string;
     price: number | string;
-    currency: 'miles' | 'brl';
+    currency: 'miles' | 'brl' | 'usd';
     success: boolean;
     error?: string;
     searchUrl?: string;
+    airlineBreakdown?: { airline: string; price: string }[];
 }
 
 interface SearchOptions {
@@ -253,6 +255,7 @@ export async function POST(req: Request) {
             searchAzul(opts, dateISO),
             searchLatam(opts, dateISO),
             searchBuscaIdeal(opts.origin, opts.destination, dateISO, opts.passengers ?? 1),
+            searchKiwi(opts.origin, opts.destination, dateISO, opts.passengers ?? 1),
         ]);
 
         // Store in cache
