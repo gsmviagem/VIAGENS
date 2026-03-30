@@ -54,8 +54,20 @@ const DEFAULT_HEADERS = {
 };
 
 // ─── Login + extração de idCli ────────────────────────────────────────────────
+function extractIdCli(html: string): string | null {
+    const m =
+        html.match(/Cliente\s*=\s*(\d{4,8})/) ??
+        html.match(/idCli['":\s=]+(\d{4,8})/i) ??
+        html.match(/"idCliente"\s*:\s*(\d{4,8})/) ??
+        html.match(/idcliente['":\s=]+(\d{4,8})/i) ??
+        html.match(/cliente['":\s=]+(\d{4,8})/i) ??
+        html.match(/[?&]idCli=(\d{4,8})/) ??
+        html.match(/\/(\d{5,8})\/busca/);
+    return m?.[1] ?? null;
+}
+
 async function authenticate(user: string, pass: string): Promise<SessionCache> {
-    // 1. POST login
+    // 1. POST login com redirect manual para capturar Set-Cookie
     const loginRes = await fetch(`${BASE}/login/authenticate`, {
         method: 'POST',
         headers: {
@@ -65,15 +77,15 @@ async function authenticate(user: string, pass: string): Promise<SessionCache> {
             'Referer': `${BASE}/login/auth`,
         },
         body: new URLSearchParams({ username: user, password: pass }).toString(),
-        redirect: 'manual', // captura o Set-Cookie antes do redirect
+        redirect: 'manual',
         signal: AbortSignal.timeout(15_000),
     });
 
     // Coleta todos os Set-Cookie da resposta
     const rawCookies = loginRes.headers.getSetCookie?.() ?? [];
     const setCookieHeader = loginRes.headers.get('set-cookie') ?? '';
+    const location = loginRes.headers.get('location') ?? '';
 
-    // Extrai pares name=value (ignora atributos como Path, Domain, HttpOnly)
     const cookiePairs: string[] = [];
     const cookieSources = rawCookies.length > 0 ? rawCookies : [setCookieHeader];
     for (const raw of cookieSources) {
@@ -82,36 +94,52 @@ async function authenticate(user: string, pass: string): Promise<SessionCache> {
     }
 
     if (cookiePairs.length === 0) {
-        // Verifica se o login falhou (redirect para login_error)
-        const location = loginRes.headers.get('location') ?? '';
         if (location.includes('login_error') || loginRes.status === 401) {
             throw new Error('Credenciais inválidas. Verifique BUSCA_IDEAL_USER e BUSCA_IDEAL_PASS.');
         }
-        throw new Error(`Login não retornou cookie de sessão (status ${loginRes.status})`);
+        throw new Error(`Login não retornou cookie de sessão (status ${loginRes.status}, location: ${location})`);
+    }
+
+    if (location.includes('login_error')) {
+        throw new Error('Credenciais inválidas. Verifique BUSCA_IDEAL_USER e BUSCA_IDEAL_PASS.');
     }
 
     const sessionCookie = cookiePairs.join('; ');
+    console.log(`[BUSCA-IDEAL] Login OK – cookies: ${cookiePairs.length}, redirect: ${location}`);
 
-    // 2. GET home page para extrair idCli
-    const homeRes = await fetch(`${BASE}/`, {
-        headers: { ...DEFAULT_HEADERS, 'Cookie': sessionCookie },
-        signal: AbortSignal.timeout(10_000),
-    });
+    // 2. Tenta extrair idCli em múltiplas páginas (redirect → / → /busca → /busca/index)
+    const pagesToTry: string[] = [];
+    if (location) {
+        const redirectUrl = location.startsWith('http') ? location : `${BASE}${location.startsWith('/') ? '' : '/'}${location}`;
+        pagesToTry.push(redirectUrl);
+    }
+    pagesToTry.push(`${BASE}/`);
+    pagesToTry.push(`${BASE}/busca`);
+    pagesToTry.push(`${BASE}/busca/index`);
 
-    const homeHtml = await homeRes.text();
+    let idCli: string | null = null;
+    for (const pageUrl of pagesToTry) {
+        try {
+            const res = await fetch(pageUrl, {
+                headers: { ...DEFAULT_HEADERS, 'Cookie': sessionCookie, 'Referer': `${BASE}/login/auth` },
+                signal: AbortSignal.timeout(10_000),
+            });
+            const html = await res.text();
+            idCli = extractIdCli(html);
+            console.log(`[BUSCA-IDEAL] Tentando ${pageUrl} (${res.status}) – idCli: ${idCli ?? 'não encontrado'}`);
+            if (idCli) break;
+        } catch (e: any) {
+            console.log(`[BUSCA-IDEAL] Erro em ${pageUrl}: ${e.message}`);
+        }
+    }
 
-    // "Cliente     = 641910" ou "idCli=641910"
-    const idCliMatch =
-        homeHtml.match(/Cliente\s*=\s*(\d{4,8})/) ??
-        homeHtml.match(/idCli['":\s=]+(\d{4,8})/);
-
-    if (!idCliMatch) {
-        throw new Error('Não foi possível extrair idCli do perfil. Login pode ter falhado silenciosamente.');
+    if (!idCli) {
+        throw new Error('Não foi possível extrair idCli. Login pode ter falhado ou site bloqueou o servidor.');
     }
 
     const cache: SessionCache = {
         cookie: sessionCookie,
-        idCli: idCliMatch[1],
+        idCli,
         expiresAt: Date.now() + SESSION_TTL,
     };
 
