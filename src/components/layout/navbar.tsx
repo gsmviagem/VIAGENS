@@ -19,7 +19,6 @@ const navItems = [
     { href: '/auto-extrator', label: 'Automations', icon: 'precision_manufacturing' },
     { href: '/calculo', label: 'Calculator', icon: 'calculate' },
     { href: '/invoice', label: 'Invoice', icon: 'description' },
-    { href: '/configuracoes', label: 'Settings', icon: 'settings' }
 ];
 
 // Light health check: ping Supabase URL and Sheets market endpoint
@@ -55,8 +54,6 @@ export function Navbar() {
     const pathname = usePathname();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isPaletteOpen, setIsPaletteOpen] = useState(false);
-    const systemStatus = useSystemStatus();
-    const sc = statusConfig[systemStatus];
 
     const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
@@ -106,30 +103,6 @@ export function Navbar() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {/* System Status Indicator */}
-                    <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10" title={`System: ${sc.label}`}>
-                        <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", sc.color, sc.pulse && "animate-pulse")} />
-                        <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider hidden md:block">{sc.label}</span>
-                    </div>
-
-                    {/* Ctrl+K Search trigger */}
-                    <button
-                        onClick={() => setIsPaletteOpen(true)}
-                        className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
-                        title="Busca global (Ctrl+K)"
-                    >
-                        <span className="material-symbols-outlined text-white/40 group-hover:text-white/70 text-[16px] transition-colors">search</span>
-                        <span className="text-[10px] font-bold text-white/30 hidden md:block">Search...</span>
-                        <kbd className="text-[9px] font-bold text-white/20 bg-white/5 border border-white/10 rounded px-1 py-0.5 hidden md:block">⌘K</kbd>
-                    </button>
-
-                    <button className="hidden sm:block p-2 hover:bg-white/5 rounded-full transition-all active:scale-95">
-                        <span className="material-symbols-outlined text-white">notifications</span>
-                    </button>
-                    <Link href="/configuracoes" className="hidden lg:block p-2 hover:bg-white/5 rounded-full transition-all active:scale-95">
-                        <span className="material-symbols-outlined text-white">settings</span>
-                    </Link>
-
                     <div className="w-8 h-8 rounded-full overflow-hidden border border-emerald-500/30 hidden sm:block">
                         <img
                             alt="User Profile"
