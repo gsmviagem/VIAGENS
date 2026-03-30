@@ -214,17 +214,17 @@ export default function BookPage() {
         return `Gostaria de emitir em tabela fixa:\n⇾ Origem e Destino: ${route}\n⇾ Data: ${data.date}\n⇾ Voo: ${data.flightTime}\n⇾ Classe: ${data.classType}\n⇾ Companhia parceira: ${data.partner}\n⇾ Adultos: ${data.adults}\n⇾ Crianças: ${data.children}\n⇾ Bebês: ${data.infants}`;
     };
 
-    const formatPassengerBlock = (data: ProcessedData): string => {
+    const formatPassengerBlock = (data: ProcessedData, forCopy = false): string => {
         if (outputMode === 'simple') {
             return data.passengers.map(p => {
                 let block = `${p.firstName}\n${p.lastName}\n${p.birthDate}\n${p.gender}`;
-                if (p.previousAccount && p.previousAccount.length > 0) block += `\nEmissão Anterior: ${p.previousAccount.join(', ')}`;
+                if (!forCopy && p.previousAccount && p.previousAccount.length > 0) block += `\nEmissão Anterior: ${p.previousAccount.join(', ')}`;
                 return block;
             }).join('\n\n');
         }
         return data.passengers.map(p => {
             let block = `DADOS DO PASSAGEIRO\n➔ Primeiro nome: ${p.firstName}\n➔ Último nome: ${p.lastName}\n➔ Gênero: ${p.gender}\n➔ Data de nascimento: ${p.birthDate}\n➔ Número do passaporte: ${p.passportNumber}\n➔ Nacionalidade: ${p.nationality}\n➔ Data de validade do passaporte: ${p.passportExpiry}\n➔ País de emissão do passaporte: ${p.passportIssuanceCountry}`;
-            if (p.previousAccount && p.previousAccount.length > 0) block += `\n➔ Emissão Anterior: ${p.previousAccount.join(', ')}`;
+            if (!forCopy && p.previousAccount && p.previousAccount.length > 0) block += `\n➔ Emissão Anterior: ${p.previousAccount.join(', ')}`;
             return block;
         }).join('\n\n');
     };
@@ -239,7 +239,7 @@ export default function BookPage() {
 
     const handleCopyPax = () => {
         if (!result) return;
-        navigator.clipboard.writeText(formatPassengerBlock(result));
+        navigator.clipboard.writeText(formatPassengerBlock(result, true));
         toast.success('Passageiro(s) copiado(s)!');
         setIsCopyingPax(true);
         setTimeout(() => setIsCopyingPax(false), 2000);

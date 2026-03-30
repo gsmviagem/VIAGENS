@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { searchAmadeus } from '@/connectors/quotation/amadeus-client';
+import { searchDuffel } from '@/connectors/quotation/duffel-client';
 
 export interface QuotationResult {
     site: string;
@@ -252,7 +252,7 @@ export async function POST(req: Request) {
             searchSmiles(opts, dateISO),
             searchAzul(opts, dateISO),
             searchLatam(opts, dateISO),
-            searchAmadeus(opts.origin, opts.destination, dateISO, opts.passengers ?? 1),
+            searchDuffel(opts.origin, opts.destination, dateISO, opts.passengers ?? 1),
         ]);
 
         // Store in cache

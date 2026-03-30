@@ -10,7 +10,7 @@ const sites = [
     { id: 'smiles', name: 'Smiles Rewards', color: 'border-orange-500/30 text-orange-400' },
     { id: 'latam', name: 'LATAM Pass', color: 'border-purple-500/30 text-purple-400' },
     { id: 'azul', name: 'Azul Rewards', color: 'border-blue-500/30 text-blue-400' },
-    { id: 'amadeus', name: 'Amadeus (500+ Cias)', color: 'border-sky-500/30 text-sky-400' },
+    { id: 'duffel', name: 'Duffel (300+ Cias)', color: 'border-sky-500/30 text-sky-400' },
 ];
 
 interface HistoryEntry {
@@ -53,7 +53,7 @@ export default function CotacaoPage() {
         smiles: 'idle',
         latam: 'idle',
         azul: 'idle',
-        amadeus: 'idle',
+        duffel: 'idle',
     });
     const [history, setHistory] = useState<HistoryEntry[]>([]);
     const [iataError, setIataError] = useState('');
@@ -178,7 +178,7 @@ export default function CotacaoPage() {
                 smiles: 'https://www.smiles.com.br',
                 latam: 'https://www.latamairlines.com/br/pt',
                 azul: 'https://azulpelomundo.voeazul.com.br',
-                amadeus: 'https://www.amadeus.com',
+                duffel: 'https://app.duffel.com',
             };
             window.open(fallbacks[siteId] || '#', '_blank', 'noopener,noreferrer');
         }
@@ -404,10 +404,10 @@ export default function CotacaoPage() {
                                 </div>
 
                                 <div className="mt-4">
-                                    {site.id === 'amadeus' && searchStatus[site.id] === 'done' ? (
+                                    {site.id === 'duffel' && searchStatus[site.id] === 'done' ? (
                                         // Amadeus: show airline breakdown
                                         (() => {
-                                            const amRes = results.find(r => r.site === 'Amadeus');
+                                            const amRes = results.find(r => r.site === 'Duffel');
                                             return (
                                                 <div className="space-y-1">
                                                     {amRes?.airlineBreakdown?.map((b: any, i: number) => (
@@ -496,8 +496,8 @@ export default function CotacaoPage() {
                                             <tr key={res.site} className="hover:bg-white/[0.02] transition-colors">
                                                 <td className="px-6 py-4 text-white font-bold">
                                                     {res.site}
-                                                    {res.site === 'Amadeus' && (
-                                                        <span className="ml-1.5 text-[9px] font-bold text-sky-500/60 uppercase">500+ cias</span>
+                                                    {res.site === 'Duffel' && (
+                                                        <span className="ml-1.5 text-[9px] font-bold text-sky-500/60 uppercase">300+ cias</span>
                                                     )}
                                                 </td>
                                                 <td className="px-6 py-4">
@@ -509,7 +509,7 @@ export default function CotacaoPage() {
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-slate-500 text-[11px]">
-                                                    {res.site === 'Amadeus' && res.airlineBreakdown?.length > 0
+                                                    {res.site === 'Duffel' && res.airlineBreakdown?.length > 0
                                                         ? res.airlineBreakdown.map((b: any) => b.airline).join(' · ')
                                                         : res.error ?? ''}
                                                 </td>
