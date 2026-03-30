@@ -67,6 +67,28 @@ function extractIdCli(html: string): string | null {
 }
 
 async function authenticate(user: string, pass: string): Promise<SessionCache> {
+    // 0. GET /login/auth para obter JSESSIONID pré-login (Spring Security requer)
+    let preCookie = '';
+    try {
+        const preRes = await fetch(`${BASE}/login/auth`, {
+            headers: { ...DEFAULT_HEADERS },
+            redirect: 'manual',
+            signal: AbortSignal.timeout(10_000),
+        });
+        const rawPre = preRes.headers.getSetCookie?.() ?? [];
+        const preCookieHeader = preRes.headers.get('set-cookie') ?? '';
+        const preSources = rawPre.length > 0 ? rawPre : [preCookieHeader];
+        const prePairs: string[] = [];
+        for (const raw of preSources) {
+            const parts = raw.split(';');
+            if (parts[0]?.includes('=')) prePairs.push(parts[0].trim());
+        }
+        preCookie = prePairs.join('; ');
+        console.log(`[BUSCA-IDEAL] Pre-login cookies: ${prePairs.length} (${prePairs.map(p => p.split('=')[0]).join(', ')})`);
+    } catch (e: any) {
+        console.log(`[BUSCA-IDEAL] Pre-login GET failed: ${e.message}`);
+    }
+
     // 1. POST login com redirect manual para capturar Set-Cookie
     const loginRes = await fetch(`${BASE}/login/authenticate`, {
         method: 'POST',
@@ -75,8 +97,9 @@ async function authenticate(user: string, pass: string): Promise<SessionCache> {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Origin': BASE,
             'Referer': `${BASE}/login/auth`,
+            ...(preCookie ? { 'Cookie': preCookie } : {}),
         },
-        body: new URLSearchParams({ username: user, password: pass }).toString(),
+        body: new URLSearchParams({ username: user, password: pass, 'remember-me': 'on' }).toString(),
         redirect: 'manual',
         signal: AbortSignal.timeout(15_000),
     });
