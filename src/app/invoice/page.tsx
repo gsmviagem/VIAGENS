@@ -384,22 +384,12 @@ export default function InvoicePage() {
                         </button>
                     </div>
 
-                    {/* STATS */}
-                    {selectedClient && (
-                        <div className="glass-panel p-8 bg-gradient-to-br from-emerald-500/5 to-transparent">
-                            <h3 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-6">Current Sheet Balance</h3>
-                            <div>
-                                <p className="text-[10px] text-outline uppercase font-mono">Ledger Total</p>
-                                <p className="text-3xl font-black text-white italic tracking-tighter">{selectedClient.totalOwed}</p>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 {/* PREVIEW & SELECTION */}
-                <div className="flex-1 min-w-0 space-y-8">
+                <div className="flex-1 min-w-0 flex flex-col gap-8 min-h-0">
                     {/* TOP SUMMARY BOX */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-1 px-1">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-1 px-1 shrink-0">
                          <div className="glass-panel p-6 border-r-0 rounded-r-none">
                             <span className="text-[9px] font-black text-outline uppercase tracking-widest">Total Expenses</span>
                             <p className="text-2xl font-black text-white mt-1">$ {totalEmissions.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
@@ -420,7 +410,7 @@ export default function InvoicePage() {
                          </div>
                     </div>
 
-                    <div className="glass-panel flex flex-col h-[750px]">
+                    <div className="glass-panel flex flex-col flex-1 min-h-0">
                         <div className="p-6 border-b border-white/5 flex justify-between items-center">
                             <div className="flex items-center gap-4">
                                 <span className="material-symbols-outlined text-outline">description</span>
