@@ -11,6 +11,7 @@ interface Client {
     broker: string;
     company: string;
     totalOwed: string;
+    email?: string;
 }
 
 interface Emission {
@@ -139,32 +140,32 @@ export default function InvoicePage() {
         // --- 1. COMPACT HEADER DESIGN ---
         // Main dark blue banner (compact)
         doc.setFillColor(PRIMARY_BLUE[0], PRIMARY_BLUE[1], PRIMARY_BLUE[2]);
-        doc.rect(0, 0, pageWidth, 28, 'F');
+        doc.rect(0, 0, pageWidth, 18, 'F');
         
         // Subtle diagonal polygon for depth
         doc.setFillColor(0, 35, 75);
-        doc.triangle(pageWidth - 80, 0, pageWidth, 0, pageWidth, 28, 'F');
+        doc.triangle(pageWidth - 80, 0, pageWidth, 0, pageWidth, 18, 'F');
 
         // Thin emerald accent ribbon
         doc.setFillColor(ACCENT_COLOR[0], ACCENT_COLOR[1], ACCENT_COLOR[2]);
-        doc.rect(0, 28, pageWidth, 1.5, 'F');
+        doc.rect(0, 18, pageWidth, 1.5, 'F');
 
         // Company Name
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(13);
+        doc.setFontSize(22);
         doc.setFont('helvetica', 'bold');
-        doc.text('DIMAIS CORP', 15, 18);
+        doc.text('DIMAIS CORP', 15, 12);
 
         // "INVOICE" badge
         doc.setFillColor(255, 255, 255);
-        doc.roundedRect(pageWidth - 38, 9, 23, 10, 1.5, 1.5, 'F');
+        doc.roundedRect(pageWidth - 38, 4, 23, 10, 1.5, 1.5, 'F');
         doc.setTextColor(PRIMARY_BLUE[0], PRIMARY_BLUE[1], PRIMARY_BLUE[2]);
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text('INVOICE', pageWidth - 26.5, 14.5, { align: 'center', baseline: 'middle' });
+        doc.text('INVOICE', pageWidth - 26.5, 9.5, { align: 'center', baseline: 'middle' });
 
         // --- 2. COMPACT INFO ROW ---
-        const infoY = 38;
+        const infoY = 28;
         
         // Left: Billed to (compact card)
         doc.setFillColor(248, 250, 252);
@@ -289,8 +290,8 @@ export default function InvoicePage() {
 
         const clientNameFile = selectedClient.company || selectedClient.broker;
         const todayFile = new Date();
-        const formattedDateFile = `${todayFile.getMonth() + 1}-${todayFile.getDate()}-${todayFile.getFullYear()}`;
-        doc.save(`Invoice ${clientNameFile} - ${formattedDateFile}.pdf`);
+        const formattedDateFile = `${String(todayFile.getMonth() + 1).padStart(2, '0')}.${String(todayFile.getDate()).padStart(2, '0')}.${todayFile.getFullYear()}`;
+        doc.save(`INVOICE ${clientNameFile.toUpperCase()} - ${formattedDateFile}.pdf`);
     };
 
     return (
@@ -378,6 +379,54 @@ export default function InvoicePage() {
                         >
                             {loading ? 'Processing...' : 'Fetch Billing Data'}
                         </button>
+
+                        <AnimatePresence>
+                            {selectedClient && (
+                                <motion.div 
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="bg-black/20 micro-border p-6 space-y-5 border-emerald-500/20 mt-6">
+                                        <div className="flex items-center gap-3 border-b border-white/5 pb-3">
+                                            <span className="material-symbols-outlined text-[14px] text-emerald-400">person</span>
+                                            <span className="text-[10px] font-black text-white uppercase tracking-[0.2em] italic">Client Info</span>
+                                        </div>
+                                        
+                                        <div className="space-y-4">
+                                            <div>
+                                                <p className="text-[8px] font-black text-outline uppercase tracking-widest mb-1">Broker Name</p>
+                                                <p className="text-[11px] font-black text-white uppercase">{selectedClient.broker || 'N/A'}</p>
+                                            </div>
+                                            
+                                            <div>
+                                                <p className="text-[8px] font-black text-outline uppercase tracking-widest mb-1">Company</p>
+                                                <p className="text-[11px] font-black text-[#c8c6c5] uppercase">{selectedClient.company || 'N/A'}</p>
+                                            </div>
+
+                                            <div>
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <p className="text-[8px] font-black text-outline uppercase tracking-widest">Contact Email</p>
+                                                    <button 
+                                                        onClick={() => {
+                                                            if (selectedClient.email) {
+                                                                navigator.clipboard.writeText(selectedClient.email);
+                                                                toast.success('Email copied successfully');
+                                                            }
+                                                        }}
+                                                        className="flex items-center gap-1 text-[8px] font-black text-emerald-400 hover:text-emerald-300 uppercase tracking-widest transition-colors active:scale-95"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[10px]">content_copy</span> Copy
+                                                    </button>
+                                                </div>
+                                                <p className="text-[10px] font-mono text-white/70 bg-black/40 py-2 px-3 rounded-sm border border-white/5 break-all">{selectedClient.email || 'No email provided'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
 
                 </div>

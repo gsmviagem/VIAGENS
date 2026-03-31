@@ -19,7 +19,8 @@ export async function GET() {
                 id: i,
                 broker: (row[0] || '').trim(),
                 company: (row[1] || '').trim(),
-                totalOwed: (row[2] || '0')
+                totalOwed: (row[2] || '0'),
+                email: `contato@${(row[1] || row[0] || 'cliente').split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}.com`
             }))
             .filter(c => c.broker || c.company);
 
