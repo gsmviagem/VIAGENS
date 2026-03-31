@@ -10,6 +10,7 @@ export interface QuotationResult {
     error?: string;
     searchUrl?: string;
     airlineBreakdown?: { airline: string; price: string }[];
+    milesBreakdown?: { airline: string; flightCode: string; miles: string; departure: string; stops: string }[];
 }
 
 interface SearchOptions {

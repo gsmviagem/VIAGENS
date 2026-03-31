@@ -151,7 +151,7 @@ export default function InvoicePage() {
 
         // Company Name
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(16);
+        doc.setFontSize(13);
         doc.setFont('helvetica', 'bold');
         doc.text('DIMAIS CORP', 15, 18);
 
@@ -159,9 +159,9 @@ export default function InvoicePage() {
         doc.setFillColor(255, 255, 255);
         doc.roundedRect(pageWidth - 38, 9, 23, 10, 1.5, 1.5, 'F');
         doc.setTextColor(PRIMARY_BLUE[0], PRIMARY_BLUE[1], PRIMARY_BLUE[2]);
-        doc.setFontSize(7);
+        doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text('INVOICE', pageWidth - 26.5, 15.5, { align: 'center' });
+        doc.text('INVOICE', pageWidth - 26.5, 14.5, { align: 'center', baseline: 'middle' });
 
         // --- 2. COMPACT INFO ROW ---
         const infoY = 38;
@@ -187,17 +187,10 @@ export default function InvoicePage() {
         doc.setFontSize(7);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(150, 150, 150);
-        doc.text('No:', 108, infoY + 7);
+        doc.text('Date:', 108, infoY + 10);
         doc.setTextColor(40, 40, 40);
         doc.setFont('helvetica', 'bold');
-        doc.text(`# ${Math.floor(Math.random() * 900000) + 100000}`, 115, infoY + 7);
-
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(150, 150, 150);
-        doc.text('Date:', 108, infoY + 13);
-        doc.setTextColor(40, 40, 40);
-        doc.setFont('helvetica', 'bold');
-        doc.text(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }), 118, infoY + 13);
+        doc.text(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }), 118, infoY + 10);
 
         // Right: Financial summary (compact card)
         const sumBoxX = pageWidth - 60;
@@ -294,7 +287,10 @@ export default function InvoicePage() {
         doc.setTextColor(150, 150, 150);
         doc.text('DIMAIS CORP - TRAVEL PERSPECTIVE & BILLING TECHNOLOGY', pageWidth / 2, 285, { align: 'center' });
 
-        doc.save(`Invoice_${(selectedClient.company || selectedClient.broker).replace(/\s+/g, '_')}_${new Date().getFullYear()}.pdf`);
+        const clientNameFile = selectedClient.company || selectedClient.broker;
+        const todayFile = new Date();
+        const formattedDateFile = `${todayFile.getMonth() + 1}-${todayFile.getDate()}-${todayFile.getFullYear()}`;
+        doc.save(`Invoice ${clientNameFile} - ${formattedDateFile}.pdf`);
     };
 
     return (

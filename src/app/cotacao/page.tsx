@@ -409,11 +409,40 @@ export default function CotacaoPage() {
                                 <div className="mt-4">
                                     {(() => {
                                         const res = results.find(r => r.site.toLowerCase().replace(/\s+/g, '-').includes(site.id));
-                                        const isMultiCia = site.id === 'busca-ideal' || site.id === 'kiwi';
                                         const isDone = searchStatus[site.id] === 'done';
 
-                                        // Busca Ideal e Kiwi: mostra breakdown por cia quando tem resultado
-                                        if (isMultiCia && isDone && res?.airlineBreakdown?.length > 0) {
+                                        // Busca Ideal: mostra top 5 em milhas quando disponível
+                                        if (site.id === 'busca-ideal' && isDone && res?.milesBreakdown?.length > 0) {
+                                            return (
+                                                <div className="space-y-1.5">
+                                                    <div className="flex items-center gap-1 mb-2">
+                                                        <span className="material-symbols-outlined text-cyan-400 text-xs">stars</span>
+                                                        <span className="text-[9px] font-bold uppercase tracking-widest text-cyan-400/60">Top 5 em Milhas</span>
+                                                    </div>
+                                                    {res.milesBreakdown.map((b: any, i: number) => (
+                                                        <div key={i} className="flex items-center justify-between text-[11px] bg-white/[0.03] rounded-lg px-2 py-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[9px] font-black text-cyan-400/50 w-3">{i + 1}</span>
+                                                                <div>
+                                                                    <span className="text-slate-300 font-bold">{b.airline}</span>
+                                                                    <span className="text-slate-600 ml-1 text-[9px]">{b.flightCode}</span>
+                                                                    <p className="text-[9px] text-slate-600">{b.stops}</p>
+                                                                </div>
+                                                            </div>
+                                                            <span className="font-black text-cyan-300">{b.miles} <span className="text-[9px] opacity-60">mi</span></span>
+                                                        </div>
+                                                    ))}
+                                                    <div className="flex justify-end pt-1">
+                                                        <Button variant="ghost" size="sm" onClick={() => openViewBoard(site.id)} className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-white">
+                                                            Ver Site
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+
+                                        // Kiwi: mostra breakdown por cia quando tem resultado
+                                        if (site.id === 'kiwi' && isDone && res?.airlineBreakdown?.length > 0) {
                                             return (
                                                 <div className="space-y-1.5">
                                                     {res.airlineBreakdown.map((b: any, i: number) => (
