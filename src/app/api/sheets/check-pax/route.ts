@@ -20,41 +20,65 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: 'Google Sheets não está configurado.' }, { status: 500 });
         }
 
-        // Column G=Pax names, M=Conta (index 6 from G)
-        const rawData = await sheetsService.readSheetData('BASE!G3:M');
+        // Reading from B to M to get:
+        // B(0): Booking Date (DD/MM/YYYY)
+        // G(5): Pax Name
+        // H(6): PNR / Localizador
+        // M(11): Conta
+        const rawData = await sheetsService.readSheetData('BASE!B3:M');
 
         if (!rawData) {
             return NextResponse.json({ success: false, error: 'Falha ao ler dados da planilha BASE' }, { status: 500 });
         }
 
-        // results: { "JOHN DOE": ["CONTA1", "CONTA2", ...] }
-        const results: Record<string, string[]> = {};
-        
+        const currentYear = new Date().getFullYear();
+
+        // results: { "JOHN DOE": [{ localizador: "ABC123", conta: "CONTA1" }, ...] }
+        const results: Record<string, { localizador: string; conta: string }[]> = {};
+
         const searchNames = passengers.map((p: string) => p.toUpperCase().trim());
         for (const name of searchNames) results[name] = [];
 
         for (const row of rawData) {
-            if (!row || !row[0]) continue;
-            
-            const paxCell = row[0].toUpperCase(); // Column G
-            const accountCell = (row[6] || '').trim(); // Column M
-            
-            if (!accountCell) continue;
+            if (!row || !row[5]) continue; // Must have Pax Name in col G (index 5)
+
+            const dateStr = (row[0] || '').trim(); // B(0): DD/MM/YYYY
+
+            // Filter: only current year emissions
+            if (dateStr) {
+                const parts = dateStr.split('/');
+                if (parts.length === 3) {
+                    const rowYear = parseInt(parts[2]);
+                    if (rowYear !== currentYear) continue;
+                }
+            } else {
+                // No date — skip
+                continue;
+            }
+
+            const paxCell = row[5].toUpperCase(); // G(5): Pax Name
+            const localizador = (row[6] || '').trim().toUpperCase(); // H(6): PNR/Localizador
+            const accountCell = (row[11] || '').trim(); // M(11): Conta
 
             for (const searchName of searchNames) {
                 if (paxCell.includes(searchName)) {
-                    // Add account only if not already listed (avoid duplicates)
-                    if (!results[searchName].includes(accountCell)) {
-                        results[searchName].push(accountCell);
+                    // Add entry only if localizador not already listed (avoid duplicates)
+                    const alreadyAdded = results[searchName].some(e => e.localizador === localizador);
+                    if (!alreadyAdded && localizador) {
+                        results[searchName].push({ localizador, conta: accountCell });
                     }
                 }
             }
         }
 
-        // Remove empty entries
+        // Remove empty entries and format as displayable strings
         const filtered: Record<string, string[]> = {};
-        for (const [name, accounts] of Object.entries(results)) {
-            if (accounts.length > 0) filtered[name] = accounts;
+        for (const [name, entries] of Object.entries(results)) {
+            if (entries.length > 0) {
+                filtered[name] = entries.map(e =>
+                    e.conta ? `${e.localizador} (${e.conta})` : e.localizador
+                );
+            }
         }
 
         return NextResponse.json({
@@ -67,4 +91,3 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
-
