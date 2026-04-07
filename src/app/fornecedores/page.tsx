@@ -254,8 +254,9 @@ export default function FornecedoresPage() {
 
         const dateStr = new Date();
         const fmtDate = `${String(dateStr.getDate()).padStart(2, '0')}.${String(dateStr.getMonth() + 1).padStart(2, '0')}.${dateStr.getFullYear()}`;
-        const fileSupplier = supplier && supplier !== 'TODOS' ? supplier : 'ALL-SUPPLIERS';
-        doc.save(`SUPPLIER STATEMENT ${fileSupplier} - ${fmtDate}.pdf`);
+        const firstName = supplierLabel.split(' ')[0];
+        const fileSupplier = supplier && supplier !== 'TODOS' ? firstName : 'ALL-SUPPLIERS';
+        doc.save(`STATEMENT (${fileSupplier}) - ${fmtDate}.pdf`);
         toast.success('PDF exportado com sucesso!');
     };
 
