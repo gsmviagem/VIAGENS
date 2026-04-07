@@ -114,7 +114,9 @@ export default function FornecedoresPage() {
 
         // --- INFO ROW ---
         const infoY = 28;
-        const supplierLabel = supplier && supplier !== 'TODOS' ? supplier : 'TODOS OS FORNECEDORES';
+        const supplierInfo = data.suppliers?.find((s: any) => s.name === supplier);
+        const resolvedName = supplierInfo?.fullName || (supplier && supplier !== 'TODOS' ? supplier : 'TODOS OS FORNECEDORES');
+        const supplierLabel = resolvedName;
 
         // Left box: Supplier name
         doc.setFillColor(248, 250, 252);
@@ -128,7 +130,7 @@ export default function FornecedoresPage() {
         doc.setTextColor(40, 40, 40);
         doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
-        doc.text(supplierLabel.length > 22 ? supplierLabel.substring(0, 22) + '...' : supplierLabel, 22, infoY + 13);
+        doc.text(supplierLabel.length > 28 ? supplierLabel.substring(0, 28) + '...' : supplierLabel, 22, infoY + 13);
 
         // Center: date
         doc.setFontSize(7);
@@ -142,7 +144,6 @@ export default function FornecedoresPage() {
         // Right summary box
         const totalBruto = data.ledger.reduce((acc: number, row: any) => acc + parseCurrencyBR(row.total), 0);
         // Credits: find selected supplier credits
-        const supplierInfo = data.suppliers?.find((s: any) => s.name === supplier);
         const creditOkVal = supplierInfo ? parseCurrencyBR(supplierInfo.creditOk) : 0;
         const netTotal = totalBruto - creditOkVal;
 
@@ -211,26 +212,38 @@ export default function FornecedoresPage() {
         });
 
         // --- CREDITS SECTION ---
-        if (supplierInfo && creditOkVal > 0) {
+        const creditEntries: { valor: number; valorFmt: string; detalhes: string }[] = supplierInfo?.creditDetails || [];
+        if (creditEntries.length > 0) {
             const nextY = (doc as any).lastAutoTable.finalY + 10;
             doc.setTextColor(16, 120, 60);
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
             doc.text('CRÉDITOS APLICADOS', 20, nextY);
 
+            const creditRows = creditEntries.map(c => [
+                c.detalhes || '-',
+                c.valorFmt
+            ]);
+
+            // Add summary row
+            creditRows.push(['TOTAL CRÉDITOS', supplierInfo!.creditOk]);
+
             autoTable(doc, {
                 startY: nextY + 3,
-                head: [['Fornecedor', 'Pago (OK)', 'Devendo', 'Saldo Líquido']],
-                body: [[
-                    supplierInfo.name,
-                    supplierInfo.creditOk,
-                    supplierInfo.debt,
-                    `${supplierInfo.saldoType === 'NEGATIVE' ? '-' : ''}${supplierInfo.saldo}`
-                ]],
+                head: [['Descrição / Detalhes', 'Valor']],
+                body: creditRows,
                 theme: 'plain',
                 headStyles: { textColor: [100, 100, 100], fontSize: 8, fontStyle: 'bold' },
-                bodyStyles: { fontSize: 8, cellPadding: 2 },
-                columnStyles: { 3: { halign: 'right', fontStyle: 'bold' } }
+                bodyStyles: { fontSize: 8, cellPadding: 2, textColor: [50, 50, 50] },
+                columnStyles: { 1: { halign: 'right', fontStyle: 'bold' } },
+                didParseCell: (hookData: any) => {
+                    // Highlight total row
+                    if (hookData.row.index === creditRows.length - 1) {
+                        hookData.cell.styles.fillColor = [230, 250, 240];
+                        hookData.cell.styles.fontStyle = 'bold';
+                        hookData.cell.styles.textColor = [10, 100, 50];
+                    }
+                }
             });
         }
 

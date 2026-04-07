@@ -66,9 +66,24 @@ export async function POST(req: NextRequest) {
             }
         }
 
+        // Fetch full names from DATA BASE!B:C (B=alias, C=full name)
+        const fullNameMap: Record<string, string> = {};
+        const dbData = await sheetsService.readSheetData('DATA BASE!B:C');
+        if (dbData) {
+            for (const row of dbData) {
+                if (!row || !row[0] || !row[1]) continue;
+                const alias = row[0].trim().toLowerCase();
+                const fullName = row[1].trim()
+                    .toLowerCase()
+                    .replace(/\b\w/g, (c: string) => c.toUpperCase());
+                fullNameMap[alias] = fullName;
+            }
+        }
+
         // Fetch supplier credits/payments from SUPPLIER!Z:AE
-        // Z=0(SUPLIER), AA=1(VALOR), AB=2(DETALHES), AC=3(SITUAÇÃO), AD=4(VALOR EMISSÃO), AE=5(PAGO/N PAGO)
+        // Z=0(SUPPLIER), AA=1(VALOR), AB=2(DETALHES), AC=3(SITUAÇÃO), AD=4(VALOR EMISSÃO), AE=5(PAGO/N PAGO)
         const manualCredits: Record<string, number> = {};
+        const creditDetails: Record<string, { valor: number; valorFmt: string; detalhes: string }[]> = {};
         const creditData = await sheetsService.readSheetData('SUPPLIER!Z:AE');
         
         if (creditData) {
@@ -77,12 +92,19 @@ export async function POST(req: NextRequest) {
                 if (!row) continue;
                 
                 const creditSupplier = (row[0] || '').trim().toUpperCase();
-                const creditVal = parseCurrency(row[1]); 
-                const creditSituacao = (row[3] || '').trim().toUpperCase(); 
-                const creditPago = (row[5] || '').trim().toUpperCase(); 
+                const creditVal = parseCurrency(row[1]);
+                const creditDetalhes = (row[2] || '').trim(); // AB
+                const creditSituacao = (row[3] || '').trim().toUpperCase();
+                const creditPago = (row[5] || '').trim().toUpperCase();
 
                 if (creditSupplier && creditVal > 0 && creditSituacao === 'OK' && creditPago === 'PAGO') {
                     manualCredits[creditSupplier] = (manualCredits[creditSupplier] || 0) + creditVal;
+                    if (!creditDetails[creditSupplier]) creditDetails[creditSupplier] = [];
+                    creditDetails[creditSupplier].push({
+                        valor: creditVal,
+                        valorFmt: formatCurrency(creditVal),
+                        detalhes: creditDetalhes
+                    });
                 }
             }
         }
@@ -243,24 +265,29 @@ export async function POST(req: NextRequest) {
             .filter(name => name.trim() !== '' && !ignoreNames.has(name.trim().toUpperCase()))
             .map(name => {
                 const totalDebtAmount = supplierDebts[name] || 0;
-                const creditPaid = manualCredits[name] || 0; // Only AC=OK + AE=PAGO
-                
-                // Saldo Líquido = Credit Paid - Debt
+                const creditPaid = manualCredits[name] || 0;
                 const saldo = creditPaid - totalDebtAmount;
-                
+
+                // Resolve full name: search fullNameMap case-insensitively
+                const nameLower = name.toLowerCase();
+                const fullName = fullNameMap[nameLower] ||
+                    Object.entries(fullNameMap).find(([k]) => k.includes(nameLower) || nameLower.includes(k))?.[1] ||
+                    name.toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase());
+
                 return {
                     name,
+                    fullName,
                     debt: formatCurrency(totalDebtAmount),
                     creditOk: formatCurrency(creditPaid),
-                    creditPending: formatCurrency(0), // No pending concept anymore
+                    creditDetails: creditDetails[name] || [],
+                    creditPending: formatCurrency(0),
                     saldo: formatCurrency(Math.abs(saldo)),
                     saldoType: saldo > 0 ? 'POSITIVE' : (saldo < 0 ? 'NEGATIVE' : 'NEUTRAL'),
                     highlight: false
                 };
             })
-            // Only show suppliers that actually have SOME financial activity
             .filter(s => parseCurrency(s.debt) > 0 || parseCurrency(s.creditOk) > 0)
-            .sort((a, b) => parseCurrency(b.debt) - parseCurrency(a.debt)); // sort by largest debt first
+            .sort((a, b) => parseCurrency(b.debt) - parseCurrency(a.debt));
 
         return NextResponse.json({
             success: true,
