@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function FornecedoresPage() {
     const [loading, setLoading] = useState(true);
@@ -70,6 +72,180 @@ export default function FornecedoresPage() {
         toast.success("Copiado para a área de transferência!");
     };
 
+    const parseCurrencyBR = (val: string): number => {
+        if (!val) return 0;
+        const clean = String(val).replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
+        const num = parseFloat(clean);
+        return isNaN(num) ? 0 : num;
+    };
+
+    const generateSupplierPDF = () => {
+        if (!data || !data.ledger || data.ledger.length === 0) {
+            toast.error('Nenhum dado para exportar.');
+            return;
+        }
+
+        const doc = new jsPDF() as any;
+        const pageWidth = doc.internal.pageSize.width;
+        const PRIMARY: [number, number, number] = [10, 10, 20];
+        const ACCENT: [number, number, number] = [16, 185, 129];
+        const AMBER: [number, number, number] = [245, 158, 11];
+
+        // --- HEADER ---
+        doc.setFillColor(PRIMARY[0], PRIMARY[1], PRIMARY[2]);
+        doc.rect(0, 0, pageWidth, 18, 'F');
+        doc.setFillColor(0, 0, 10);
+        doc.triangle(pageWidth - 80, 0, pageWidth, 0, pageWidth, 18, 'F');
+        doc.setFillColor(AMBER[0], AMBER[1], AMBER[2]);
+        doc.rect(0, 18, pageWidth, 1.5, 'F');
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.setFont('helvetica', 'bold');
+        doc.text('DIMAIS CORP', 15, 12);
+
+        // "SUPPLIER" badge
+        doc.setFillColor(245, 158, 11);
+        doc.roundedRect(pageWidth - 46, 4, 31, 10, 1.5, 1.5, 'F');
+        doc.setTextColor(10, 10, 20);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.text('SUPPLIER', pageWidth - 30.5, 9.5, { align: 'center', baseline: 'middle' });
+
+        // --- INFO ROW ---
+        const infoY = 28;
+        const supplierLabel = supplier && supplier !== 'TODOS' ? supplier : 'TODOS OS FORNECEDORES';
+
+        // Left box: Supplier name
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(15, infoY, 85, 18, 1.5, 1.5, 'F');
+        doc.setFillColor(AMBER[0], AMBER[1], AMBER[2]);
+        doc.rect(15, infoY + 3, 2, 12, 'F');
+        doc.setFontSize(6);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(140, 140, 140);
+        doc.text('SUPPLIER', 22, infoY + 7);
+        doc.setTextColor(40, 40, 40);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text(supplierLabel.length > 22 ? supplierLabel.substring(0, 22) + '...' : supplierLabel, 22, infoY + 13);
+
+        // Center: date
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(150, 150, 150);
+        doc.text('Emitido em:', 108, infoY + 10);
+        doc.setTextColor(40, 40, 40);
+        doc.setFont('helvetica', 'bold');
+        doc.text(new Date().toLocaleDateString('pt-BR', { year: 'numeric', month: 'short', day: 'numeric' }), 124, infoY + 10);
+
+        // Right summary box
+        const totalBruto = data.ledger.reduce((acc: number, row: any) => acc + parseCurrencyBR(row.total), 0);
+        // Credits: find selected supplier credits
+        const supplierInfo = data.suppliers?.find((s: any) => s.name === supplier);
+        const creditOkVal = supplierInfo ? parseCurrencyBR(supplierInfo.creditOk) : 0;
+        const netTotal = totalBruto - creditOkVal;
+
+        const sumBoxX = pageWidth - 60;
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(220, 225, 230);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(sumBoxX, infoY, 45, 18, 1.5, 1.5, 'FD');
+
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text('Total Bruto', sumBoxX + 3, infoY + 6);
+        doc.setTextColor(40, 40, 40);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`R$ ${totalBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sumBoxX + 42, infoY + 6, { align: 'right' });
+
+        if (creditOkVal > 0) {
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 100, 100);
+            doc.text('Créditos', sumBoxX + 3, infoY + 10.5);
+            doc.setTextColor(16, 120, 80);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`-R$ ${creditOkVal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sumBoxX + 42, infoY + 10.5, { align: 'right' });
+        }
+
+        const finalColor = netTotal <= 0 ? ACCENT : AMBER;
+        doc.setFillColor(finalColor[0], finalColor[1], finalColor[2]);
+        doc.rect(sumBoxX, infoY + 13, 45, 5, 'F');
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(255, 255, 255);
+        doc.text('SALDO LÍQ.', sumBoxX + 3, infoY + 16.5);
+        doc.text(`R$ ${Math.abs(netTotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sumBoxX + 42, infoY + 16.5, { align: 'right' });
+
+        // --- LEDGER TABLE ---
+        const ledgerRows = data.ledger.map((row: any) => [
+            row.date || '-',
+            row.loc || '-',
+            row.miles ? `${row.miles}K` : '-',
+            row.price ? `R$ ${String(row.price).replace('R$', '').trim()}` : '-',
+            row.tax ? `R$ ${String(row.tax).replace('R$', '').trim()}` : 'R$ 0,00',
+            row.total ? String(row.total).replace('R$', '').trim() : '0,00',
+        ]);
+
+        autoTable(doc, {
+            startY: infoY + 28,
+            head: [['Data', 'LOC', 'Milhas', 'Preço/Milha', 'Taxas', 'Total (R$)']],
+            body: ledgerRows,
+            theme: 'grid',
+            headStyles: {
+                fillColor: PRIMARY,
+                textColor: [255, 255, 255],
+                fontSize: 8,
+                fontStyle: 'bold',
+                halign: 'left'
+            },
+            bodyStyles: {
+                fontSize: 8,
+                cellPadding: 3,
+                textColor: [50, 50, 50],
+                lineColor: [235, 235, 235]
+            },
+            alternateRowStyles: { fillColor: [248, 250, 252] },
+            columnStyles: { 5: { halign: 'right', fontStyle: 'bold' } }
+        });
+
+        // --- CREDITS SECTION ---
+        if (supplierInfo && creditOkVal > 0) {
+            const nextY = (doc as any).lastAutoTable.finalY + 10;
+            doc.setTextColor(16, 120, 60);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text('CRÉDITOS APLICADOS', 20, nextY);
+
+            autoTable(doc, {
+                startY: nextY + 3,
+                head: [['Fornecedor', 'Pago (OK)', 'Devendo', 'Saldo Líquido']],
+                body: [[
+                    supplierInfo.name,
+                    supplierInfo.creditOk,
+                    supplierInfo.debt,
+                    `${supplierInfo.saldoType === 'NEGATIVE' ? '-' : ''}${supplierInfo.saldo}`
+                ]],
+                theme: 'plain',
+                headStyles: { textColor: [100, 100, 100], fontSize: 8, fontStyle: 'bold' },
+                bodyStyles: { fontSize: 8, cellPadding: 2 },
+                columnStyles: { 3: { halign: 'right', fontStyle: 'bold' } }
+            });
+        }
+
+        // --- FOOTER ---
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text('DIMAIS CORP - TRAVEL PERSPECTIVE & BILLING TECHNOLOGY', pageWidth / 2, 285, { align: 'center' });
+
+        const dateStr = new Date();
+        const fmtDate = `${String(dateStr.getDate()).padStart(2, '0')}.${String(dateStr.getMonth() + 1).padStart(2, '0')}.${dateStr.getFullYear()}`;
+        const fileSupplier = supplier && supplier !== 'TODOS' ? supplier : 'ALL-SUPPLIERS';
+        doc.save(`SUPPLIER STATEMENT ${fileSupplier} - ${fmtDate}.pdf`);
+        toast.success('PDF exportado com sucesso!');
+    };
+
     if (loading && !data) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
@@ -94,6 +270,14 @@ export default function FornecedoresPage() {
                         </p>
                     </div>
                 </div>
+                <Button
+                    onClick={generateSupplierPDF}
+                    disabled={!data || !data.ledger || data.ledger.length === 0}
+                    className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-30 text-black font-black text-[10px] tracking-widest uppercase h-9 px-5 rounded-xl shadow-lg shadow-amber-500/20 transition-all active:scale-95"
+                >
+                    <span className="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+                    Exportar PDF
+                </Button>
             </div>
 
             {/* Scrollable Content Area */}
