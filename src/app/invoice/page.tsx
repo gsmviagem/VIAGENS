@@ -420,7 +420,28 @@ export default function InvoicePage() {
                         </section>
 
                         <div className="space-y-4">
-                            <div className="flex justify-between items-center">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-outline uppercase tracking-widest">Start Date</label>
+                                    <input 
+                                        type="date"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        className="w-full bg-black/40 micro-border px-4 py-4 text-white text-sm focus:outline-none focus:border-secondary transition-all"
+                                    />
+                                </div>
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-outline uppercase tracking-widest">End Date</label>
+                                    <input 
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        className="w-full bg-black/40 micro-border px-4 py-4 text-white text-sm focus:outline-none focus:border-secondary transition-all"
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="flex justify-between items-center mt-4 border-t border-white/5 pt-4">
                                 <label className="text-[10px] font-black text-outline uppercase tracking-widest">Select Period</label>
                                 <button
                                     onClick={handleAddWeek}

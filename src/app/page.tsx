@@ -184,19 +184,25 @@ export default function DashboardPage() {
                             </div>
                         </section>
 
-                        {/* LUXURY JET BLACK AESTHETIC VISUALIZER */}
+                        {/* DIMAIS HUB BRAND VISUALIZER */}
                         <section className="md:col-span-8 overflow-hidden flex flex-col">
                             <div className="glass-panel h-full flex flex-col bg-black border-white/5 items-center justify-center relative group overflow-hidden shadow-[inset_0_0_50px_rgba(0,0,0,0.8)]">
                                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_#000_100%)] z-10 pointer-events-none"></div>
+                                
+                                {/* Cool Grid Background */}
+                                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)] opacity-30 z-0"></div>
+                                
                                 <img 
-                                    src="/luxury-jet.png" 
-                                    alt="Luxury Private Jet" 
-                                    className="w-full h-full object-cover scale-105 group-hover:scale-100 transition-transform duration-[2000ms] z-0 opacity-90"
+                                    src="/logo.png" 
+                                    alt="Dimais Hub Logo" 
+                                    className="w-1/2 max-w-[250px] object-contain scale-105 group-hover:scale-100 transition-transform duration-[2000ms] z-0 opacity-90 drop-shadow-[0_0_20px_rgba(255,255,255,0.15)]"
                                 />
+                                
                                 <div className="absolute inset-x-0 bottom-6 flex flex-col items-center z-20 pointer-events-none">
                                     <div className="h-px w-32 bg-gradient-to-r from-transparent via-white/10 to-transparent mb-3" />
-                                    <p className="text-[11px] font-black text-white/20 uppercase tracking-[0.6em] animate-pulse">Elite.Fleet.Secure</p>
+                                    <p className="text-[11px] font-black text-white/20 uppercase tracking-[0.6em] animate-pulse">Hub.Operational.Secure</p>
                                 </div>
+                                
                                 {/* Professional Framing Overlay */}
                                 <div className="absolute inset-x-8 inset-y-8 border border-white/5 pointer-events-none z-20"></div>
                             </div>

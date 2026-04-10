@@ -121,17 +121,17 @@ export function BlackCalendar({ startDate, endDate, onChange }: BlackCalendarPro
                     let textClass = "text-white/70";
                     
                     if (isStart || isEnd) {
-                        bgClass = "bg-[#f97316]"; // Vivid Orange Default
+                        bgClass = "bg-white"; // Monochrome Hub
                         textClass = "text-black font-bold";
                     } else if (inRange) {
-                        bgClass = "bg-[#2a2a2a]"; // Dark Grey Highlight
+                        bgClass = "bg-white/10"; // Dark Grey Highlight
                         textClass = "text-white/90";
                     } else {
                         bgClass = "hover:bg-white/5";
                     }
 
                     return (
-                        <div key={d} className={`h-8 flex justify-center items-center ${inRange && !isStart && !isEnd ? 'bg-[#2a2a2a]' : ''}`}>
+                        <div key={d} className={`h-8 flex justify-center items-center ${inRange && !isStart && !isEnd ? 'bg-white/5' : ''}`}>
                              <button
                                 onClick={() => handleDayClick(d)}
                                 className={`w-8 h-8 rounded-full flex justify-center items-center text-xs transition-colors duration-200 ${bgClass} ${textClass}`}
@@ -144,7 +144,7 @@ export function BlackCalendar({ startDate, endDate, onChange }: BlackCalendarPro
             </div>
             
             {selectingStep === 1 && (
-                <div className="text-[10px] text-orange-400 mt-2 text-center uppercase tracking-widest font-bold animate-pulse">
+                <div className="text-[10px] text-white/70 mt-2 text-center uppercase tracking-widest font-bold animate-pulse">
                     Select the end date
                 </div>
             )}
