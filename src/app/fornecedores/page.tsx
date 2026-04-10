@@ -309,7 +309,16 @@ export default function FornecedoresPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ filename: fileName, pdfBase64 })
-            }).catch(console.error);
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) toast.success('E-mail do recíbo enviado!');
+                else toast.error('Falha ao enviar e-mail: ' + data.error);
+            })
+            .catch(err => {
+                console.error(err);
+                toast.error('Erro ao enviar e-mail.');
+            });
         } catch (e) {
             console.error('Failed to send email:', e);
         }
@@ -398,7 +407,16 @@ export default function FornecedoresPage() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ filename: fileName, pdfBase64 })
-                }).catch(console.error);
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) toast.success('E-mail do Statement enviado!');
+                    else toast.error('Falha ao enviar e-mail: ' + data.error);
+                })
+                .catch(err => {
+                    console.error(err);
+                    toast.error('Erro de conexão no envio de e-mail.');
+                });
             } catch (e) {
                 console.error('Failed to send statement email:', e);
             }

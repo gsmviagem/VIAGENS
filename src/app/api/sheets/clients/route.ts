@@ -35,10 +35,22 @@ export async function GET() {
                 const broker = (row[0] || '').trim();
                 const company = (row[1] || '').trim();
                 
-                // match by broker or company name against emailsMap
-                const email = emailsMap[broker.toLowerCase()] || 
-                              emailsMap[company.toLowerCase()] || 
-                              `contato@${(company || broker || 'cliente').split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}.com`;
+                // match by broker or company name against emailsMap (using includes for partial matches like 'ARIE AVRAM +507...')
+                const bLower = broker.toLowerCase();
+                const cLower = company.toLowerCase();
+                
+                let matchedEmail = emailsMap[bLower] || emailsMap[cLower];
+                
+                if (!matchedEmail) {
+                    const foundKey = Object.keys(emailsMap).find(k => 
+                        (k.length > 3 && bLower.includes(k)) || 
+                        (k.length > 3 && cLower.includes(k))
+                    );
+                    if (foundKey) matchedEmail = emailsMap[foundKey];
+                }
+
+                // fallback
+                const email = matchedEmail || `contato@${(company || broker || 'cliente').split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}.com`;
                 
                 return {
                     id: i,
