@@ -13,7 +13,8 @@ export const metadata: Metadata = {
   themeColor: "#050505",
   manifest: "/site.webmanifest",
   icons: {
-    icon: "/logo-512.png",
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
     apple: "/logo-512.png",
   }
 };
