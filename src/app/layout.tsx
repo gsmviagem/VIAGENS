@@ -11,11 +11,10 @@ export const metadata: Metadata = {
   title: "GSMVIAGEM HUB",
   description: "Hub operacional moderno para gestão de passagens e automação",
   themeColor: "#050505",
-  manifest: "/manifest.json",
+  manifest: "/site.webmanifest",
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/icon.png"
+    icon: "/logo-512.png",
+    apple: "/logo-512.png",
   }
 };
 
