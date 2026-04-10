@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { BlackCalendar } from '@/components/ui/black-calendar';
 
 interface Client {
     broker: string;
@@ -40,6 +41,20 @@ export default function InvoicePage() {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<{ emissions: Emission[], credits: Credit[] }>({ emissions: [], credits: [] });
     const [selectedCreditIds, setSelectedCreditIds] = useState<Set<string>>(new Set());
+    const [namingFormat, setNamingFormat] = useState<'DEFAULT' | 'RANGE' | 'MONTH'>('DEFAULT');
+
+    const handleAddWeek = () => {
+        const s = new Date(startDate);
+        s.setUTCHours(12);
+        s.setDate(s.getDate() + 7);
+        
+        const e = new Date(endDate);
+        e.setUTCHours(12);
+        e.setDate(e.getDate() + 7);
+
+        setStartDate(s.toISOString().split('T')[0]);
+        setEndDate(e.toISOString().split('T')[0]);
+    };
 
     // Fetch clients on mount
     useEffect(() => {
@@ -291,9 +306,38 @@ export default function InvoicePage() {
         doc.text('DIMAIS CORP - TRAVEL PERSPECTIVE & BILLING TECHNOLOGY', pageWidth / 2, 285, { align: 'center' });
 
         const clientNameFile = selectedClient.company || selectedClient.broker;
-        const todayFile = new Date();
-        const formattedDateFile = `${String(todayFile.getMonth() + 1).padStart(2, '0')}.${String(todayFile.getDate()).padStart(2, '0')}.${todayFile.getFullYear()}`;
-        const fileName = `INVOICE ${clientNameFile.toUpperCase()} - ${formattedDateFile}.pdf`;
+        
+        let finalFileName = '';
+
+        if (namingFormat === 'RANGE') {
+            const formatUS = (d: string) => {
+                const parts = d.split('-');
+                return `${parts[1]}.${parts[2]}.${parts[0]}`; // MM.DD.YYYY
+            };
+            finalFileName = `INVOICE ${clientNameFile.toUpperCase()} - ${formatUS(startDate)} - ${formatUS(endDate)}.pdf`;
+        } else if (namingFormat === 'MONTH') {
+            const sdDate = new Date(startDate);
+            sdDate.setUTCHours(12);
+            const edDate = new Date(endDate);
+            edDate.setUTCHours(12);
+            
+            const startMonth = sdDate.toLocaleDateString('en-US', { month: 'long' }).toUpperCase();
+            const startYear = sdDate.getFullYear();
+            const endMonth = edDate.toLocaleDateString('en-US', { month: 'long' }).toUpperCase();
+            const endYear = edDate.getFullYear();
+
+            if (startMonth === endMonth && startYear === endYear) {
+                finalFileName = `INVOICE ${clientNameFile.toUpperCase()} - ${startMonth} ${startYear}.pdf`;
+            } else {
+                finalFileName = `INVOICE ${clientNameFile.toUpperCase()} - ${startMonth} - ${endMonth} ${endYear}.pdf`;
+            }
+        } else {
+            const todayFile = new Date();
+            const formattedDateFile = `${String(todayFile.getMonth() + 1).padStart(2, '0')}.${String(todayFile.getDate()).padStart(2, '0')}.${todayFile.getFullYear()}`;
+            finalFileName = `INVOICE ${clientNameFile.toUpperCase()} - ${formattedDateFile}.pdf`;
+        }
+
+        const fileName = finalFileName;
         doc.save(fileName);
         
         // Background email sending
@@ -375,25 +419,38 @@ export default function InvoicePage() {
                             </div>
                         </section>
 
-                        <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black text-outline uppercase tracking-widest">Start Date</label>
-                                <input 
-                                    type="date"
-                                    value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                    className="w-full bg-black/40 micro-border px-4 py-4 text-white text-sm focus:outline-none focus:border-secondary transition-all"
-                                />
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                                <label className="text-[10px] font-black text-outline uppercase tracking-widest">Select Period</label>
+                                <button
+                                    onClick={handleAddWeek}
+                                    className="text-[9px] font-black text-emerald-400 hover:text-emerald-300 uppercase tracking-widest px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 rounded transition-all active:scale-95"
+                                >
+                                    +1 Semana
+                                </button>
                             </div>
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black text-outline uppercase tracking-widest">End Date</label>
-                                <input 
-                                    type="date"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                    className="w-full bg-black/40 micro-border px-4 py-4 text-white text-sm focus:outline-none focus:border-secondary transition-all"
-                                />
-                            </div>
+                            
+                            <BlackCalendar 
+                                startDate={startDate} 
+                                endDate={endDate} 
+                                onChange={(s, e) => {
+                                    setStartDate(s);
+                                    setEndDate(e);
+                                }} 
+                            />
+                        </div>
+
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black text-outline uppercase tracking-widest">Document Naming</label>
+                            <select 
+                                value={namingFormat}
+                                onChange={(e) => setNamingFormat(e.target.value as 'DEFAULT' | 'RANGE' | 'MONTH')}
+                                className="w-full bg-black/40 micro-border px-4 py-4 text-[#e0e0e0] text-[11px] font-black tracking-widest uppercase focus:outline-none focus:border-secondary transition-all cursor-pointer appearance-none"
+                            >
+                                <option value="DEFAULT">DD.MM.YYYY (Current Date)</option>
+                                <option value="RANGE">DD.MM.YYYY - DD.MM.YYYY (Range)</option>
+                                <option value="MONTH">MONTH YEAR (Based on Setup)</option>
+                            </select>
                         </div>
 
                         <button
