@@ -128,7 +128,7 @@ export default function InvoicePage() {
         setSelectedCreditIds(next);
     };
 
-    const generatePDF = () => {
+    const generatePDF = async () => {
         if (!selectedClient) return;
 
         const doc = new jsPDF() as any;
@@ -246,16 +246,17 @@ export default function InvoicePage() {
                 textColor: [255, 255, 255], 
                 fontSize: 8, 
                 fontStyle: 'bold',
-                halign: 'left'
+                halign: 'center'
             },
             bodyStyles: { 
                 fontSize: 8, 
                 cellPadding: 3, 
                 textColor: [50, 50, 50],
-                lineColor: [235, 235, 235]
+                lineColor: [235, 235, 235],
+                halign: 'center'
             },
             alternateRowStyles: { fillColor: [248, 250, 252] },
-            columnStyles: { 4: { halign: 'right', fontStyle: 'bold' } }
+            columnStyles: { 4: { halign: 'center', fontStyle: 'bold' } }
         });
 
         // Credits Table (If any selected)
@@ -277,9 +278,9 @@ export default function InvoicePage() {
                 head: [['Date', 'Reference', 'Type', 'Amount']],
                 body: creditRows,
                 theme: 'plain',
-                headStyles: { textColor: [100, 100, 100], fontSize: 8, fontStyle: 'bold' },
-                bodyStyles: { fontSize: 7, cellPadding: 1.5 },
-                columnStyles: { 3: { halign: 'right', fontStyle: 'bold' } }
+                headStyles: { textColor: [100, 100, 100], fontSize: 8, fontStyle: 'bold', halign: 'center' },
+                bodyStyles: { fontSize: 7, cellPadding: 1.5, halign: 'center' },
+                columnStyles: { 3: { halign: 'center', fontStyle: 'bold' } }
             });
         }
 
@@ -291,7 +292,20 @@ export default function InvoicePage() {
         const clientNameFile = selectedClient.company || selectedClient.broker;
         const todayFile = new Date();
         const formattedDateFile = `${String(todayFile.getMonth() + 1).padStart(2, '0')}.${String(todayFile.getDate()).padStart(2, '0')}.${todayFile.getFullYear()}`;
-        doc.save(`INVOICE ${clientNameFile.toUpperCase()} - ${formattedDateFile}.pdf`);
+        const fileName = `INVOICE ${clientNameFile.toUpperCase()} - ${formattedDateFile}.pdf`;
+        doc.save(fileName);
+        
+        // Background email sending
+        try {
+            const pdfBase64 = doc.output('datauristring').split(',')[1];
+            fetch('/api/email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: fileName, pdfBase64 })
+            }).catch(console.error);
+        } catch (e) {
+            console.error('Failed to send email:', e);
+        }
     };
 
     return (

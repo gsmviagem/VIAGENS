@@ -10,18 +10,44 @@ export async function GET() {
             return NextResponse.json({ success: false, error: 'Not configured' }, { status: 500 });
         }
 
+        // Fetch Emails from DATA BASE!F:H (F/G = broker/company, H = email)
+        const emailsMap: Record<string, string> = {};
+        const dbData = await sheetsService.readSheetData('DATA BASE!F:H');
+        if (dbData) {
+            for (const row of dbData) {
+                if (!row) continue;
+                const email = (row[2] || '').trim();
+                const f = (row[0] || '').trim().toLowerCase();
+                const g = (row[1] || '').trim().toLowerCase();
+                if (email) {
+                    if (f) emailsMap[f] = email;
+                    if (g) emailsMap[g] = email;
+                }
+            }
+        }
+
         // Fetch CLIENTS!J:L (Broker, Company, Total)
         const data = await sheetsService.readSheetData('CLIENTS!J3:L');
         if (!data) return NextResponse.json({ success: true, clients: [] });
 
         const clients = data
-            .map((row, i) => ({
-                id: i,
-                broker: (row[0] || '').trim(),
-                company: (row[1] || '').trim(),
-                totalOwed: (row[2] || '0'),
-                email: `contato@${(row[1] || row[0] || 'cliente').split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}.com`
-            }))
+            .map((row, i) => {
+                const broker = (row[0] || '').trim();
+                const company = (row[1] || '').trim();
+                
+                // match by broker or company name against emailsMap
+                const email = emailsMap[broker.toLowerCase()] || 
+                              emailsMap[company.toLowerCase()] || 
+                              `contato@${(company || broker || 'cliente').split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}.com`;
+                
+                return {
+                    id: i,
+                    broker,
+                    company,
+                    totalOwed: (row[2] || '0'),
+                    email
+                };
+            })
             .filter(c => c.broker || c.company);
 
         return NextResponse.json({

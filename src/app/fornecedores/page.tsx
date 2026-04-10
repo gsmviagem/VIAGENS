@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { PDFDocument } from 'pdf-lib';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function FornecedoresPage() {
     const [loading, setLoading] = useState(true);
@@ -22,6 +24,13 @@ export default function FornecedoresPage() {
     const [pendingOnly, setPendingOnly] = useState(true);
 
     const [uniqueSuppliers, setUniqueSuppliers] = useState<string[]>([]);
+    
+    // Preparar Statement
+    const [statementModalOpen, setStatementModalOpen] = useState(false);
+    const [statementFiles, setStatementFiles] = useState<File[]>([]);
+    const [statementLoading, setStatementLoading] = useState(false);
+    const [statementDragging, setStatementDragging] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const fetchData = async () => {
         setLoading(true);
@@ -79,7 +88,7 @@ export default function FornecedoresPage() {
         return isNaN(num) ? 0 : num;
     };
 
-    const generateSupplierPDF = () => {
+    const generateSupplierPDF = (returnBytes = false) => {
         if (!data || !data.ledger || data.ledger.length === 0) {
             toast.error('Nenhum dado para exportar.');
             return;
@@ -180,18 +189,25 @@ export default function FornecedoresPage() {
         doc.text(`R$ ${Math.abs(netTotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sumBoxX + 42, infoY + 16.5, { align: 'right' });
 
         // --- LEDGER TABLE ---
-        const ledgerRows = data.ledger.map((row: any) => [
-            row.date || '-',
-            row.loc || '-',
-            row.miles ? `${row.miles}K` : '-',
-            row.price ? `R$ ${String(row.price).replace('R$', '').trim()}` : '-',
-            row.tax ? `R$ ${String(row.tax).replace('R$', '').trim()}` : 'R$ 0,00',
-            row.total ? String(row.total).replace('R$', '').trim() : '0,00',
-        ]);
+        const ledgerRows = data.ledger.map((row: any) => {
+            const priceVal = parseCurrencyBR(String(row.price || '0'));
+            const milesVal = parseFloat(String(row.miles || '0').replace(',', '.'));
+            const calcValor = priceVal * milesVal;
+
+            return [
+                row.date || '-',
+                row.loc || '-',
+                row.miles ? `${row.miles}K` : '-',
+                row.price ? `R$ ${String(row.price).replace('R$', '').trim()}` : '-',
+                `R$ ${calcValor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                row.tax ? `R$ ${String(row.tax).replace('R$', '').trim()}` : 'R$ 0,00',
+                row.total ? String(row.total).replace('R$', '').trim() : '0,00',
+            ];
+        });
 
         autoTable(doc, {
             startY: infoY + 28,
-            head: [['Data', 'LOC', 'Milhas', 'Preço/Milha', 'Taxas', 'Total (R$)']],
+            head: [['Data', 'LOC', 'Milhas', 'Preço/Milha', 'Valor', 'Taxas', 'Total (R$)']],
             body: ledgerRows,
             theme: 'grid',
             headStyles: {
@@ -199,16 +215,38 @@ export default function FornecedoresPage() {
                 textColor: [255, 255, 255],
                 fontSize: 8,
                 fontStyle: 'bold',
-                halign: 'left'
+                halign: 'center'
             },
             bodyStyles: {
                 fontSize: 8,
                 cellPadding: 3,
                 textColor: [50, 50, 50],
-                lineColor: [235, 235, 235]
+                lineColor: [235, 235, 235],
+                halign: 'center'
             },
             alternateRowStyles: { fillColor: [248, 250, 252] },
-            columnStyles: { 5: { halign: 'right', fontStyle: 'bold' } }
+            columnStyles: { 6: { halign: 'center', fontStyle: 'bold' } },
+            didParseCell: (hookData: any) => {
+                if (hookData.section === 'body') {
+                    const rowData = data.ledger[hookData.row.index];
+                    if (!rowData) return;
+                    
+                    const reqSupp = supplier !== 'TODOS' ? supplier : null;
+                    
+                    if (hookData.column.index === 4) { // Valor (Milhas)
+                        const notMySupplier = reqSupp && rowData.milesSupplier !== reqSupp;
+                        if (rowData.isMilesPaid || notMySupplier) {
+                            hookData.cell.styles.textColor = [180, 180, 180];
+                        }
+                    }
+                    if (hookData.column.index === 5) { // Taxas
+                        const notMySupplier = reqSupp && rowData.taxSupplier !== reqSupp;
+                        if (rowData.isTaxesPaid || notMySupplier) {
+                            hookData.cell.styles.textColor = [180, 180, 180];
+                        }
+                    }
+                }
+            }
         });
 
         // --- CREDITS SECTION ---
@@ -233,9 +271,9 @@ export default function FornecedoresPage() {
                 head: [['Descrição / Detalhes', 'Valor']],
                 body: creditRows,
                 theme: 'plain',
-                headStyles: { textColor: [100, 100, 100], fontSize: 8, fontStyle: 'bold' },
-                bodyStyles: { fontSize: 8, cellPadding: 2, textColor: [50, 50, 50] },
-                columnStyles: { 1: { halign: 'right', fontStyle: 'bold' } },
+                headStyles: { textColor: [100, 100, 100], fontSize: 8, fontStyle: 'bold', halign: 'center' },
+                bodyStyles: { fontSize: 8, cellPadding: 2, textColor: [50, 50, 50], halign: 'center' },
+                columnStyles: { 1: { halign: 'center', fontStyle: 'bold' } },
                 didParseCell: (hookData: any) => {
                     // Highlight total row
                     if (hookData.row.index === creditRows.length - 1) {
@@ -252,12 +290,124 @@ export default function FornecedoresPage() {
         doc.setTextColor(150, 150, 150);
         doc.text('DIMAIS CORP - TRAVEL PERSPECTIVE & BILLING TECHNOLOGY', pageWidth / 2, 285, { align: 'center' });
 
+        if (returnBytes) {
+            return doc.output('arraybuffer');
+        }
+
         const dateStr = new Date();
         const fmtDate = `${String(dateStr.getDate()).padStart(2, '0')}.${String(dateStr.getMonth() + 1).padStart(2, '0')}.${dateStr.getFullYear()}`;
         const firstName = supplierLabel.split(' ')[0];
         const fileSupplier = supplier && supplier !== 'TODOS' ? firstName : 'ALL-SUPPLIERS';
-        doc.save(`STATEMENT ${fileSupplier.toUpperCase()} - ${fmtDate}.pdf`);
+        const fileName = `STATEMENT ${fileSupplier.toUpperCase()} - ${fmtDate}.pdf`;
+        doc.save(fileName);
         toast.success('PDF exportado com sucesso!');
+
+        // Send email in background
+        try {
+            const pdfBase64 = doc.output('datauristring').split(',')[1];
+            fetch('/api/email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: fileName, pdfBase64 })
+            }).catch(console.error);
+        } catch (e) {
+            console.error('Failed to send email:', e);
+        }
+    };
+
+    const handleStatementFiles = (incoming: FileList | null) => {
+        if (!incoming) return;
+        const ACCEPTED = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+        const newItems = Array.from(incoming).filter(f => ACCEPTED.includes(f.type));
+        if (newItems.length === 0) {
+            toast.error('Apenas PDF ou Imagens (PNG/JPG).');
+            return;
+        }
+        setStatementFiles(prev => [...prev, ...newItems]);
+    };
+
+    const handleFullStatement = async () => {
+        setStatementLoading(true);
+        try {
+            const statementBytes = generateSupplierPDF(true) as ArrayBuffer;
+            if (!statementBytes) {
+                setStatementLoading(false);
+                return;
+            }
+
+            const merged = await PDFDocument.load(statementBytes);
+
+            for (const f of statementFiles) {
+                const fileBytes = await f.arrayBuffer();
+                if (f.type === 'application/pdf') {
+                    const srcDoc = await PDFDocument.load(fileBytes);
+                    const pages = await merged.copyPages(srcDoc, srcDoc.getPageIndices());
+                    pages.forEach((p: any) => merged.addPage(p));
+                } else if (f.type.startsWith('image/')) {
+                    let img;
+                    if (f.type === 'image/png') {
+                        img = await merged.embedPng(fileBytes);
+                    } else {
+                        img = await merged.embedJpg(fileBytes);
+                    }
+                    const { width, height } = img;
+                    const A4_W = 595.28;
+                    const A4_H = 841.89;
+
+                    const scale = Math.min(A4_W / width, A4_H / height);
+                    const drawW = width * scale;
+                    const drawH = height * scale;
+                    const x = (A4_W - drawW) / 2;
+                    const y = (A4_H - drawH) / 2;
+
+                    const page = merged.addPage([A4_W, A4_H]);
+                    page.drawImage(img, { x, y, width: drawW, height: drawH });
+                }
+            }
+
+            const pdfBytes = await merged.save();
+            const blob = new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+
+            const supplierInfo = data?.suppliers?.find((s: any) => s.name === supplier);
+            const resolvedName = supplierInfo?.fullName || (supplier && supplier !== 'TODOS' ? supplier : 'TODOS');
+            const firstName = resolvedName.split(' ')[0];
+            
+            const dateStr = new Date();
+            const fmtDate = `${String(dateStr.getDate()).padStart(2, '0')}.${String(dateStr.getMonth() + 1).padStart(2, '0')}.${dateStr.getFullYear()}`;
+            
+            const fileName = `PAGAMENTO ${firstName.toUpperCase()} - ${fmtDate}.pdf`;
+            a.download = fileName;
+            a.click();
+            URL.revokeObjectURL(url);
+            toast.success('PAGAMENTO gerado com sucesso!');
+            setStatementModalOpen(false);
+            setStatementFiles([]);
+
+            try {
+                const arr = new Uint8Array(pdfBytes);
+                let binary = '';
+                for (let i = 0; i < arr.byteLength; i++) {
+                    binary += String.fromCharCode(arr[i]);
+                }
+                const pdfBase64 = btoa(binary);
+                
+                fetch('/api/email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: fileName, pdfBase64 })
+                }).catch(console.error);
+            } catch (e) {
+                console.error('Failed to send statement email:', e);
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error('Erro ao gerar Statement Final.');
+        } finally {
+            setStatementLoading(false);
+        }
     };
 
     if (loading && !data) {
@@ -284,14 +434,24 @@ export default function FornecedoresPage() {
                         </p>
                     </div>
                 </div>
-                <Button
-                    onClick={generateSupplierPDF}
-                    disabled={!data || !data.ledger || data.ledger.length === 0}
-                    className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-30 text-black font-black text-[10px] tracking-widest uppercase h-9 px-5 rounded-xl shadow-lg shadow-amber-500/20 transition-all active:scale-95"
-                >
-                    <span className="material-symbols-outlined text-[16px]">picture_as_pdf</span>
-                    Exportar PDF
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        onClick={() => setStatementModalOpen(true)}
+                        disabled={!data || !data.ledger || data.ledger.length === 0}
+                        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 text-white font-black text-[10px] tracking-widest uppercase h-9 px-4 rounded-xl shadow-lg transition-all active:scale-95"
+                    >
+                        <span className="material-symbols-outlined text-[16px]">layers</span>
+                        Recibo
+                    </Button>
+                    <Button
+                        onClick={() => generateSupplierPDF(false)}
+                        disabled={!data || !data.ledger || data.ledger.length === 0}
+                        className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-30 text-black font-black text-[10px] tracking-widest uppercase h-9 px-4 rounded-xl shadow-lg shadow-amber-500/20 transition-all active:scale-95"
+                    >
+                        <span className="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+                        Exportar PDF
+                    </Button>
+                </div>
             </div>
 
             {/* Scrollable Content Area */}
@@ -441,10 +601,30 @@ export default function FornecedoresPage() {
                                                 <span className="text-blue-400 font-bold leading-tight">{s.debt}</span>
                                             </div>
                                         </div>
-                                        <div className="mt-1.5 text-center bg-white/5 border border-white/10 p-1 rounded-lg flex justify-between items-center px-2">
+                                        <div 
+                                            className="mt-1.5 text-center bg-white/5 border border-white/10 p-1 rounded-lg flex justify-between items-center px-2 group/copy hover:bg-white/10 transition-colors" 
+                                            onClick={(e) => { e.stopPropagation(); copyToClipboard(`${s.saldoType === 'NEGATIVE' ? '-' : ''}${s.saldo}`); }}
+                                            title="Copiar Saldo Líquido"
+                                        >
                                             <span className="text-[9px] text-white/60 uppercase font-black">Saldo Líquido</span>
-                                            <span className="text-white font-black text-xs leading-none py-0.5">{s.saldoType === 'NEGATIVE' ? '-' : ''}{s.saldo}</span>
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-white font-black text-xs leading-none py-0.5">{s.saldoType === 'NEGATIVE' ? '-' : ''}{s.saldo}</span>
+                                                <span className="material-symbols-outlined text-[10px] text-white/30 group-hover/copy:text-white/80 transition-colors">content_copy</span>
+                                            </div>
                                         </div>
+                                        {s.pix && (
+                                            <div 
+                                                className="mt-1 text-center bg-white/5 border border-white/10 p-1 rounded-lg flex justify-between items-center px-2 group/copy hover:bg-white/10 transition-colors" 
+                                                onClick={(e) => { e.stopPropagation(); copyToClipboard(s.pix); }} 
+                                                title="Copiar PIX"
+                                            >
+                                                <span className="text-[9px] text-emerald-400/60 uppercase font-black">Chave PIX</span>
+                                                <div className="flex items-center gap-1 overflow-hidden">
+                                                    <span className="text-emerald-400 font-mono text-[9px] leading-none py-0.5 truncate max-w-[80px]">{s.pix}</span>
+                                                    <span className="material-symbols-outlined text-[10px] text-emerald-400/30 group-hover/copy:text-emerald-400 transition-colors">content_copy</span>
+                                                </div>
+                                            </div>
+                                        )}
                                         {(s.creditPending && s.creditPending !== 'R$ 0,00') && (
                                             <div className="mt-1 text-center text-[9px] text-amber-200/60 uppercase font-black">
                                                 + {s.creditPending} pendente
@@ -552,6 +732,88 @@ export default function FornecedoresPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Modal Preparar Statement */}
+            <AnimatePresence>
+                {statementModalOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-[#111] border border-white/10 rounded-xl p-6 w-full max-w-[600px] shadow-2xl flex flex-col gap-6"
+                        >
+                            <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                                <div className="flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-emerald-400">layers</span>
+                                    <div>
+                                        <h2 className="text-[12px] font-black text-white uppercase tracking-widest">Recibo</h2>
+                                        <p className="text-[10px] text-white/50 font-mono">Merge Statement + Comprovantes</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setStatementModalOpen(false)} className="text-white/50 hover:text-white transition-colors">
+                                    <span className="material-symbols-outlined text-[20px]">close</span>
+                                </button>
+                            </div>
+
+                            <div
+                                onDragOver={(e) => { e.preventDefault(); setStatementDragging(true); }}
+                                onDragLeave={() => setStatementDragging(false)}
+                                onDrop={(e) => { e.preventDefault(); setStatementDragging(false); handleStatementFiles(e.dataTransfer.files); }}
+                                onClick={() => fileInputRef.current?.click()}
+                                className={cn(
+                                    'border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all',
+                                    statementDragging ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/10 hover:border-emerald-500/40 hover:bg-emerald-500/5'
+                                )}
+                            >
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
+                                    multiple
+                                    className="hidden"
+                                    onChange={(e) => handleStatementFiles(e.target.files)}
+                                />
+                                <span className="material-symbols-outlined text-[32px] text-emerald-400/60 mb-2 block">upload_file</span>
+                                <p className="text-[11px] font-black text-white/60 uppercase tracking-widest">
+                                    Solte PDFs ou Imagens aqui
+                                </p>
+                                <p className="text-[9px] text-white/30 mt-1 font-mono">Comprovantes, etc (O Statement PDF é gerado e anexado sozinho)</p>
+                            </div>
+
+                            {statementFiles.length > 0 && (
+                                <div className="max-h-[150px] overflow-y-auto custom-scrollbar space-y-2">
+                                    {statementFiles.map((f, i) => (
+                                        <div key={i} className="flex justify-between items-center bg-black/40 border border-white/5 p-2 px-3 rounded-md">
+                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                <span className="material-symbols-outlined text-[14px] text-white/50">draft</span>
+                                                <span className="text-[10px] text-white/80 font-mono truncate">{f.name}</span>
+                                            </div>
+                                            <button onClick={() => setStatementFiles(prev => prev.filter((_, idx) => idx !== i))} className="text-red-400/60 hover:text-red-400 transition-colors">
+                                                <span className="material-symbols-outlined text-[14px]">close</span>
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            <Button
+                                onClick={handleFullStatement}
+                                disabled={statementLoading}
+                                className="w-full h-10 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[11px] tracking-widest uppercase transition-all"
+                            >
+                                {statementLoading ? <span className="material-symbols-outlined animate-spin text-[16px] mr-2">refresh</span> : null}
+                                {statementLoading ? 'Processando...' : 'GERAR RECIBO DE PAGAMENTO'}
+                            </Button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

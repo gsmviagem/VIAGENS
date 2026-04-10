@@ -26,6 +26,7 @@ const COMMANDS: Command[] = [
     { id: 'auto-extrator', label: 'Automações', description: 'Auto-extrator de bookings', icon: 'precision_manufacturing', href: '/auto-extrator', keywords: ['automation', 'scraper', 'extractor', 'azul', 'smiles'] },
     { id: 'calculo', label: 'Calculadora', description: 'Cálculo de preços e milhas', icon: 'calculate', href: '/calculo', keywords: ['calculator', 'price', 'preco', 'preço', 'miles'] },
     { id: 'invoice', label: 'Invoice', description: 'Gerador de notas fiscais', icon: 'description', href: '/invoice', keywords: ['nota', 'fiscal', 'pdf', 'nota fiscal'] },
+    { id: 'ferramentas', label: 'Tools', description: 'Merge PDF, Imagem para PDF', icon: 'build', href: '/ferramentas', keywords: ['tools', 'ferramentas', 'merge', 'pdf', 'imagem', 'image', 'converter'] },
     { id: 'configuracoes', label: 'Configurações', description: 'Settings – chaves e config', icon: 'settings', href: '/configuracoes', keywords: ['settings', 'config', 'api', 'keys'] },
 ];
 

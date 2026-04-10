@@ -66,9 +66,9 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Fetch full names from DATA BASE!B:C (B=alias, C=full name)
-        const fullNameMap: Record<string, string> = {};
-        const dbData = await sheetsService.readSheetData('DATA BASE!B:C');
+        // Fetch full names and PIX from DATA BASE!B:D (B=alias, C=full name, D=pix key)
+        const supplierInfoMap: Record<string, { fullName: string, pix: string }> = {};
+        const dbData = await sheetsService.readSheetData('DATA BASE!B:D');
         if (dbData) {
             for (const row of dbData) {
                 if (!row || !row[0] || !row[1]) continue;
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
                 const fullName = row[1].trim()
                     .toLowerCase()
                     .replace(/\b\w/g, (c: string) => c.toUpperCase());
-                fullNameMap[alias] = fullName;
+                supplierInfoMap[alias] = { fullName, pix: row[2] ? row[2].trim() : '' };
             }
         }
 
@@ -244,6 +244,10 @@ export async function POST(req: NextRequest) {
                     total: visualRowTotal,
                     issueStatus: printIssueStatus,
                     supplier: rowSupplierMiles || rowSupplierTax || rowSupplierRep,
+                    milesSupplier: rowSupplierMiles,
+                    taxSupplier: rowSupplierTax,
+                    isMilesPaid: isMilesPaid,
+                    isTaxesPaid: isTaxesPaid
                 });
                 
                 filteredTotal += (supplier && supplier !== 'TODOS') ? supplierOwedInThisRow : parseCurrency(totalStr);
@@ -268,15 +272,17 @@ export async function POST(req: NextRequest) {
                 const creditPaid = manualCredits[name] || 0;
                 const saldo = creditPaid - totalDebtAmount;
 
-                // Resolve full name: search fullNameMap case-insensitively
+                // Resolve full name and pix: search supplierInfoMap case-insensitively
                 const nameLower = name.toLowerCase();
-                const fullName = fullNameMap[nameLower] ||
-                    Object.entries(fullNameMap).find(([k]) => k.includes(nameLower) || nameLower.includes(k))?.[1] ||
-                    name.toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase());
+                const matchedInfo = supplierInfoMap[nameLower] ||
+                    Object.entries(supplierInfoMap).find(([k]) => k.includes(nameLower) || nameLower.includes(k))?.[1];
+                const fullName = matchedInfo?.fullName || name.toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase());
+                const pix = matchedInfo?.pix || '';
 
                 return {
                     name,
                     fullName,
+                    pix,
                     debt: formatCurrency(totalDebtAmount),
                     creditOk: formatCurrency(creditPaid),
                     creditDetails: creditDetails[name] || [],
