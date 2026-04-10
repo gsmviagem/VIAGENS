@@ -47,6 +47,16 @@ export function BlackCalendar({ startDate, endDate, onChange }: BlackCalendarPro
         setCurrentMonth(new Date(year, month + 1, 1));
     };
 
+    const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setCurrentMonth(new Date(year, parseInt(e.target.value), 1));
+    };
+
+    const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setCurrentMonth(new Date(parseInt(e.target.value), month, 1));
+    };
+
+    const YEARS = Array.from({ length: 16 }, (_, i) => 2020 + i);
+
     const padZero = (n: number) => n.toString().padStart(2, '0');
 
     const handleDayClick = (day: number) => {
@@ -94,8 +104,25 @@ export function BlackCalendar({ startDate, endDate, onChange }: BlackCalendarPro
                 <button onClick={handlePrevMonth} className="text-white/50 hover:text-white transition cursor-pointer p-1">
                     <ChevronLeft size={18} />
                 </button>
-                <div className="font-medium text-sm text-[#e0e0e0]">
-                    {MONTHS[month]} {year}
+                <div className="flex gap-2 items-center bg-white/5 px-2 py-1 rounded">
+                    <select 
+                        value={month} 
+                        onChange={handleMonthChange}
+                        className="bg-transparent text-sm font-medium text-[#e0e0e0] focus:outline-none cursor-pointer appearance-none text-center hover:text-white transition-colors"
+                    >
+                        {MONTHS.map((m, i) => (
+                            <option key={m} value={i} className="bg-[#131313] text-white">{m}</option>
+                        ))}
+                    </select>
+                    <select 
+                        value={year} 
+                        onChange={handleYearChange}
+                        className="bg-transparent text-sm font-medium text-[#e0e0e0] focus:outline-none cursor-pointer appearance-none text-center hover:text-white transition-colors"
+                    >
+                        {YEARS.map(y => (
+                            <option key={y} value={y} className="bg-[#131313] text-white">{y}</option>
+                        ))}
+                    </select>
                 </div>
                 <button onClick={handleNextMonth} className="text-white/50 hover:text-white transition cursor-pointer p-1">
                     <ChevronRight size={18} />
