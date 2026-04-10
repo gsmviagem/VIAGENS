@@ -11,6 +11,12 @@ export const metadata: Metadata = {
   title: "GSMVIAGEM HUB - Command Center",
   description: "Hub operacional moderno para gestão de passagens e automação",
   themeColor: "#050505",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+    shortcut: "/logo.png"
+  }
 };
 
 export default async function RootLayout({
