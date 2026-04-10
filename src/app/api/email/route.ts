@@ -15,7 +15,10 @@ export async function POST(req: NextRequest) {
 
         if (!user || !pass) {
             console.warn('[EMAIL] SMTP credenciais não configuradas. Envio ignorado.');
-            return NextResponse.json({ success: false, error: 'SMTP não configurado' }, { status: 500 });
+            return NextResponse.json({ 
+                success: false, 
+                error: `SMTP não configurado. USER: ${user ? 'presente' : 'faltando'}, PASS: ${pass ? 'presente' : 'faltando'}` 
+            }, { status: 500 });
         }
 
         const transporter = nodemailer.createTransport({

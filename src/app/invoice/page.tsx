@@ -43,11 +43,12 @@ export default function InvoicePage() {
 
     // Fetch clients on mount
     useEffect(() => {
-        fetch('/api/sheets/clients')
+        fetch('/api/sheets/clients', { cache: 'no-store' })
             .then(res => res.json())
             .then(json => {
                 if (json.success) setClients(json.clients);
-            });
+            })
+            .catch(err => console.error("Error fetching clients:", err));
     }, []);
 
     const filteredClients = useMemo(() => {
