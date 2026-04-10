@@ -13,9 +13,9 @@ export const metadata: Metadata = {
   themeColor: "#050505",
   manifest: "/manifest.json",
   icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
-    shortcut: "/logo.png"
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/icon.png"
   }
 };
 
