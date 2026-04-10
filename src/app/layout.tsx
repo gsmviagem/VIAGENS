@@ -8,7 +8,7 @@ import { createClient } from "@/utils/supabase/server";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "GSMVIAGEM HUB - Command Center",
+  title: "GSMVIAGEM HUB",
   description: "Hub operacional moderno para gestão de passagens e automação",
   themeColor: "#050505",
   manifest: "/manifest.json",
