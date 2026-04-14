@@ -229,6 +229,14 @@ export default function InvoicePage() {
         doc.setFontSize(11);
         doc.text(`$ ${Math.abs(finalTotal).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumBoxX + 47, infoY + 20, { align: 'right' });
 
+        const emissionsRows = data.emissions.map((e: any) => [
+            formatUSDate(e.date),
+            e.pax,
+            e.pnr,
+            e.route,
+            e.value.replace('R$', '$')
+        ]);
+
         autoTable(doc, {
             startY: infoY + 30,
             head: [['Date', 'Passenger', 'Loc', 'Route', 'Price']],
