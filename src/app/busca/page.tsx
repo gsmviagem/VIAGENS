@@ -11,67 +11,134 @@ import { toast } from "sonner";
 interface QuotationResult {
     site: string;
     price: number | string;
-    currency: 'miles' | 'BRL';
+    currency: 'miles' | 'brl' | 'usd';
     success: boolean;
     error?: string;
+    searchUrl?: string;
+    airlineBreakdown?: { airline: string; price: string }[];
+    milesBreakdown?: { airline: string; flightCode: string; miles: string; departure: string; stops: string }[];
 }
 
 const AIRLINE_COLORS: Record<string, string> = {
     Azul: 'border-sky-500/30 bg-sky-500/10 text-sky-400',
     LATAM: 'border-blue-500/30 bg-blue-500/10 text-blue-400',
     Smiles: 'border-orange-500/30 bg-orange-500/10 text-orange-400',
-    BuscaIdeal: 'border-purple-500/30 bg-purple-500/10 text-purple-400',
+    'Busca Ideal': 'border-purple-500/30 bg-purple-500/10 text-purple-400',
+    Kiwi: 'border-teal-500/30 bg-teal-500/10 text-teal-400',
 };
 
 function ResultCard({ result, index }: { result: QuotationResult; index: number }) {
     const colorClass = AIRLINE_COLORS[result.site] ?? 'border-white/10 bg-white/5 text-slate-400';
+    const [expanded, setExpanded] = useState(false);
+    const hasBreakdown = (result.airlineBreakdown?.length ?? 0) > 0 || (result.milesBreakdown?.length ?? 0) > 0;
 
     return (
         <motion.div
-            key={result.site}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.08 }}
-            className="glass-panel p-6 rounded-2xl border border-white/5 flex flex-col md:flex-row md:items-center gap-6 group hover:border-primary/20 transition-all hover:bg-white/[0.02]"
+            className="glass-panel rounded-2xl border border-white/5 group hover:border-primary/20 transition-all hover:bg-white/[0.02] overflow-hidden"
         >
-            <div className="flex items-center gap-4 min-w-[140px]">
-                <div className={cn("w-12 h-12 rounded-xl border flex items-center justify-center", colorClass)}>
-                    <span className="material-symbols-outlined text-2xl font-bold">flight_takeoff</span>
-                </div>
-                <div>
-                    <div className="font-black text-white">{result.site}</div>
-                    <div className="text-[10px] text-slate-500 uppercase font-black">Direct Access</div>
-                </div>
-            </div>
-
-            <div className="flex-1 flex items-center justify-between px-2">
-                {result.success ? (
-                    <>
-                        <div className="flex items-center gap-2 text-green-400 text-xs font-bold">
-                            <span className="material-symbols-outlined text-sm">check_circle</span> Online
-                        </div>
-                        <div className="text-right">
-                            <div className="text-2xl font-black text-primary drop-shadow-[0_0_4px_rgba(0,255,200,0.3)]">
-                                {typeof result.price === 'number' ? result.price.toLocaleString('pt-BR') : result.price}
-                            </div>
-                            <div className="text-[10px] text-slate-500 font-black uppercase tracking-widest">
-                                {result.currency === 'miles' ? 'MILHAS' : 'BRL'}
-                            </div>
-                        </div>
-                    </>
-                ) : (
-                    <div className="flex items-center gap-2 text-primary text-xs font-bold ml-auto">
-                        <span className="material-symbols-outlined text-sm">cancel</span>
-                        <span>{result.error ?? 'Falha na busca'}</span>
+            <div className="p-6 flex flex-col md:flex-row md:items-center gap-6">
+                <div className="flex items-center gap-4 min-w-[140px]">
+                    <div className={cn("w-12 h-12 rounded-xl border flex items-center justify-center", colorClass)}>
+                        <span className="material-symbols-outlined text-2xl font-bold">flight_takeoff</span>
                     </div>
-                )}
+                    <div>
+                        <div className="font-black text-white">{result.site}</div>
+                        <div className="text-[10px] text-slate-500 uppercase font-black">Direct Access</div>
+                    </div>
+                </div>
+
+                <div className="flex-1 flex items-center justify-between px-2">
+                    {result.success ? (
+                        <>
+                            <div className="flex items-center gap-2 text-green-400 text-xs font-bold">
+                                <span className="material-symbols-outlined text-sm">check_circle</span> Online
+                            </div>
+                            <div className="text-right">
+                                <div className="text-2xl font-black text-primary drop-shadow-[0_0_4px_rgba(0,255,200,0.3)]">
+                                    {typeof result.price === 'number' ? result.price.toLocaleString('pt-BR') : result.price}
+                                </div>
+                                <div className="text-[10px] text-slate-500 font-black uppercase tracking-widest">
+                                    {result.currency === 'miles' ? 'MILHAS' : 'BRL'}
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex items-center gap-2 text-rose-400 text-xs font-bold ml-auto">
+                            <span className="material-symbols-outlined text-sm">cancel</span>
+                            <span>{result.error ?? 'Falha na busca'}</span>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                    {result.searchUrl && (
+                        <a href={result.searchUrl} target="_blank" rel="noopener noreferrer">
+                            <Button className="bg-white/5 border border-white/10 text-white rounded-xl h-10 px-5 group-hover:bg-primary group-hover:text-background-dark transition-all font-black text-xs">
+                                VIEW <span className="material-symbols-outlined text-sm ml-1">open_in_new</span>
+                            </Button>
+                        </a>
+                    )}
+                    {hasBreakdown && (
+                        <Button
+                            variant="ghost"
+                            className="w-10 h-10 rounded-xl border border-white/10 text-slate-400 hover:text-primary hover:border-primary/20 transition-all p-0 shrink-0"
+                            onClick={() => setExpanded(e => !e)}
+                        >
+                            <span className={cn("material-symbols-outlined text-sm transition-transform duration-200", expanded && "rotate-180")}>expand_more</span>
+                        </Button>
+                    )}
+                </div>
             </div>
 
-            {result.success && (
-                <Button className="bg-white/5 border border-white/10 text-white rounded-xl h-10 px-6 group-hover:bg-primary group-hover:text-background-dark transition-all font-black text-xs">
-                    SELECT <span className="material-symbols-outlined text-sm ml-2">arrow_forward</span>
-                </Button>
-            )}
+            <AnimatePresence>
+                {expanded && hasBreakdown && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden border-t border-white/5"
+                    >
+                        <div className="p-6 grid md:grid-cols-2 gap-6">
+                            {(result.airlineBreakdown?.length ?? 0) > 0 && (
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Preço por Companhia</p>
+                                    <div className="space-y-2">
+                                        {result.airlineBreakdown!.map((row, i) => (
+                                            <div key={i} className="flex items-center justify-between text-sm">
+                                                <span className="text-slate-400 font-bold">{row.airline}</span>
+                                                <span className="text-white font-black">{row.price}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {(result.milesBreakdown?.length ?? 0) > 0 && (
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Top Milhas</p>
+                                    <div className="space-y-2">
+                                        {result.milesBreakdown!.map((row, i) => (
+                                            <div key={i} className="flex items-center justify-between gap-4 text-sm">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <span className="text-slate-600 font-mono text-[10px] shrink-0">{row.flightCode}</span>
+                                                    <span className="text-slate-400 font-bold truncate">{row.airline}</span>
+                                                </div>
+                                                <div className="text-right shrink-0">
+                                                    <div className="text-primary font-black text-sm">{row.miles} mi</div>
+                                                    <div className="text-[10px] text-slate-600">{row.stops}</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 }
@@ -80,6 +147,7 @@ export default function BuscaPage() {
     const [origin, setOrigin] = useState('');
     const [destination, setDestination] = useState('');
     const [date, setDate] = useState('');
+    const [passengers, setPassengers] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
     const [results, setResults] = useState<QuotationResult[] | null>(null);
 
@@ -101,7 +169,7 @@ export default function BuscaPage() {
             const res = await fetch('/api/quotation', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ origin: origin.toUpperCase(), destination: destination.toUpperCase(), date })
+                body: JSON.stringify({ origin: origin.toUpperCase(), destination: destination.toUpperCase(), date, passengers })
             });
 
             const data = await res.json();
@@ -134,7 +202,8 @@ export default function BuscaPage() {
                 </div>
                 <div className="flex gap-3">
                     <Badge className="bg-primary/10 text-primary border-primary/20 py-2 px-4 rounded-xl flex items-center gap-2 font-bold select-none cursor-default">
-                        <span className="material-symbols-outlined text-sm">bolt</span> 4 Nodes Ativos
+                        <span className="material-symbols-outlined text-sm">bolt</span>
+                        {results ? `${results.filter(r => r.success).length}/${results.length} Nodes` : '5 Nodes Ativos'}
                     </Badge>
                 </div>
             </motion.div>
@@ -206,9 +275,23 @@ export default function BuscaPage() {
 
                     <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-6 pt-6 border-t border-white/5">
                         <div className="flex gap-4">
-                            <Badge variant="outline" className="border-white/10 text-slate-400 py-1.5 px-4 rounded-lg flex items-center gap-2">
-                                <span className="material-symbols-outlined text-sm text-primary">person</span> 1 Adult
-                            </Badge>
+                            <div className="flex items-center gap-2 border border-white/10 rounded-lg px-3 py-1.5 text-slate-400 text-sm">
+                                <span className="material-symbols-outlined text-sm text-primary">person</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setPassengers(p => Math.max(1, p - 1))}
+                                    className="w-5 h-5 flex items-center justify-center text-slate-500 hover:text-primary transition-colors disabled:opacity-30"
+                                    disabled={passengers <= 1}
+                                >−</button>
+                                <span className="font-black text-white w-4 text-center">{passengers}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setPassengers(p => Math.min(9, p + 1))}
+                                    className="w-5 h-5 flex items-center justify-center text-slate-500 hover:text-primary transition-colors disabled:opacity-30"
+                                    disabled={passengers >= 9}
+                                >+</button>
+                                <span className="ml-1">Adult{passengers > 1 ? 's' : ''}</span>
+                            </div>
                             <Badge variant="outline" className="border-white/10 text-slate-400 py-1.5 px-4 rounded-lg flex items-center gap-2">
                                 <span className="material-symbols-outlined text-sm text-primary">business_center</span> Economy
                             </Badge>
