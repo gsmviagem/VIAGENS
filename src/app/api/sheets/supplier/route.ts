@@ -6,7 +6,7 @@ export const maxDuration = 60;
 
 function parseCurrency(val: string | undefined): number {
     if (!val) return 0;
-    const clean = val.replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
+    const clean = val.replace(/R\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(',', '.').trim();
     const num = parseFloat(clean);
     return isNaN(num) ? 0 : num;
 }
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
                 const creditSituacao = (row[3] || '').trim().toUpperCase();
                 const creditPago = (row[5] || '').trim().toUpperCase();
 
-                if (creditSupplier && creditVal > 0 && creditSituacao === 'OK' && creditPago === 'PAGO') {
+                if (creditSupplier && creditVal !== 0 && creditSituacao === 'OK' && creditPago === 'PAGO') {
                     manualCredits[creditSupplier] = (manualCredits[creditSupplier] || 0) + creditVal;
                     if (!creditDetails[creditSupplier]) creditDetails[creditSupplier] = [];
                     creditDetails[creditSupplier].push({
@@ -292,7 +292,7 @@ export async function POST(req: NextRequest) {
                     highlight: false
                 };
             })
-            .filter(s => parseCurrency(s.debt) > 0 || parseCurrency(s.creditOk) > 0)
+            .filter(s => parseCurrency(s.debt) > 0 || parseCurrency(s.creditOk) !== 0)
             .sort((a, b) => parseCurrency(b.debt) - parseCurrency(a.debt));
 
         return NextResponse.json({

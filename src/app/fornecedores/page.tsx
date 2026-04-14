@@ -83,7 +83,7 @@ export default function FornecedoresPage() {
 
     const parseCurrencyBR = (val: string): number => {
         if (!val) return 0;
-        const clean = String(val).replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
+        const clean = String(val).replace(/R\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(',', '.').trim();
         const num = parseFloat(clean);
         return isNaN(num) ? 0 : num;
     };
@@ -170,13 +170,13 @@ export default function FornecedoresPage() {
         doc.setFont('helvetica', 'bold');
         doc.text(`R$ ${totalBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sumBoxX + 42, infoY + 6, { align: 'right' });
 
-        if (creditOkVal > 0) {
+        if (creditOkVal !== 0) {
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(100, 100, 100);
-            doc.text('Créditos', sumBoxX + 3, infoY + 10.5);
+            doc.text(creditOkVal > 0 ? 'Créditos' : 'Ajustes', sumBoxX + 3, infoY + 10.5);
             doc.setTextColor(16, 120, 80);
             doc.setFont('helvetica', 'bold');
-            doc.text(`-R$ ${creditOkVal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sumBoxX + 42, infoY + 10.5, { align: 'right' });
+            doc.text(`${creditOkVal > 0 ? '-' : '+'}R$ ${Math.abs(creditOkVal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sumBoxX + 42, infoY + 10.5, { align: 'right' });
         }
 
         const finalColor = netTotal <= 0 ? ACCENT : AMBER;
