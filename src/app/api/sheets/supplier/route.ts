@@ -261,6 +261,22 @@ export async function POST(req: NextRequest) {
             }
         }
 
+        // Append totals + credits to summary text
+        if (generatedSummaryText) {
+            const supplierKey = supplier?.trim().toUpperCase() || '';
+            const creditVal = supplierKey ? (manualCredits[supplierKey] || 0) : 0;
+            const creditDets = supplierKey ? (creditDetails[supplierKey] || []) : [];
+            const netTotal = filteredTotal - creditVal;
+
+            generatedSummaryText += `\nTOTAL BRUTO: ${formatCurrency(filteredTotal)}`;
+            if (creditVal !== 0) {
+                creditDets.forEach(c => {
+                    generatedSummaryText += `\nCRÉDITO (${c.detalhes || 'Ajuste'}): ${c.valorFmt}`;
+                });
+                generatedSummaryText += `\nSALDO LÍQUIDO: ${formatCurrency(Math.abs(netTotal))}`;
+            }
+        }
+
         // Consolidate Supplier List
         // A supplier appears if they have Debt (SAÍDAS) OR Credits from BASE (Z:AE)
         // Exclude names in the AI ignore list
