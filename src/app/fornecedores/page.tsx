@@ -473,10 +473,8 @@ export default function FornecedoresPage() {
             </div>
 
             {/* Scrollable Content Area */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-4 min-h-0">
-                {/* Filter Controls */}
-                <Card className="bg-black/20 border-white/10 backdrop-blur-xl rounded-[1rem] shadow-2xl">
-                    <CardContent className="px-4 py-2.5">
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-3 min-h-0">
+                <div className="bg-white/[0.03] rounded-2xl px-4 py-2.5">
                         <form onSubmit={handleFilterSubmit} className="grid grid-cols-2 md:grid-cols-6 gap-3 items-end">
                             <div className="space-y-1 w-full">
                                 <label className="text-[10px] font-black text-white/70 uppercase tracking-widest pl-1">Data Início</label>
@@ -544,108 +542,96 @@ export default function FornecedoresPage() {
                                 </Button>
                             </div>
                         </form>
-                    </CardContent>
-                </Card>
+                </div>
 
                 {/* Metrics Overview */}
                 <div className="grid gap-3 md:grid-cols-2">
-                    <Card className="bg-black/20 border-white/10 backdrop-blur-xl rounded-[1rem] shadow-xl relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-3xl -z-10 group-hover:bg-white/10 transition-all"></div>
-                        <CardHeader className="pb-0 pt-2.5 px-5">
-                            <CardTitle className="text-[10px] font-black text-white/60 uppercase tracking-widest">Total Filtrado nas Saídas</CardTitle>
-                        </CardHeader>
-                        <CardContent className="px-5 pb-2.5">
-                            <div className="text-xl font-black text-white tracking-tighter flex items-center gap-2">
-                                {data?.summary?.totalValue}
-                                {loading && <span className="material-symbols-outlined text-sm animate-spin text-white">refresh</span>}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-black/20 border-white/10 backdrop-blur-xl rounded-[1rem] shadow-xl">
-                        <CardHeader className="pb-0 pt-2.5 px-5">
-                            <CardTitle className="text-[10px] font-black text-white/60 uppercase tracking-widest">Créditos Ativos</CardTitle>
-                        </CardHeader>
-                        <CardContent className="px-5 pb-2.5">
-                            <div className="text-xl font-black text-white tracking-tighter">
-                                {data?.suppliers?.length} <span className="text-xs text-white/50 font-medium ml-1">Fornecedores Vinculados</span>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <div className="bg-white/[0.03] rounded-2xl px-5 py-3 relative overflow-hidden">
+                        <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">Total Filtrado nas Saídas</p>
+                        <div className="text-xl font-black text-white tracking-tighter flex items-center gap-2">
+                            {data?.summary?.totalValue}
+                            {loading && <span className="material-symbols-outlined text-sm animate-spin text-white/40">refresh</span>}
+                        </div>
+                    </div>
+                    <div className="bg-white/[0.03] rounded-2xl px-5 py-3">
+                        <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">Fornecedores Vinculados</p>
+                        <div className="text-xl font-black text-white tracking-tighter">{data?.suppliers?.length || 0}</div>
+                    </div>
                 </div>
 
                 <div className="grid gap-3 lg:grid-cols-12 min-h-0">
                     {/* Suppliers List */}
-                    <div className="lg:col-span-4 space-y-2 flex flex-col">
-                        <div className="flex items-center gap-1.5 mb-0.5 px-2 shrink-0">
-                            <span className="material-symbols-outlined text-white text-base">account_balance_wallet</span>
-                            <h2 className="font-bold text-white uppercase tracking-widest text-xs">Créditos e Saldos</h2>
+                    <div className="lg:col-span-4 flex flex-col min-h-0">
+                        <div className="flex items-center gap-1.5 mb-1.5 px-1">
+                            <span className="material-symbols-outlined text-white/40 text-sm">account_balance_wallet</span>
+                            <h2 className="font-bold text-white/60 uppercase tracking-widest text-[10px]">Créditos e Saldos</h2>
                         </div>
-                        <div className="bg-black/20 backdrop-blur-xl border border-white/10 p-1.5 rounded-[1rem] shadow-2xl flex-1 overflow-hidden flex flex-col min-h-[300px]">
-                            <div className="space-y-1.5 overflow-y-auto pr-1 flex flex-col flex-1 custom-scrollbar">
+                        <div className="bg-white/[0.03] rounded-2xl p-1.5 flex-1 overflow-hidden flex flex-col min-h-[300px] max-h-[520px]">
+                            <div className="space-y-1 overflow-y-auto custom-scrollbar flex-1 pr-0.5">
                                 {data?.suppliers?.length === 0 ? (
-                                    <div className="p-4 text-center text-white/50 text-xs font-mono mt-4">Nenhum fornecedor registrado.</div>
+                                    <div className="p-4 text-center text-white/30 text-xs font-mono mt-4">Nenhum fornecedor registrado.</div>
                                 ) : null}
-                                
+
                                 {data?.suppliers?.map((s: any, idx: number) => (
-                                    <div 
-                                        key={idx} 
+                                    <div
+                                        key={idx}
                                         className={cn(
-                                            "flex flex-col p-2 rounded-xl border transition-all cursor-pointer",
+                                            "flex flex-col px-2.5 py-2 rounded-xl transition-all cursor-pointer",
                                             supplier === s.name
-                                                ? "bg-white/20 border-white/30 shadow-lg" 
-                                                : "bg-black/10 border-white/5 hover:bg-black/30"
+                                                ? "bg-white/10"
+                                                : "bg-white/[0.02] hover:bg-white/[0.05]"
                                         )}
                                         onClick={() => setSupplier(s.name)}
                                     >
-                                        <div className="flex justify-between items-center mb-1.5">
-                                            <span className={cn("text-[11px] font-black uppercase tracking-wide", supplier === s.name ? "text-white" : "text-white/80")}>
+                                        {/* Row 1: name + badge */}
+                                        <div className="flex justify-between items-center">
+                                            <span className={cn("text-[11px] font-black uppercase tracking-wide", supplier === s.name ? "text-white" : "text-white/70")}>
                                                 {s.name}
                                             </span>
-                                            <Badge className={cn("text-[9px] font-black uppercase px-1.5 py-0 rounded", 
-                                                s.saldoType === 'POSITIVE' ? 'bg-emerald-500/20 text-emerald-300' :
-                                                s.saldoType === 'NEGATIVE' ? 'bg-blue-500/20 text-blue-300' : 'bg-white/10 text-white/50'
+                                            <Badge className={cn("text-[8px] font-black uppercase px-1.5 py-0 rounded-full h-4",
+                                                s.saldoType === 'POSITIVE' ? 'bg-emerald-500/15 text-emerald-400' :
+                                                s.saldoType === 'NEGATIVE' ? 'bg-blue-500/15 text-blue-400' : 'bg-white/5 text-white/30'
                                             )}>
-                                                {s.saldoType === 'POSITIVE' ? 'CRÉDITO' : s.saldoType === 'NEGATIVE' ? 'DÍVIDA' : 'ZERADO'}
+                                                {s.saldoType === 'POSITIVE' ? 'CRÉDITO' : s.saldoType === 'NEGATIVE' ? 'DÍVIDA' : 'ZERO'}
                                             </Badge>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-1.5 text-[11px] font-mono">
-                                            <div className="bg-black/20 p-1 rounded-lg flex flex-col items-center">
-                                                <span className="text-[9px] text-white/40 uppercase font-black mb-0">Pago (OK)</span>
-                                                <span className="text-emerald-400 font-bold leading-tight">{s.creditOk}</span>
+
+                                        {/* Row 2: Pago | Devendo | Saldo inline */}
+                                        <div className="flex items-center gap-2 mt-1.5 text-[10px] font-mono">
+                                            <div className="flex flex-col items-start flex-1">
+                                                <span className="text-[8px] text-white/30 uppercase font-black">Crédito</span>
+                                                <span className="text-emerald-400 font-bold">{s.creditOk}</span>
                                             </div>
-                                            <div className="bg-black/20 p-1 rounded-lg flex flex-col items-center">
-                                                <span className="text-[9px] text-white/40 uppercase font-black mb-0">Devendo</span>
-                                                <span className="text-blue-400 font-bold leading-tight">{s.debt}</span>
+                                            <div className="w-px h-6 bg-white/5" />
+                                            <div className="flex flex-col items-start flex-1">
+                                                <span className="text-[8px] text-white/30 uppercase font-black">Devendo</span>
+                                                <span className="text-blue-400 font-bold">{s.debt}</span>
                                             </div>
-                                        </div>
-                                        <div 
-                                            className="mt-1.5 text-center bg-white/5 border border-white/10 p-1 rounded-lg flex justify-between items-center px-2 group/copy hover:bg-white/10 transition-colors" 
-                                            onClick={(e) => { e.stopPropagation(); copyToClipboard(`${s.saldoType === 'NEGATIVE' ? '-' : ''}${s.saldo}`); }}
-                                            title="Copiar Saldo Líquido"
-                                        >
-                                            <span className="text-[9px] text-white/60 uppercase font-black">Saldo Líquido</span>
-                                            <div className="flex items-center gap-1">
-                                                <span className="text-white font-black text-xs leading-none py-0.5">{s.saldoType === 'NEGATIVE' ? '-' : ''}{s.saldo}</span>
-                                                <span className="material-symbols-outlined text-[10px] text-white/30 group-hover/copy:text-white/80 transition-colors">content_copy</span>
-                                            </div>
-                                        </div>
-                                        {s.pix && (
-                                            <div 
-                                                className="mt-1 text-center bg-white/5 border border-white/10 p-1 rounded-lg flex justify-between items-center px-2 group/copy hover:bg-white/10 transition-colors" 
-                                                onClick={(e) => { e.stopPropagation(); copyToClipboard(s.pix); }} 
-                                                title="Copiar PIX"
+                                            <div className="w-px h-6 bg-white/5" />
+                                            <div
+                                                className="flex flex-col items-end flex-1 cursor-pointer group/copy"
+                                                onClick={(e) => { e.stopPropagation(); copyToClipboard(`${s.saldoType === 'NEGATIVE' ? '-' : ''}${s.saldo}`); }}
+                                                title="Copiar Saldo"
                                             >
-                                                <span className="text-[9px] text-emerald-400/60 uppercase font-black">Chave PIX</span>
-                                                <div className="flex items-center gap-1 overflow-hidden">
-                                                    <span className="text-emerald-400 font-mono text-[9px] leading-none py-0.5 truncate max-w-[80px]">{s.pix}</span>
-                                                    <span className="material-symbols-outlined text-[10px] text-emerald-400/30 group-hover/copy:text-emerald-400 transition-colors">content_copy</span>
-                                                </div>
+                                                <span className="text-[8px] text-white/30 uppercase font-black flex items-center gap-0.5">
+                                                    Saldo
+                                                    <span className="material-symbols-outlined text-[9px] text-white/20 group-hover/copy:text-white/60 transition-colors">content_copy</span>
+                                                </span>
+                                                <span className="text-white font-black">{s.saldoType === 'NEGATIVE' ? '-' : ''}{s.saldo}</span>
                                             </div>
-                                        )}
-                                        {(s.creditPending && s.creditPending !== 'R$ 0,00') && (
-                                            <div className="mt-1 text-center text-[9px] text-amber-200/60 uppercase font-black">
-                                                + {s.creditPending} pendente
+                                        </div>
+
+                                        {/* Row 3: PIX (optional) */}
+                                        {s.pix && (
+                                            <div
+                                                className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-white/5 group/pix cursor-pointer"
+                                                onClick={(e) => { e.stopPropagation(); copyToClipboard(s.pix); }}
+                                            >
+                                                <span className="text-[8px] text-white/30 uppercase font-black">PIX</span>
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-emerald-400 font-mono text-[9px] truncate max-w-[90px]">{s.pix}</span>
+                                                    <span className="material-symbols-outlined text-[9px] text-emerald-400/30 group-hover/pix:text-emerald-400 transition-colors">content_copy</span>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -654,90 +640,83 @@ export default function FornecedoresPage() {
                         </div>
                     </div>
 
-                    {/* Main Ledger Table and Text Generators */}
-                    <div className="lg:col-span-8 flex flex-col gap-3">
-                        {/* Generative Texts */}
-                        <div className="shrink-0">
+                    {/* Main Ledger Table */}
+                    <div className="lg:col-span-8 flex flex-col gap-2.5 min-h-0">
+
+                        {/* Ledger header + copy button */}
+                        <div className="flex items-center justify-between gap-2 px-1 shrink-0">
+                            <div className="flex items-center gap-1.5">
+                                <span className="material-symbols-outlined text-white/40 text-sm">payments</span>
+                                <h2 className="font-bold text-white/60 uppercase tracking-widest text-[10px]">Registros</h2>
+                                <Badge className="bg-white/5 text-white/50 font-black px-2 py-0 rounded-full text-[9px] ml-1">
+                                    {data?.ledger?.length || 0} SAÍDAS
+                                </Badge>
+                            </div>
                             <Button
                                 onClick={() => copyToClipboard(data?.generated?.summary)}
                                 disabled={!data?.generated?.summary}
-                                className="flex items-center gap-2 bg-black/30 border border-white/10 hover:bg-white/10 disabled:opacity-30 text-white font-black text-[10px] tracking-widest uppercase h-9 px-4 rounded-xl transition-all active:scale-95"
+                                className="flex items-center gap-1.5 bg-white/[0.04] hover:bg-white/10 disabled:opacity-30 text-white/60 hover:text-white font-black text-[9px] tracking-widest uppercase h-7 px-3 rounded-full transition-all active:scale-95"
                             >
-                                <span className="material-symbols-outlined text-[15px]">content_copy</span>
+                                <span className="material-symbols-outlined text-[13px]">content_copy</span>
                                 Copiar Resumo
                             </Button>
                         </div>
 
                         {/* Ledger Table */}
-                        <div className="flex-1 flex flex-col space-y-1.5 min-h-0">
-                            <div className="flex items-center justify-between gap-2 px-1 shrink-0">
-                                <div className="flex items-center gap-1.5">
-                                    <span className="material-symbols-outlined text-white text-base">payments</span>
-                                    <h2 className="font-bold text-white uppercase tracking-widest text-xs">Registros</h2>
-                                </div>
-                                <Badge className="bg-black text-white hover:bg-black/80 font-black px-2 py-0 rounded text-[10px]">
-                                    {data?.ledger?.length || 0} SAÍDAS
-                                </Badge>
-                            </div>
-                            
-                            <div className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-[1rem] overflow-hidden shadow-2xl flex-1 flex flex-col min-h-[250px]">
-                                <div className="overflow-y-auto custom-scrollbar flex-1">
-                                    <table className="w-full text-left text-[11px]">
-                                        <thead className="sticky top-0 z-10 bg-black/80 backdrop-blur-md">
-                                            <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-white/50">
-                                                <th className="px-3 py-2 font-black">Data</th>
-                                                <th className="px-3 py-2 font-black">LOC</th>
-                                                <th className="px-3 py-2 font-black">Fornecedor</th>
-                                                <th className="px-3 py-2 font-black text-right">Total</th>
-                                                <th className="px-3 py-2 font-black text-center">Status</th>
+                        <div className="bg-white/[0.03] rounded-2xl overflow-hidden flex-1 flex flex-col min-h-[250px] max-h-[520px]">
+                            <div className="overflow-y-auto custom-scrollbar flex-1">
+                                <table className="w-full text-left text-[11px]">
+                                    <thead className="sticky top-0 z-10 bg-[#0d0d0d]/95 backdrop-blur-md">
+                                        <tr className="text-[9px] uppercase tracking-widest text-white/30">
+                                            <th className="px-3 py-2.5 font-black">Data</th>
+                                            <th className="px-3 py-2.5 font-black">LOC</th>
+                                            <th className="px-3 py-2.5 font-black text-right">Total</th>
+                                            <th className="px-3 py-2.5 font-black text-center">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="font-medium">
+                                        {data?.ledger?.map((row: any, i: number) => (
+                                            <tr key={i} className="hover:bg-white/[0.03] transition-colors group">
+                                                <td className="px-3 py-1.5 text-white/40 font-mono whitespace-nowrap text-[10px]">{row.date}</td>
+                                                <td className="px-3 py-1.5 text-white font-black group-hover:text-amber-200 transition-colors whitespace-nowrap">{row.loc}</td>
+                                                <td className="px-3 py-1.5 text-right text-white font-black whitespace-nowrap">{row.total !== '0' && row.total !== '' ? `R$ ${row.total}` : '-'}</td>
+                                                <td className="px-3 py-1.5 text-center">
+                                                    <Badge
+                                                        className={cn(
+                                                            "text-[8px] font-black uppercase h-4 rounded-full px-2 flex items-center justify-center w-fit mx-auto",
+                                                            row.issueStatus === 'PENDENTE'
+                                                                ? "bg-amber-500/20 text-amber-400"
+                                                                : "bg-emerald-500/20 text-emerald-400"
+                                                        )}
+                                                    >
+                                                        {row.issueStatus}
+                                                    </Badge>
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-white/5 font-medium">
-                                            {data?.ledger?.map((row: any, i: number) => (
-                                                <tr key={i} className="hover:bg-white/5 transition-colors group">
-                                                    <td className="px-3 py-1.5 text-white/60 font-mono whitespace-nowrap">{row.date}</td>
-                                                    <td className="px-3 py-1.5 text-white font-black group-hover:text-amber-200 transition-colors whitespace-nowrap">{row.loc}</td>
-                                                    <td className="px-3 py-1.5 text-white/80 text-[10px] uppercase max-w-[120px] truncate" title={row.supplier}>{row.supplier || row.product}</td>
-                                                    <td className="px-3 py-1.5 text-right text-white font-black whitespace-nowrap">{row.total !== '0' && row.total !== '' ? `R$ ${row.total}` : '-'}</td>
+                                        ))}
+                                        {/* Credit rows */}
+                                        {supplier && supplier !== 'TODOS' && (() => {
+                                            const selSupplier = data?.suppliers?.find((s: any) => s.name === supplier);
+                                            return selSupplier?.creditDetails?.map((c: any, ci: number) => (
+                                                <tr key={`credit-${ci}`} className="hover:bg-emerald-500/5 transition-colors">
+                                                    <td className="px-3 py-1.5 text-white/20 font-mono whitespace-nowrap text-[10px]">—</td>
+                                                    <td className="px-3 py-1.5 text-emerald-400 font-black whitespace-nowrap max-w-[110px] truncate" title={c.detalhes}>{c.detalhes || '—'}</td>
+                                                    <td className="px-3 py-1.5 text-right text-emerald-400 font-black whitespace-nowrap">{c.valorFmt}</td>
                                                     <td className="px-3 py-1.5 text-center">
-                                                        <Badge 
-                                                            className={cn(
-                                                                "text-[9px] font-black uppercase h-5 rounded px-1.5 flex items-center justify-center w-fit mx-auto",
-                                                                row.issueStatus === 'PENDENTE' 
-                                                                    ? "bg-amber-500 text-white border-none" 
-                                                                    : "bg-emerald-500 text-white border-none"
-                                                            )}
-                                                        >
-                                                            {row.issueStatus}
+                                                        <Badge className="text-[8px] font-black uppercase h-4 rounded-full px-2 flex items-center justify-center w-fit mx-auto bg-emerald-500/15 text-emerald-400">
+                                                            CRÉDITO
                                                         </Badge>
                                                     </td>
                                                 </tr>
-                                            ))}
-                                            {/* Credit rows for selected supplier */}
-                                            {supplier && supplier !== 'TODOS' && (() => {
-                                                const selSupplier = data?.suppliers?.find((s: any) => s.name === supplier);
-                                                return selSupplier?.creditDetails?.map((c: any, ci: number) => (
-                                                    <tr key={`credit-${ci}`} className="hover:bg-emerald-500/5 transition-colors bg-emerald-950/20">
-                                                        <td className="px-3 py-1.5 text-white/40 font-mono whitespace-nowrap">—</td>
-                                                        <td className="px-3 py-1.5 text-emerald-400 font-black whitespace-nowrap max-w-[110px] truncate" title={c.detalhes}>{c.detalhes || '—'}</td>
-                                                        <td className="px-3 py-1.5 text-emerald-400/70 text-[10px] uppercase">CRÉDITO</td>
-                                                        <td className="px-3 py-1.5 text-right text-emerald-400 font-black whitespace-nowrap">{c.valorFmt}</td>
-                                                        <td className="px-3 py-1.5 text-center">
-                                                            <Badge className="text-[9px] font-black uppercase h-5 rounded px-1.5 flex items-center justify-center w-fit mx-auto bg-emerald-500/20 text-emerald-300 border-none">
-                                                                CRÉDITO
-                                                            </Badge>
-                                                        </td>
-                                                    </tr>
-                                                ));
-                                            })()}
-                                            {data?.ledger?.length === 0 && (
-                                                <tr>
-                                                    <td colSpan={5} className="text-center py-8 text-white/30 font-mono text-[11px]">Ajuste os filtros.</td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                            ));
+                                        })()}
+                                        {data?.ledger?.length === 0 && (
+                                            <tr>
+                                                <td colSpan={4} className="text-center py-10 text-white/20 font-mono text-[11px]">Ajuste os filtros.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
