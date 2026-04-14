@@ -53,19 +53,19 @@ export function Navbar() {
                 </Link>
 
                 {/* Desktop Nav */}
-                <div className="hidden lg:flex items-center gap-0.5 bg-white/[0.04] rounded-full px-1.5 py-1 overflow-x-auto max-w-[780px]">
+                <div className="hidden lg:flex items-center gap-0.5 bg-white/[0.04] rounded-full px-1 py-1">
                     {navItems.map((item) => (
                         <Link
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                "relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10.5px] font-semibold tracking-wide whitespace-nowrap transition-all duration-200",
+                                "relative flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-semibold tracking-wide whitespace-nowrap transition-all duration-200",
                                 pathname === item.href
                                     ? 'text-white bg-white/10'
                                     : 'text-white/40 hover:text-white/80 hover:bg-white/[0.05]'
                             )}
                         >
-                            <span className="material-symbols-outlined text-[13px] leading-none">{item.icon}</span>
+                            <span className="material-symbols-outlined text-[12px] leading-none">{item.icon}</span>
                             {item.label}
                         </Link>
                     ))}

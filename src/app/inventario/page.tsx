@@ -26,7 +26,7 @@ export default async function InventarioPage() {
     const smilesEntries = smilesData || [];
     const azulEntries = azulData || [];
 
-    const gridLayout = "grid-cols-[2fr_1.5fr_2fr_1fr_1.5fr]";
+    const gridLayout = "grid-cols-[2fr_2.5fr_2fr_1fr_1.5fr]";
 
     return (
         <div className="flex flex-col w-full h-full pt-2 text-[#e5e2e1] font-['Inter'] overflow-hidden">
