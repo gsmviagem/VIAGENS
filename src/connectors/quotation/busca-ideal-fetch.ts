@@ -308,7 +308,7 @@ export async function searchBuscaIdeal(
             currency: mainCurrency,
             success: true,
             searchUrl,
-            offers: offers.slice(0, 20),
+            offers: offers.slice(0, 100),
             airlineBreakdown,
             milesBreakdown,
         };

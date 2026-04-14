@@ -3,6 +3,9 @@
     "src/app/api/quotation/route.ts": {
       "maxDuration": 30
     },
+    "src/app/api/busca-ideal/route.ts": {
+      "maxDuration": 45
+    },
     "src/app/api/sheets/base/route.ts": {
       "maxDuration": 60
     },

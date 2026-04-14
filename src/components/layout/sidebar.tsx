@@ -12,6 +12,7 @@ const navItems = [
     { href: '/inventario', label: 'Inventory (SAÍDAS)', icon: 'inventory' },
     { href: '/fornecedores', label: 'Suppliers', icon: 'handshake' },
     { href: '/cotacao', label: 'Quoting', icon: 'search' },
+    { href: '/busca-ideal', label: 'Miles Search', icon: 'airlines' },
     { href: '/processamento', label: 'Book', icon: 'auto_stories' },
     { href: '/auto-extrator', label: 'Automations', icon: 'precision_manufacturing' },
     { href: '/calculo', label: 'Calculator', icon: 'calculate' },
