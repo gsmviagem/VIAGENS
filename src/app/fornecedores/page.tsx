@@ -100,93 +100,87 @@ export default function FornecedoresPage() {
         const ACCENT: [number, number, number] = [16, 185, 129];
         const AMBER: [number, number, number] = [245, 158, 11];
 
-        // --- HEADER ---
+        // === HEADER ===
         doc.setFillColor(PRIMARY[0], PRIMARY[1], PRIMARY[2]);
-        doc.rect(0, 0, pageWidth, 18, 'F');
+        doc.rect(0, 0, pageWidth, 20, 'F');
         doc.setFillColor(0, 0, 10);
-        doc.triangle(pageWidth - 80, 0, pageWidth, 0, pageWidth, 18, 'F');
+        doc.triangle(pageWidth - 80, 0, pageWidth, 0, pageWidth, 20, 'F');
         doc.setFillColor(AMBER[0], AMBER[1], AMBER[2]);
-        doc.rect(0, 18, pageWidth, 1.5, 'F');
+        doc.rect(0, 20, pageWidth, 1.5, 'F');
 
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(22);
         doc.setFont('helvetica', 'bold');
-        doc.text('DIMAIS CORP', 15, 12);
+        doc.text('DIMAIS CORP', 15, 14);
 
-        // "SUPPLIER" badge
-        doc.setFillColor(245, 158, 11);
-        doc.roundedRect(pageWidth - 46, 4, 31, 10, 1.5, 1.5, 'F');
-        doc.setTextColor(10, 10, 20);
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'bold');
-        doc.text('SUPPLIER', pageWidth - 30.5, 9.5, { align: 'center', baseline: 'middle' });
-
-        // --- INFO ROW ---
-        const infoY = 28;
+        // === INFO ROW ===
+        const infoY = 30;
         const supplierInfo = data.suppliers?.find((s: any) => s.name === supplier);
         const resolvedName = supplierInfo?.fullName || (supplier && supplier !== 'TODOS' ? supplier : 'TODOS OS FORNECEDORES');
         const supplierLabel = resolvedName;
+        const emitDate = new Date().toLocaleDateString('pt-BR', { year: 'numeric', month: 'short', day: 'numeric' });
 
-        // Left box: Supplier name
+        // Left card: Supplier name + date
         doc.setFillColor(248, 250, 252);
-        doc.roundedRect(15, infoY, 85, 18, 1.5, 1.5, 'F');
+        doc.roundedRect(15, infoY, 110, 22, 1.5, 1.5, 'F');
         doc.setFillColor(AMBER[0], AMBER[1], AMBER[2]);
-        doc.rect(15, infoY + 3, 2, 12, 'F');
-        doc.setFontSize(6);
+        doc.rect(15, infoY + 3, 2.5, 16, 'F');
+
+        doc.setFontSize(5.5);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(140, 140, 140);
-        doc.text('SUPPLIER', 22, infoY + 7);
-        doc.setTextColor(40, 40, 40);
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.text(supplierLabel.length > 28 ? supplierLabel.substring(0, 28) + '...' : supplierLabel, 22, infoY + 13);
+        doc.text('FORNECEDOR', 22, infoY + 7);
 
-        // Center: date
+        doc.setTextColor(30, 30, 30);
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text(supplierLabel.length > 34 ? supplierLabel.substring(0, 34) + '...' : supplierLabel, 22, infoY + 14);
+
         doc.setFontSize(7);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(150, 150, 150);
-        doc.text('Emitido em:', 108, infoY + 10);
-        doc.setTextColor(40, 40, 40);
-        doc.setFont('helvetica', 'bold');
-        doc.text(new Date().toLocaleDateString('pt-BR', { year: 'numeric', month: 'short', day: 'numeric' }), 124, infoY + 10);
+        doc.text(`Emitido em ${emitDate}`, 22, infoY + 20);
 
         // Right summary box
         const totalBruto = data.ledger.reduce((acc: number, row: any) => acc + parseCurrencyBR(row.total), 0);
-        // Credits: find selected supplier credits
         const creditOkVal = supplierInfo ? parseCurrencyBR(supplierInfo.creditOk) : 0;
         const netTotal = totalBruto - creditOkVal;
 
-        const sumBoxX = pageWidth - 60;
+        const sumBoxX = pageWidth - 65;
         doc.setFillColor(255, 255, 255);
         doc.setDrawColor(220, 225, 230);
         doc.setLineWidth(0.3);
-        doc.roundedRect(sumBoxX, infoY, 45, 18, 1.5, 1.5, 'FD');
+        doc.roundedRect(sumBoxX, infoY, 50, 22, 1.5, 1.5, 'FD');
 
-        doc.setFontSize(7);
+        doc.setFontSize(6.5);
         doc.setFont('helvetica', 'normal');
-        doc.setTextColor(100, 100, 100);
-        doc.text('Total Bruto', sumBoxX + 3, infoY + 6);
+        doc.setTextColor(120, 120, 120);
+        doc.text('Total Bruto', sumBoxX + 3, infoY + 7);
         doc.setTextColor(40, 40, 40);
         doc.setFont('helvetica', 'bold');
-        doc.text(`R$ ${totalBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sumBoxX + 42, infoY + 6, { align: 'right' });
+        doc.setFontSize(9);
+        doc.text(`R$ ${totalBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sumBoxX + 47, infoY + 7, { align: 'right' });
 
         if (creditOkVal !== 0) {
             doc.setFont('helvetica', 'normal');
-            doc.setTextColor(100, 100, 100);
-            doc.text(creditOkVal > 0 ? 'Créditos' : 'Ajustes', sumBoxX + 3, infoY + 10.5);
+            doc.setFontSize(6.5);
+            doc.setTextColor(120, 120, 120);
+            doc.text(creditOkVal > 0 ? 'Créditos' : 'Ajustes', sumBoxX + 3, infoY + 13);
             doc.setTextColor(16, 120, 80);
             doc.setFont('helvetica', 'bold');
-            doc.text(`${creditOkVal > 0 ? '-' : '+'}R$ ${Math.abs(creditOkVal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sumBoxX + 42, infoY + 10.5, { align: 'right' });
+            doc.setFontSize(9);
+            doc.text(`${creditOkVal > 0 ? '-' : '+'}R$ ${Math.abs(creditOkVal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sumBoxX + 47, infoY + 13, { align: 'right' });
         }
 
         const finalColor = netTotal <= 0 ? ACCENT : AMBER;
         doc.setFillColor(finalColor[0], finalColor[1], finalColor[2]);
-        doc.rect(sumBoxX, infoY + 13, 45, 5, 'F');
-        doc.setFontSize(7);
+        doc.rect(sumBoxX, infoY + 15.5, 50, 6.5, 'F');
+        doc.setFontSize(6);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(255, 255, 255);
-        doc.text('SALDO LÍQ.', sumBoxX + 3, infoY + 16.5);
-        doc.text(`R$ ${Math.abs(netTotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sumBoxX + 42, infoY + 16.5, { align: 'right' });
+        doc.text('SALDO LÍQ.', sumBoxX + 3, infoY + 20);
+        doc.setFontSize(11);
+        doc.text(`R$ ${Math.abs(netTotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sumBoxX + 47, infoY + 20, { align: 'right' });
 
         // --- LEDGER TABLE ---
         const ledgerRows = data.ledger.map((row: any) => {
@@ -206,7 +200,7 @@ export default function FornecedoresPage() {
         });
 
         autoTable(doc, {
-            startY: infoY + 28,
+            startY: infoY + 30,
             head: [['Data', 'LOC', 'Milhas', 'Preço/Milha', 'Valor', 'Taxas', 'Total (R$)']],
             body: ledgerRows,
             theme: 'grid',

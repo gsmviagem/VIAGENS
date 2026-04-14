@@ -153,107 +153,84 @@ export default function InvoicePage() {
         const PRIMARY_BLUE: [number, number, number] = [0, 43, 92]; // #002b5c
         const ACCENT_COLOR: [number, number, number] = [16, 185, 129]; // Emerald
 
-        // --- 1. COMPACT HEADER DESIGN ---
-        // Main dark blue banner (compact)
+        // === HEADER ===
         doc.setFillColor(PRIMARY_BLUE[0], PRIMARY_BLUE[1], PRIMARY_BLUE[2]);
-        doc.rect(0, 0, pageWidth, 18, 'F');
-        
-        // Subtle diagonal polygon for depth
+        doc.rect(0, 0, pageWidth, 20, 'F');
         doc.setFillColor(0, 35, 75);
-        doc.triangle(pageWidth - 80, 0, pageWidth, 0, pageWidth, 18, 'F');
-
-        // Thin emerald accent ribbon
+        doc.triangle(pageWidth - 80, 0, pageWidth, 0, pageWidth, 20, 'F');
         doc.setFillColor(ACCENT_COLOR[0], ACCENT_COLOR[1], ACCENT_COLOR[2]);
-        doc.rect(0, 18, pageWidth, 1.5, 'F');
+        doc.rect(0, 20, pageWidth, 1.5, 'F');
 
-        // Company Name
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(22);
         doc.setFont('helvetica', 'bold');
-        doc.text('DIMAIS CORP', 15, 12);
+        doc.text('DIMAIS CORP', 15, 14);
 
-        // "INVOICE" badge
-        doc.setFillColor(255, 255, 255);
-        doc.roundedRect(pageWidth - 38, 4, 23, 10, 1.5, 1.5, 'F');
-        doc.setTextColor(PRIMARY_BLUE[0], PRIMARY_BLUE[1], PRIMARY_BLUE[2]);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('INVOICE', pageWidth - 26.5, 9.5, { align: 'center', baseline: 'middle' });
+        // === INFO ROW ===
+        const infoY = 30;
+        const emitDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
-        // --- 2. COMPACT INFO ROW ---
-        const infoY = 28;
-        
-        // Left: Billed to (compact card)
+        // Left card: Client name + date
         doc.setFillColor(248, 250, 252);
-        doc.roundedRect(15, infoY, 85, 18, 1.5, 1.5, 'F');
+        doc.roundedRect(15, infoY, 110, 22, 1.5, 1.5, 'F');
         doc.setFillColor(PRIMARY_BLUE[0], PRIMARY_BLUE[1], PRIMARY_BLUE[2]);
-        doc.rect(15, infoY + 3, 2, 12, 'F');
-        
-        doc.setFontSize(6);
+        doc.rect(15, infoY + 3, 2.5, 16, 'F');
+
+        doc.setFontSize(5.5);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(140, 140, 140);
         doc.text('BILLED TO', 22, infoY + 7);
 
-        doc.setTextColor(40, 40, 40);
-        doc.setFontSize(9);
+        doc.setTextColor(30, 30, 30);
+        doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         const clientName = (selectedClient.company || selectedClient.broker).toUpperCase();
-        doc.text(clientName.length > 22 ? clientName.substring(0, 22) + '...' : clientName, 22, infoY + 13);
+        doc.text(clientName.length > 34 ? clientName.substring(0, 34) + '...' : clientName, 22, infoY + 14);
 
-        // Center: Meta info
         doc.setFontSize(7);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(150, 150, 150);
-        doc.text('Date:', 108, infoY + 10);
-        doc.setTextColor(40, 40, 40);
-        doc.setFont('helvetica', 'bold');
-        doc.text(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }), 118, infoY + 10);
+        doc.text(`Issued ${emitDate}`, 22, infoY + 20);
 
-        // Right: Financial summary (compact card)
-        const sumBoxX = pageWidth - 60;
+        // Right: Financial summary
+        const sumBoxX = pageWidth - 65;
         doc.setFillColor(255, 255, 255);
         doc.setDrawColor(220, 225, 230);
         doc.setLineWidth(0.3);
-        doc.roundedRect(sumBoxX, infoY, 45, 18, 1.5, 1.5, 'FD');
+        doc.roundedRect(sumBoxX, infoY, 50, 22, 1.5, 1.5, 'FD');
 
-        doc.setFontSize(7);
+        doc.setFontSize(6.5);
         doc.setFont('helvetica', 'normal');
-        doc.setTextColor(100, 100, 100);
-        doc.text('Bookings', sumBoxX + 3, infoY + 6);
+        doc.setTextColor(120, 120, 120);
+        doc.text('Bookings', sumBoxX + 3, infoY + 7);
         doc.setTextColor(40, 40, 40);
         doc.setFont('helvetica', 'bold');
-        doc.text(`$ ${totalEmissions.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumBoxX + 42, infoY + 6, { align: 'right' });
+        doc.setFontSize(9);
+        doc.text(`$ ${totalEmissions.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumBoxX + 47, infoY + 7, { align: 'right' });
 
         if (totalSelectedCredits > 0) {
             doc.setFont('helvetica', 'normal');
-            doc.setTextColor(100, 100, 100);
-            doc.text('Credits', sumBoxX + 3, infoY + 10.5);
+            doc.setFontSize(6.5);
+            doc.setTextColor(120, 120, 120);
+            doc.text('Credits', sumBoxX + 3, infoY + 13);
             doc.setTextColor(220, 38, 38);
             doc.setFont('helvetica', 'bold');
-            doc.text(`-$ ${totalSelectedCredits.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumBoxX + 42, infoY + 10.5, { align: 'right' });
+            doc.setFontSize(9);
+            doc.text(`-$ ${totalSelectedCredits.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumBoxX + 47, infoY + 13, { align: 'right' });
         }
 
-        // TOTAL footer strip
         const finalColor = finalTotal <= 0 ? ACCENT_COLOR : PRIMARY_BLUE;
         doc.setFillColor(finalColor[0], finalColor[1], finalColor[2]);
-        doc.rect(sumBoxX, infoY + 13, 45, 5, 'F');
-        doc.setFontSize(7);
+        doc.rect(sumBoxX, infoY + 15.5, 50, 6.5, 'F');
+        doc.setFontSize(6);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(255, 255, 255);
-        doc.text('TOTAL', sumBoxX + 3, infoY + 16.5);
-        doc.text(`$ ${Math.abs(finalTotal).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumBoxX + 42, infoY + 16.5, { align: 'right' });
-
-        // --- 4. PREMIER DATA TABLES ---
-        const emissionsRows = data.emissions.map(e => [
-            formatUSDate(e.date),
-            e.pax,
-            e.pnr,
-            e.route,
-            e.value.replace('R$', '$')
-        ]);
+        doc.text('TOTAL', sumBoxX + 3, infoY + 20);
+        doc.setFontSize(11);
+        doc.text(`$ ${Math.abs(finalTotal).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumBoxX + 47, infoY + 20, { align: 'right' });
 
         autoTable(doc, {
-            startY: infoY + 28,
+            startY: infoY + 30,
             head: [['Date', 'Passenger', 'Loc', 'Route', 'Price']],
             body: emissionsRows,
             theme: 'grid',
