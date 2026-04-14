@@ -657,39 +657,15 @@ export default function FornecedoresPage() {
                     {/* Main Ledger Table and Text Generators */}
                     <div className="lg:col-span-8 flex flex-col gap-3">
                         {/* Generative Texts */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5 shrink-0">
-                            <div className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-[1rem] p-2 shadow-2xl flex flex-col">
-                                <div className="flex justify-between items-center mb-1.5 px-1">
-                                    <span className="text-[10px] uppercase font-black text-white/60 tracking-widest flex items-center gap-1">
-                                        <span className="material-symbols-outlined text-[13px]">subject</span> Detalhado
-                                    </span>
-                                    <Button size="sm" variant="ghost" className="h-5 px-1.5 text-[9px] text-white/50 hover:text-white hover:bg-white/10 rounded-md" onClick={() => copyToClipboard(data?.generated?.full)}>
-                                        <span className="material-symbols-outlined text-[11px] mr-1">content_copy</span> COPIAR
-                                    </Button>
-                                </div>
-                                <textarea 
-                                    readOnly 
-                                    value={data?.generated?.full || ''} 
-                                    className="w-full min-h-[75px] h-[75px] bg-black/40 border-none rounded-lg text-white/80 text-[11px] font-mono p-2 focus:outline-none resize-none custom-scrollbar leading-tight"
-                                    placeholder="..."
-                                ></textarea>
-                            </div>
-                            <div className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-[1rem] p-2 shadow-2xl flex flex-col">
-                                <div className="flex justify-between items-center mb-1.5 px-1">
-                                    <span className="text-[10px] uppercase font-black text-white/60 tracking-widest flex items-center gap-1">
-                                        <span className="material-symbols-outlined text-[13px]">short_text</span> Resumo
-                                    </span>
-                                    <Button size="sm" variant="ghost" className="h-5 px-1.5 text-[9px] text-white/50 hover:text-white hover:bg-white/10 rounded-md" onClick={() => copyToClipboard(data?.generated?.summary)}>
-                                        <span className="material-symbols-outlined text-[11px] mr-1">content_copy</span> COPIAR
-                                    </Button>
-                                </div>
-                                <textarea 
-                                    readOnly 
-                                    value={data?.generated?.summary || ''} 
-                                    className="w-full min-h-[75px] h-[75px] bg-black/40 border-none rounded-lg text-white/80 text-[11px] font-mono p-2 focus:outline-none resize-none custom-scrollbar leading-tight"
-                                    placeholder="..."
-                                ></textarea>
-                            </div>
+                        <div className="shrink-0">
+                            <Button
+                                onClick={() => copyToClipboard(data?.generated?.summary)}
+                                disabled={!data?.generated?.summary}
+                                className="flex items-center gap-2 bg-black/30 border border-white/10 hover:bg-white/10 disabled:opacity-30 text-white font-black text-[10px] tracking-widest uppercase h-9 px-4 rounded-xl transition-all active:scale-95"
+                            >
+                                <span className="material-symbols-outlined text-[15px]">content_copy</span>
+                                Copiar Resumo
+                            </Button>
                         </div>
 
                         {/* Ledger Table */}
@@ -737,6 +713,23 @@ export default function FornecedoresPage() {
                                                     </td>
                                                 </tr>
                                             ))}
+                                            {/* Credit rows for selected supplier */}
+                                            {supplier && supplier !== 'TODOS' && (() => {
+                                                const selSupplier = data?.suppliers?.find((s: any) => s.name === supplier);
+                                                return selSupplier?.creditDetails?.map((c: any, ci: number) => (
+                                                    <tr key={`credit-${ci}`} className="hover:bg-emerald-500/5 transition-colors bg-emerald-950/20">
+                                                        <td className="px-3 py-1.5 text-white/40 font-mono whitespace-nowrap">—</td>
+                                                        <td className="px-3 py-1.5 text-emerald-400 font-black whitespace-nowrap max-w-[110px] truncate" title={c.detalhes}>{c.detalhes || '—'}</td>
+                                                        <td className="px-3 py-1.5 text-emerald-400/70 text-[10px] uppercase">CRÉDITO</td>
+                                                        <td className="px-3 py-1.5 text-right text-emerald-400 font-black whitespace-nowrap">{c.valorFmt}</td>
+                                                        <td className="px-3 py-1.5 text-center">
+                                                            <Badge className="text-[9px] font-black uppercase h-5 rounded px-1.5 flex items-center justify-center w-fit mx-auto bg-emerald-500/20 text-emerald-300 border-none">
+                                                                CRÉDITO
+                                                            </Badge>
+                                                        </td>
+                                                    </tr>
+                                                ));
+                                            })()}
                                             {data?.ledger?.length === 0 && (
                                                 <tr>
                                                     <td colSpan={5} className="text-center py-8 text-white/30 font-mono text-[11px]">Ajuste os filtros.</td>
