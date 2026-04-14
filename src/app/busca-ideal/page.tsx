@@ -45,6 +45,16 @@ const AIRLINE_COLORS: Record<string, string> = {
     TAP: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
 };
 
+/** Normaliza "GOL (G3)" → "GOL", "LATAM Airlines" → "LATAM", etc. */
+function normalizeAirline(raw: string): string {
+    const upper = raw.toUpperCase();
+    if (upper.includes('GOL')) return 'GOL';
+    if (upper.includes('LATAM')) return 'LATAM';
+    if (upper.includes('AZUL')) return 'AZUL';
+    if (upper.includes('TAP')) return 'TAP';
+    return raw;
+}
+
 const SORT_COLS = ['miles', 'cost', 'departure'] as const;
 type SortCol = typeof SORT_COLS[number];
 
@@ -124,21 +134,21 @@ export default function BuscaIdealPage() {
         }
     };
 
-    // Airlines present in results
+    // Airlines present in results (normalized)
     const airlines = useMemo(() => {
-        const seen = new Set(offers.map(o => o.airline));
+        const seen = new Set(offers.map(o => normalizeAirline(o.airline)));
         return ['ALL', ...Array.from(seen).sort()];
     }, [offers]);
 
     // Filtered + sorted
     const filtered = useMemo(() => {
-        let list = activeAirline === 'ALL' ? offers : offers.filter(o => o.airline === activeAirline);
+        let list = activeAirline === 'ALL' ? offers : offers.filter(o => normalizeAirline(o.airline) === activeAirline);
         return [...list].sort((a, b) => {
             let diff = 0;
             if (sortCol === 'miles') diff = a.miles - b.miles;
             else if (sortCol === 'cost') {
-                const ca = (a.miles / 1000) * (milheiro[a.airline] ?? 0);
-                const cb = (b.miles / 1000) * (milheiro[b.airline] ?? 0);
+                const ca = (a.miles / 1000) * (milheiro[normalizeAirline(a.airline)] ?? 0);
+                const cb = (b.miles / 1000) * (milheiro[normalizeAirline(b.airline)] ?? 0);
                 diff = ca - cb;
             } else if (sortCol === 'departure') diff = a.departure.localeCompare(b.departure);
             return sortAsc ? diff : -diff;
@@ -146,7 +156,7 @@ export default function BuscaIdealPage() {
     }, [offers, activeAirline, sortCol, sortAsc, milheiro]);
 
     const getCost = (offer: BuscaIdealOffer): number =>
-        (offer.miles / 1000) * (milheiro[offer.airline] ?? 0);
+        (offer.miles / 1000) * (milheiro[normalizeAirline(offer.airline)] ?? 0);
 
     const handleSort = (col: SortCol) => {
         if (sortCol === col) setSortAsc(a => !a);
@@ -417,7 +427,8 @@ export default function BuscaIdealPage() {
                                 <div>
                                     {filtered.map((offer, i) => {
                                         const cost = getCost(offer);
-                                        const colorClass = AIRLINE_COLORS[offer.airline] ?? 'border-white/10 bg-white/5 text-slate-400';
+                                        const airKey = normalizeAirline(offer.airline);
+                                        const colorClass = AIRLINE_COLORS[airKey] ?? 'border-white/10 bg-white/5 text-slate-400';
                                         const depTime = offer.departure.split(' ')[1] ?? offer.departure;
                                         const arrTime = offer.arrival.split(' ')[1] ?? offer.arrival;
 
@@ -432,7 +443,7 @@ export default function BuscaIdealPage() {
                                                 {/* CIA */}
                                                 <div className="flex items-center">
                                                     <span className={cn('px-2 py-0.5 rounded-md border text-[10px] font-black uppercase', colorClass)}>
-                                                        {offer.airline}
+                                                        {airKey}
                                                     </span>
                                                 </div>
 
