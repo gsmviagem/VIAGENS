@@ -4,9 +4,10 @@ import { GoogleSheetsService } from '@/lib/google-sheets';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-// ─── Aliases: nomes que devem ser tratados como outro fornecedor ──────────────
+// ─── Aliases: variantes → nome canônico ───────────────────────────────────────
 const SUPPLIER_ALIASES: Record<string, string> = {
-    'LIMINAR NOSSA': 'JULIO BALCÃO',
+    'LIMINAR NOSSA': 'JULIO BALCAO',
+    'JULIO BALCÃO':  'JULIO BALCAO',
 };
 
 function normalizeSupplier(name: string): string {
@@ -291,14 +292,22 @@ export async function POST(req: NextRequest) {
         // A supplier appears if they have Debt (SAÍDAS) OR Credits from BASE (Z:AE)
         // Exclude names in the AI ignore list
         const allSuppliers = new Set([...Object.keys(supplierDebts), ...Object.keys(manualCredits)]);
-        const suppliersList = Array.from(allSuppliers)
-            .filter(name => name.trim() !== '' && !ignoreNames.has(name.trim().toUpperCase()))
-            .map(name => {
-                const totalDebtAmount = supplierDebts[name] || 0;
-                const creditPaid = manualCredits[name] || 0;
+        // Dedup: agrupar por nome canônico (normalizeSupplier já unificou as chaves,
+        // mas pode haver duplicatas remanescentes de variantes não cobertas)
+        const deduped: Record<string, { debt: number; credit: number; creditDets: typeof creditDetails[string] }> = {};
+        for (const name of Array.from(allSuppliers)) {
+            if (name.trim() === '' || ignoreNames.has(name.trim().toUpperCase())) continue;
+            const canonical = normalizeSupplier(name);
+            if (!deduped[canonical]) deduped[canonical] = { debt: 0, credit: 0, creditDets: [] };
+            deduped[canonical].debt   += supplierDebts[name]   || 0;
+            deduped[canonical].credit += manualCredits[name]   || 0;
+            deduped[canonical].creditDets.push(...(creditDetails[name] || []));
+        }
+
+        const suppliersList = Object.entries(deduped)
+            .map(([name, { debt: totalDebtAmount, credit: creditPaid, creditDets }]) => {
                 const saldo = creditPaid - totalDebtAmount;
 
-                // Resolve full name and pix: search supplierInfoMap case-insensitively
                 const nameLower = name.toLowerCase();
                 const matchedInfo = supplierInfoMap[nameLower] ||
                     Object.entries(supplierInfoMap).find(([k]) => k.includes(nameLower) || nameLower.includes(k))?.[1];
@@ -311,7 +320,7 @@ export async function POST(req: NextRequest) {
                     pix,
                     debt: formatCurrency(totalDebtAmount),
                     creditOk: formatCurrency(creditPaid),
-                    creditDetails: creditDetails[name] || [],
+                    creditDetails: creditDets,
                     creditPending: formatCurrency(0),
                     saldo: formatCurrency(Math.abs(saldo)),
                     saldoType: saldo > 0 ? 'POSITIVE' : (saldo < 0 ? 'NEGATIVE' : 'NEUTRAL'),
