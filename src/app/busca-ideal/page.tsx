@@ -220,7 +220,7 @@ export default function BuscaIdealPage() {
             } else if (sortCol === 'departure') diff = a.departure.localeCompare(b.departure);
             return sortAsc ? diff : -diff;
         });
-    }, [offers, activeAirline, sortCol, sortAsc, milheiro]);
+    }, [offers, activeAirline, activeStops, sortCol, sortAsc, milheiro]);
 
     const getCost = (offer: BuscaIdealOffer): number =>
         (offer.miles / 1000) * (milheiro[normalizeAirline(offer.airline)] ?? 0);
