@@ -573,62 +573,49 @@ export default function FornecedoresPage() {
                                     <div
                                         key={idx}
                                         className={cn(
-                                            "flex flex-col px-2.5 py-2 rounded-xl transition-all cursor-pointer",
+                                            "flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer",
                                             supplier === s.name
                                                 ? "bg-white/10"
                                                 : "bg-white/[0.02] hover:bg-white/[0.05]"
                                         )}
                                         onClick={() => setSupplier(s.name)}
                                     >
-                                        {/* Row 1: name + badge */}
-                                        <div className="flex justify-between items-center">
-                                            <span className={cn("text-[11px] font-black uppercase tracking-wide", supplier === s.name ? "text-white" : "text-white/70")}>
-                                                {s.name}
-                                            </span>
-                                            <Badge className={cn("text-[8px] font-black uppercase px-1.5 py-0 rounded-full h-4",
-                                                s.saldoType === 'POSITIVE' ? 'bg-emerald-500/15 text-emerald-400' :
-                                                s.saldoType === 'NEGATIVE' ? 'bg-blue-500/15 text-blue-400' : 'bg-white/5 text-white/30'
-                                            )}>
-                                                {s.saldoType === 'POSITIVE' ? 'CRÉDITO' : s.saldoType === 'NEGATIVE' ? 'DÍVIDA' : 'ZERO'}
-                                            </Badge>
+                                        {/* Status dot */}
+                                        <div className={cn("w-1.5 h-1.5 rounded-full shrink-0",
+                                            s.saldoType === 'POSITIVE' ? 'bg-emerald-400' :
+                                            s.saldoType === 'NEGATIVE' ? 'bg-blue-400' : 'bg-white/20'
+                                        )} />
+
+                                        {/* Name */}
+                                        <span className={cn("text-[11px] font-black uppercase tracking-wide flex-1 truncate", supplier === s.name ? "text-white" : "text-white/70")}>
+                                            {s.name}
+                                        </span>
+
+                                        {/* Crédito */}
+                                        <span className="text-emerald-400 font-mono text-[10px] shrink-0">{s.creditOk}</span>
+                                        <span className="text-white/10 text-[9px]">|</span>
+                                        {/* Devendo */}
+                                        <span className="text-blue-400 font-mono text-[10px] shrink-0">{s.debt}</span>
+                                        <span className="text-white/10 text-[9px]">|</span>
+
+                                        {/* Saldo + copy */}
+                                        <div
+                                            className="flex items-center gap-1 cursor-pointer group/copy shrink-0"
+                                            onClick={(e) => { e.stopPropagation(); copyToClipboard(s.saldo); }}
+                                            title="Copiar Saldo"
+                                        >
+                                            <span className="text-white font-black text-[11px]">{s.saldo}</span>
+                                            <span className="material-symbols-outlined text-[10px] text-white/20 group-hover/copy:text-white/60 transition-colors">content_copy</span>
                                         </div>
 
-                                        {/* Row 2: Pago | Devendo | Saldo inline */}
-                                        <div className="flex items-center gap-2 mt-1.5 text-[10px] font-mono">
-                                            <div className="flex flex-col items-start flex-1">
-                                                <span className="text-[8px] text-white/30 uppercase font-black">Crédito</span>
-                                                <span className="text-emerald-400 font-bold">{s.creditOk}</span>
-                                            </div>
-                                            <div className="w-px h-6 bg-white/5" />
-                                            <div className="flex flex-col items-start flex-1">
-                                                <span className="text-[8px] text-white/30 uppercase font-black">Devendo</span>
-                                                <span className="text-blue-400 font-bold">{s.debt}</span>
-                                            </div>
-                                            <div className="w-px h-6 bg-white/5" />
-                                            <div
-                                                className="flex flex-col items-end flex-1 cursor-pointer group/copy"
-                                                onClick={(e) => { e.stopPropagation(); copyToClipboard(s.saldo); }}
-                                                title="Copiar Saldo"
-                                            >
-                                                <span className="text-[8px] text-white/30 uppercase font-black flex items-center gap-0.5">
-                                                    Saldo
-                                                    <span className="material-symbols-outlined text-[9px] text-white/20 group-hover/copy:text-white/60 transition-colors">content_copy</span>
-                                                </span>
-                                                <span className="text-white font-black">{s.saldo}</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Row 3: PIX (optional) */}
+                                        {/* PIX copy */}
                                         {s.pix && (
                                             <div
-                                                className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-white/5 group/pix cursor-pointer"
+                                                className="flex items-center gap-0.5 cursor-pointer group/pix shrink-0"
                                                 onClick={(e) => { e.stopPropagation(); copyToClipboard(s.pix); }}
+                                                title={`Copiar PIX: ${s.pix}`}
                                             >
-                                                <span className="text-[8px] text-white/30 uppercase font-black">PIX</span>
-                                                <div className="flex items-center gap-1">
-                                                    <span className="text-emerald-400 font-mono text-[9px] truncate max-w-[90px]">{s.pix}</span>
-                                                    <span className="material-symbols-outlined text-[9px] text-emerald-400/30 group-hover/pix:text-emerald-400 transition-colors">content_copy</span>
-                                                </div>
+                                                <span className="material-symbols-outlined text-[11px] text-emerald-400/40 group-hover/pix:text-emerald-400 transition-colors">tag</span>
                                             </div>
                                         )}
                                     </div>
@@ -662,16 +649,16 @@ export default function FornecedoresPage() {
                         {/* Ledger Table */}
                         <div className="bg-white/[0.03] rounded-2xl overflow-hidden flex-1 flex flex-col min-h-[250px] max-h-[520px]">
                             <div className="overflow-y-auto custom-scrollbar flex-1">
-                                <table className="w-full text-left text-[11px]">
+                                <table className="w-full text-left text-xs">
                                     <thead className="sticky top-0 z-10 bg-[#0d0d0d]/95 backdrop-blur-md">
-                                        <tr className="text-[9px] uppercase tracking-widest text-white/30">
-                                            <th className="px-3 py-2.5 font-black">Data</th>
-                                            <th className="px-3 py-2.5 font-black">LOC</th>
-                                            <th className="px-3 py-2.5 font-black text-right">Preço/Mi</th>
-                                            <th className="px-3 py-2.5 font-black text-right">Valor</th>
-                                            <th className="px-3 py-2.5 font-black text-right">Taxas</th>
-                                            <th className="px-3 py-2.5 font-black text-right">Total</th>
-                                            <th className="px-3 py-2.5 font-black text-center">Status</th>
+                                        <tr className="text-[10px] uppercase tracking-widest text-white/30">
+                                            <th className="px-3 py-2 font-black">Data</th>
+                                            <th className="px-3 py-2 font-black">LOC</th>
+                                            <th className="px-3 py-2 font-black text-right">Preço/Mi</th>
+                                            <th className="px-3 py-2 font-black text-right">Valor</th>
+                                            <th className="px-3 py-2 font-black text-right">Taxas</th>
+                                            <th className="px-3 py-2 font-black text-right">Total</th>
+                                            <th className="px-3 py-2 font-black text-center">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody className="font-medium">
@@ -699,12 +686,12 @@ export default function FornecedoresPage() {
 
                                             return (
                                             <tr key={i} className="hover:bg-white/[0.03] transition-colors group">
-                                                <td className="px-3 py-1.5 text-white/40 font-mono whitespace-nowrap text-[10px]">{row.date}</td>
+                                                <td className="px-3 py-1.5 text-white/40 font-mono whitespace-nowrap">{row.date}</td>
                                                 <td className="px-3 py-1.5 text-white font-black group-hover:text-amber-200 transition-colors whitespace-nowrap">{row.loc}</td>
-                                                <td className={cn("px-3 py-1.5 text-right whitespace-nowrap text-[10px] font-mono", valueFaded ? "text-white/20" : "text-white/60")}>{fmtPrice}</td>
-                                                <td className={cn("px-3 py-1.5 text-right whitespace-nowrap text-[10px] font-mono", valueFaded ? "text-white/20" : "text-white/70")}>{fmtValue}</td>
-                                                <td className={cn("px-3 py-1.5 text-right whitespace-nowrap text-[10px] font-mono", taxFaded ? "text-white/20" : "text-white/70")}>{fmtTax}</td>
-                                                <td className="px-3 py-1.5 text-right text-white font-black whitespace-nowrap text-[11px]">{fmtTotal}</td>
+                                                <td className={cn("px-3 py-1.5 text-right whitespace-nowrap font-mono", valueFaded ? "text-white/20" : "text-white/60")}>{fmtPrice}</td>
+                                                <td className={cn("px-3 py-1.5 text-right whitespace-nowrap font-mono", valueFaded ? "text-white/20" : "text-white/70")}>{fmtValue}</td>
+                                                <td className={cn("px-3 py-1.5 text-right whitespace-nowrap font-mono", taxFaded ? "text-white/20" : "text-white/70")}>{fmtTax}</td>
+                                                <td className="px-3 py-1.5 text-right text-white font-black whitespace-nowrap text-[13px]">{fmtTotal}</td>
                                                 <td className="px-3 py-1.5 text-center">
                                                     <Badge
                                                         className={cn(
