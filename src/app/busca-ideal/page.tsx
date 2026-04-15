@@ -98,6 +98,7 @@ export default function BuscaIdealPage() {
     const [sortAsc, setSortAsc] = useState(true);
     const [hasSearched, setHasSearched] = useState(false);
     const [history, setHistory] = useState<HistoryEntry[]>([]);
+    const [activeStops, setActiveStops] = useState<string>('ALL');
 
     useEffect(() => {
         try {
@@ -134,6 +135,7 @@ export default function BuscaIdealPage() {
         setOffers([]);
         setHasSearched(false);
         setActiveAirline('ALL');
+        setActiveStops('ALL');
         try {
             const res = await fetch('/api/busca-ideal', {
                 method: 'POST',
@@ -193,8 +195,20 @@ export default function BuscaIdealPage() {
         return ['ALL', ...Array.from(seen).sort()];
     }, [offers]);
 
+    // Stops options derived from results
+    const stopsOptions = useMemo(() => {
+        const seen = new Set(offers.map(o => o.stops));
+        const sorted = Array.from(seen).sort((a, b) => {
+            if (a === 'Direto') return -1;
+            if (b === 'Direto') return 1;
+            return a.localeCompare(b);
+        });
+        return ['ALL', ...sorted];
+    }, [offers]);
+
     const filtered = useMemo(() => {
         let list = activeAirline === 'ALL' ? offers : offers.filter(o => normalizeAirline(o.airline) === activeAirline);
+        if (activeStops !== 'ALL') list = list.filter(o => o.stops === activeStops);
         return [...list].sort((a, b) => {
             let diff = 0;
             if (sortCol === 'miles') diff = a.miles - b.miles;
@@ -476,15 +490,17 @@ export default function BuscaIdealPage() {
 
                 {/* ── Results ── */}
                 <div className="flex-1 min-w-0 flex flex-col gap-4 overflow-hidden">
-                    {/* Filter tabs + count */}
+                    {/* Filter tabs */}
                     <AnimatePresence>
                         {hasSearched && (
                             <motion.div
                                 initial={{ opacity: 0, y: -8 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="flex items-center justify-between gap-3 shrink-0 flex-wrap"
+                                className="flex flex-col gap-2 shrink-0"
                             >
-                                <div className="flex gap-2 flex-wrap">
+                                {/* Companhias */}
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-600 shrink-0">CIA</span>
                                     {airlines.map(air => (
                                         <button
                                             key={air}
@@ -505,11 +521,40 @@ export default function BuscaIdealPage() {
                                         </button>
                                     ))}
                                 </div>
-                                {filtered.length > 0 && (
-                                    <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest shrink-0">
-                                        {filtered.length} voo{filtered.length !== 1 ? 's' : ''}
-                                    </span>
-                                )}
+
+                                {/* Escalas */}
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-600 shrink-0">ESC</span>
+                                    {stopsOptions.map(stop => {
+                                        const count = stop === 'ALL'
+                                            ? (activeAirline === 'ALL' ? offers : offers.filter(o => normalizeAirline(o.airline) === activeAirline)).length
+                                            : offers.filter(o => o.stops === stop && (activeAirline === 'ALL' || normalizeAirline(o.airline) === activeAirline)).length;
+                                        return (
+                                            <button
+                                                key={stop}
+                                                type="button"
+                                                onClick={() => setActiveStops(stop)}
+                                                className={cn(
+                                                    'px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border',
+                                                    activeStops === stop
+                                                        ? stop === 'ALL'
+                                                            ? 'bg-primary/15 border-primary/30 text-primary'
+                                                            : stop === 'Direto'
+                                                                ? 'bg-green-500/15 border-green-500/30 text-green-400'
+                                                                : 'bg-amber-500/15 border-amber-500/30 text-amber-400'
+                                                        : 'border-white/10 text-slate-500 hover:border-white/20 hover:text-slate-300'
+                                                )}
+                                            >
+                                                {stop === 'ALL' ? 'Todos' : stop} ({count})
+                                            </button>
+                                        );
+                                    })}
+                                    {filtered.length > 0 && (
+                                        <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest ml-auto shrink-0">
+                                            {filtered.length} voo{filtered.length !== 1 ? 's' : ''}
+                                        </span>
+                                    )}
+                                </div>
                             </motion.div>
                         )}
                     </AnimatePresence>
