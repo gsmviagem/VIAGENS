@@ -4,6 +4,16 @@ import { GoogleSheetsService } from '@/lib/google-sheets';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
+// ─── Aliases: nomes que devem ser tratados como outro fornecedor ──────────────
+const SUPPLIER_ALIASES: Record<string, string> = {
+    'LIMINAR NOSSA': 'JULIO BALCÃO',
+};
+
+function normalizeSupplier(name: string): string {
+    const upper = name.trim().toUpperCase();
+    return SUPPLIER_ALIASES[upper] ?? upper;
+}
+
 function parseCurrency(val: string | undefined): number {
     if (!val) return 0;
     const clean = val.replace(/R\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(',', '.').trim();
@@ -91,7 +101,7 @@ export async function POST(req: NextRequest) {
                 const row = creditData[i];
                 if (!row) continue;
                 
-                const creditSupplier = (row[0] || '').trim().toUpperCase();
+                const creditSupplier = normalizeSupplier(row[0] || '');
                 const creditVal = parseCurrency(row[1]);
                 const creditDetalhes = (row[2] || '').trim(); // AB
                 const creditSituacao = (row[3] || '').trim().toUpperCase();
@@ -152,11 +162,11 @@ export async function POST(req: NextRequest) {
             const isTaxesPaid = baseInfo ? baseInfo.paidTaxes : false;
             const isRepPaid   = baseInfo ? baseInfo.paidServ : false;
 
-            const rowSupplierMiles = (row[6] || '').trim().toUpperCase();
+            const rowSupplierMiles = normalizeSupplier(row[6] || '');
             const valMiles = parseCurrency(row[7]);
-            const rowSupplierTax = (row[8] || '').trim().toUpperCase();
+            const rowSupplierTax = normalizeSupplier(row[8] || '');
             const valTax = parseCurrency(row[9]);
-            const rowSupplierRep = (row[10] || '').trim().toUpperCase();
+            const rowSupplierRep = normalizeSupplier(row[10] || '');
             const valRep = parseCurrency(row[11]);
             const paxName = row[1] || '';
             const product = row[3] || '';

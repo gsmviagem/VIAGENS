@@ -604,14 +604,14 @@ export default function FornecedoresPage() {
                                             <div className="w-px h-6 bg-white/5" />
                                             <div
                                                 className="flex flex-col items-end flex-1 cursor-pointer group/copy"
-                                                onClick={(e) => { e.stopPropagation(); copyToClipboard(`${s.saldoType === 'NEGATIVE' ? '-' : ''}${s.saldo}`); }}
+                                                onClick={(e) => { e.stopPropagation(); copyToClipboard(s.saldo); }}
                                                 title="Copiar Saldo"
                                             >
                                                 <span className="text-[8px] text-white/30 uppercase font-black flex items-center gap-0.5">
                                                     Saldo
                                                     <span className="material-symbols-outlined text-[9px] text-white/20 group-hover/copy:text-white/60 transition-colors">content_copy</span>
                                                 </span>
-                                                <span className="text-white font-black">{s.saldoType === 'NEGATIVE' ? '-' : ''}{s.saldo}</span>
+                                                <span className="text-white font-black">{s.saldo}</span>
                                             </div>
                                         </div>
 
@@ -664,16 +664,44 @@ export default function FornecedoresPage() {
                                         <tr className="text-[9px] uppercase tracking-widest text-white/30">
                                             <th className="px-3 py-2.5 font-black">Data</th>
                                             <th className="px-3 py-2.5 font-black">LOC</th>
+                                            <th className="px-3 py-2.5 font-black text-right">Preço/Mi</th>
+                                            <th className="px-3 py-2.5 font-black text-right">Valor</th>
+                                            <th className="px-3 py-2.5 font-black text-right">Taxas</th>
                                             <th className="px-3 py-2.5 font-black text-right">Total</th>
                                             <th className="px-3 py-2.5 font-black text-center">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody className="font-medium">
-                                        {data?.ledger?.map((row: any, i: number) => (
+                                        {data?.ledger?.map((row: any, i: number) => {
+                                            const reqSupp = supplier !== 'TODOS' ? supplier : null;
+                                            const taxFaded = reqSupp
+                                                ? (row.taxSupplier !== reqSupp || row.isTaxesPaid)
+                                                : row.isTaxesPaid;
+                                            const valueFaded = reqSupp
+                                                ? (row.milesSupplier !== reqSupp || row.isMilesPaid)
+                                                : row.isMilesPaid;
+
+                                            const fmtPrice = row.price && row.price !== '0'
+                                                ? `R$ ${String(row.price).replace('R$', '').trim()}`
+                                                : '—';
+                                            const fmtValue = row.value && row.value !== '0'
+                                                ? `R$ ${String(row.value).replace('R$', '').trim()}`
+                                                : '—';
+                                            const fmtTax = row.tax && row.tax !== '0'
+                                                ? `R$ ${String(row.tax).replace('R$', '').trim()}`
+                                                : '—';
+                                            const fmtTotal = row.total && row.total !== '0' && row.total !== ''
+                                                ? (String(row.total).startsWith('R$') ? row.total : `R$ ${row.total}`)
+                                                : '—';
+
+                                            return (
                                             <tr key={i} className="hover:bg-white/[0.03] transition-colors group">
                                                 <td className="px-3 py-1.5 text-white/40 font-mono whitespace-nowrap text-[10px]">{row.date}</td>
                                                 <td className="px-3 py-1.5 text-white font-black group-hover:text-amber-200 transition-colors whitespace-nowrap">{row.loc}</td>
-                                                <td className="px-3 py-1.5 text-right text-white font-black whitespace-nowrap">{row.total !== '0' && row.total !== '' ? `R$ ${row.total}` : '-'}</td>
+                                                <td className={cn("px-3 py-1.5 text-right whitespace-nowrap text-[10px] font-mono", valueFaded ? "text-white/20" : "text-white/60")}>{fmtPrice}</td>
+                                                <td className={cn("px-3 py-1.5 text-right whitespace-nowrap text-[10px] font-mono", valueFaded ? "text-white/20" : "text-white/70")}>{fmtValue}</td>
+                                                <td className={cn("px-3 py-1.5 text-right whitespace-nowrap text-[10px] font-mono", taxFaded ? "text-white/20" : "text-white/70")}>{fmtTax}</td>
+                                                <td className="px-3 py-1.5 text-right text-white font-black whitespace-nowrap text-[11px]">{fmtTotal}</td>
                                                 <td className="px-3 py-1.5 text-center">
                                                     <Badge
                                                         className={cn(
@@ -687,7 +715,8 @@ export default function FornecedoresPage() {
                                                     </Badge>
                                                 </td>
                                             </tr>
-                                        ))}
+                                            );
+                                        })}
                                         {/* Credit rows */}
                                         {supplier && supplier !== 'TODOS' && (() => {
                                             const selSupplier = data?.suppliers?.find((s: any) => s.name === supplier);
@@ -695,6 +724,9 @@ export default function FornecedoresPage() {
                                                 <tr key={`credit-${ci}`} className="hover:bg-emerald-500/5 transition-colors">
                                                     <td className="px-3 py-1.5 text-white/20 font-mono whitespace-nowrap text-[10px]">—</td>
                                                     <td className="px-3 py-1.5 text-emerald-400 font-black whitespace-nowrap max-w-[110px] truncate" title={c.detalhes}>{c.detalhes || '—'}</td>
+                                                    <td className="px-3 py-1.5 text-right text-white/20 text-[10px]">—</td>
+                                                    <td className="px-3 py-1.5 text-right text-white/20 text-[10px]">—</td>
+                                                    <td className="px-3 py-1.5 text-right text-white/20 text-[10px]">—</td>
                                                     <td className="px-3 py-1.5 text-right text-emerald-400 font-black whitespace-nowrap">{c.valorFmt}</td>
                                                     <td className="px-3 py-1.5 text-center">
                                                         <Badge className="text-[8px] font-black uppercase h-4 rounded-full px-2 flex items-center justify-center w-fit mx-auto bg-emerald-500/15 text-emerald-400">
@@ -706,7 +738,7 @@ export default function FornecedoresPage() {
                                         })()}
                                         {data?.ledger?.length === 0 && (
                                             <tr>
-                                                <td colSpan={4} className="text-center py-10 text-white/20 font-mono text-[11px]">Ajuste os filtros.</td>
+                                                <td colSpan={7} className="text-center py-10 text-white/20 font-mono text-[11px]">Ajuste os filtros.</td>
                                             </tr>
                                         )}
                                     </tbody>
