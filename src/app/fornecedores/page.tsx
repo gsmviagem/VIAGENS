@@ -52,8 +52,11 @@ export default function FornecedoresPage() {
             
             if (json.success) {
                 setData(json.data);
-                if (uniqueSuppliers.length === 0 && json.data.suppliers) {
-                    setUniqueSuppliers(json.data.suppliers.map((s:any) => s.name));
+                if (json.data.suppliers) {
+                    const names: string[] = json.data.suppliers.map((s:any) => s.name);
+                    setUniqueSuppliers(names);
+                    // Se o fornecedor selecionado não existe mais (ex: alias mergeado), reset
+                    setSupplier(prev => (prev !== 'TODOS' && !names.includes(prev)) ? 'TODOS' : prev);
                 }
             } else {
                 toast.error(json.error || "Erro ao buscar dados");
