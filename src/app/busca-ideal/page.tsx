@@ -18,11 +18,36 @@ interface BuscaIdealOffer {
     stops: string;
     priceBrl: number;
     miles: number;
+    taxes: number;
     type: string;
+}
+
+interface HistoryEntry {
+    origin: string;
+    destination: string;
+    date: string;
+    passengers: number;
+    cabin: 'economy' | 'executive';
+    count: number;
+    cheapestMiles: number | null;
+    ts: number;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const LS_KEY = 'busca-ideal-milheiro';
+const LS_HISTORY = 'busca-ideal-history';
+const MAX_HISTORY = 8;
+
+function loadHistory(): HistoryEntry[] {
+    try { return JSON.parse(localStorage.getItem(LS_HISTORY) || '[]'); } catch { return []; }
+}
+
+function saveHistory(entry: HistoryEntry) {
+    const prev = loadHistory().filter(
+        h => !(h.origin === entry.origin && h.destination === entry.destination && h.date === entry.date && h.passengers === entry.passengers && h.cabin === entry.cabin)
+    );
+    localStorage.setItem(LS_HISTORY, JSON.stringify([entry, ...prev].slice(0, MAX_HISTORY)));
+}
 
 const DEFAULT_MILHEIRO: Record<string, number> = {
     LATAM: 25.5,
@@ -31,11 +56,11 @@ const DEFAULT_MILHEIRO: Record<string, number> = {
     TAP: 44,
 };
 
-const MILHEIRO_ROWS: { key: string; label: string; icon: string }[] = [
-    { key: 'LATAM', label: 'LATAM', icon: 'flight' },
-    { key: 'AZUL', label: 'AZUL', icon: 'flight' },
-    { key: 'GOL', label: 'SMILES / GOL', icon: 'flight' },
-    { key: 'TAP', label: 'TAP', icon: 'flight' },
+const MILHEIRO_ROWS: { key: string; label: string }[] = [
+    { key: 'LATAM', label: 'LATAM' },
+    { key: 'AZUL', label: 'AZUL' },
+    { key: 'GOL', label: 'SMILES / GOL' },
+    { key: 'TAP', label: 'TAP' },
 ];
 
 const AIRLINE_COLORS: Record<string, string> = {
@@ -45,7 +70,6 @@ const AIRLINE_COLORS: Record<string, string> = {
     TAP: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
 };
 
-/** Normaliza "GOL (G3)" → "GOL", "LATAM Airlines" → "LATAM", etc. */
 function normalizeAirline(raw: string): string {
     const upper = raw.toUpperCase();
     if (upper.includes('GOL')) return 'GOL';
@@ -55,7 +79,7 @@ function normalizeAirline(raw: string): string {
     return raw;
 }
 
-const SORT_COLS = ['miles', 'cost', 'departure'] as const;
+const SORT_COLS = ['miles', 'cost', 'departure', 'taxes'] as const;
 type SortCol = typeof SORT_COLS[number];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -64,21 +88,23 @@ export default function BuscaIdealPage() {
     const [destination, setDestination] = useState('');
     const [date, setDate] = useState('');
     const [passengers, setPassengers] = useState(1);
+    const [cabin, setCabin] = useState<'economy' | 'executive'>('economy');
     const [isLoading, setIsLoading] = useState(false);
     const [offers, setOffers] = useState<BuscaIdealOffer[]>([]);
     const [searchUrl, setSearchUrl] = useState('');
     const [activeAirline, setActiveAirline] = useState('ALL');
     const [milheiro, setMilheiro] = useState(DEFAULT_MILHEIRO);
-    const [sortCol, setSortCol] = useState<SortCol>('miles');
+    const [sortCol, setSortCol] = useState<SortCol>('cost');
     const [sortAsc, setSortAsc] = useState(true);
     const [hasSearched, setHasSearched] = useState(false);
+    const [history, setHistory] = useState<HistoryEntry[]>([]);
 
-    // Load milheiro from localStorage
     useEffect(() => {
         try {
             const saved = localStorage.getItem(LS_KEY);
             if (saved) setMilheiro(prev => ({ ...prev, ...JSON.parse(saved) }));
         } catch { /* ignore */ }
+        setHistory(loadHistory());
     }, []);
 
     const handleMilheiroChange = useCallback((key: string, val: string) => {
@@ -117,6 +143,7 @@ export default function BuscaIdealPage() {
                     destination: destination.trim().toUpperCase(),
                     date,
                     passengers,
+                    cabin,
                 }),
             });
             const data = await res.json();
@@ -125,6 +152,20 @@ export default function BuscaIdealPage() {
             setOffers(allOffers);
             setSearchUrl(data.searchUrl ?? '');
             setHasSearched(true);
+
+            const entry: HistoryEntry = {
+                origin: origin.trim().toUpperCase(),
+                destination: destination.trim().toUpperCase(),
+                date,
+                passengers,
+                cabin,
+                count: allOffers.length,
+                cheapestMiles: allOffers.length > 0 ? Math.min(...allOffers.map(o => o.miles)) : null,
+                ts: Date.now(),
+            };
+            saveHistory(entry);
+            setHistory(loadHistory());
+
             toast.success(`${allOffers.length} voos com milhas encontrados`);
         } catch (err: any) {
             toast.error(err.message);
@@ -134,18 +175,30 @@ export default function BuscaIdealPage() {
         }
     };
 
-    // Airlines present in results (normalized)
+    const loadFromHistory = (h: HistoryEntry) => {
+        setOrigin(h.origin);
+        setDestination(h.destination);
+        setDate(h.date);
+        setPassengers(h.passengers);
+        setCabin(h.cabin);
+    };
+
+    const clearHistory = () => {
+        localStorage.removeItem(LS_HISTORY);
+        setHistory([]);
+    };
+
     const airlines = useMemo(() => {
         const seen = new Set(offers.map(o => normalizeAirline(o.airline)));
         return ['ALL', ...Array.from(seen).sort()];
     }, [offers]);
 
-    // Filtered + sorted
     const filtered = useMemo(() => {
         let list = activeAirline === 'ALL' ? offers : offers.filter(o => normalizeAirline(o.airline) === activeAirline);
         return [...list].sort((a, b) => {
             let diff = 0;
             if (sortCol === 'miles') diff = a.miles - b.miles;
+            else if (sortCol === 'taxes') diff = (a.taxes ?? 0) - (b.taxes ?? 0);
             else if (sortCol === 'cost') {
                 const ca = (a.miles / 1000) * (milheiro[normalizeAirline(a.airline)] ?? 0);
                 const cb = (b.miles / 1000) * (milheiro[normalizeAirline(b.airline)] ?? 0);
@@ -264,6 +317,39 @@ export default function BuscaIdealPage() {
                         </div>
                     </div>
 
+                    {/* Cabin selector */}
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Cabine</label>
+                        <div className="flex h-11 rounded-xl border border-white/10 overflow-hidden bg-white/5">
+                            <button
+                                type="button"
+                                onClick={() => setCabin('economy')}
+                                className={cn(
+                                    'px-4 text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5',
+                                    cabin === 'economy'
+                                        ? 'bg-primary/20 text-primary border-r border-primary/20'
+                                        : 'text-slate-500 hover:text-slate-300 border-r border-white/10'
+                                )}
+                            >
+                                <span className="material-symbols-outlined text-sm">airline_seat_recline_normal</span>
+                                Eco
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setCabin('executive')}
+                                className={cn(
+                                    'px-4 text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5',
+                                    cabin === 'executive'
+                                        ? 'bg-amber-500/20 text-amber-400'
+                                        : 'text-slate-500 hover:text-slate-300'
+                                )}
+                            >
+                                <span className="material-symbols-outlined text-sm">airline_seat_flat</span>
+                                Exec
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Search button */}
                     <Button
                         onClick={handleSearch}
@@ -278,54 +364,115 @@ export default function BuscaIdealPage() {
                 </div>
             </motion.div>
 
-            {/* Content: Milheiro + Results */}
+            {/* Content: Sidebar + Results */}
             <div className="flex-1 min-h-0 flex gap-5 overflow-hidden">
-                {/* ── Milheiro Block ── */}
-                <motion.div
-                    initial={{ opacity: 0, x: -16 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="w-64 shrink-0 glass-panel rounded-2xl border border-white/10 p-5 flex flex-col gap-4 h-fit"
-                >
-                    <div>
-                        <h2 className="text-xs font-black uppercase tracking-widest text-white mb-0.5">Custo por Milheiro</h2>
-                        <p className="text-[10px] text-slate-500">R$ por 1.000 milhas — salvo localmente</p>
-                    </div>
+                {/* ── Left Sidebar: Milheiro + Histórico ── */}
+                <div className="w-64 shrink-0 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
+                    {/* Milheiro */}
+                    <motion.div
+                        initial={{ opacity: 0, x: -16 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="glass-panel rounded-2xl border border-white/10 p-5 flex flex-col gap-4"
+                    >
+                        <div>
+                            <h2 className="text-xs font-black uppercase tracking-widest text-white mb-0.5">Custo por Milheiro</h2>
+                            <p className="text-[10px] text-slate-500">R$ por 1.000 milhas — salvo localmente</p>
+                        </div>
+                        <div className="space-y-3">
+                            {MILHEIRO_ROWS.map(row => (
+                                <div key={row.key} className="flex items-center gap-3">
+                                    <div className={cn('w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 text-[10px] font-black', AIRLINE_COLORS[row.key] ?? 'border-white/10 bg-white/5 text-slate-400')}>
+                                        {row.key === 'GOL' ? 'G' : row.key[0]}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wide truncate">{row.label}</div>
+                                    </div>
+                                    <div className="relative w-20 shrink-0">
+                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-[10px] font-bold">R$</span>
+                                        <input
+                                            type="number"
+                                            step="0.5"
+                                            min="0"
+                                            value={milheiro[row.key] ?? ''}
+                                            onChange={e => handleMilheiroChange(row.key, e.target.value)}
+                                            className="w-full h-8 bg-white/5 border border-white/10 rounded-lg pl-6 pr-2 text-right text-white text-xs font-black focus:outline-none focus:border-primary/50 focus:bg-white/[0.08] transition-all"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="pt-1 border-t border-white/5">
+                            <button
+                                type="button"
+                                onClick={handleReset}
+                                className="w-full text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-slate-400 transition-colors py-1 flex items-center justify-center gap-1"
+                            >
+                                <span className="material-symbols-outlined text-xs">restart_alt</span> Redefinir padrão
+                            </button>
+                        </div>
+                    </motion.div>
 
-                    <div className="space-y-3">
-                        {MILHEIRO_ROWS.map(row => (
-                            <div key={row.key} className="flex items-center gap-3">
-                                <div className={cn('w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 text-[10px] font-black', AIRLINE_COLORS[row.key] ?? 'border-white/10 bg-white/5 text-slate-400')}>
-                                    {row.key === 'GOL' ? 'G' : row.key[0]}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wide truncate">{row.label}</div>
-                                </div>
-                                <div className="relative w-20 shrink-0">
-                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-[10px] font-bold">R$</span>
-                                    <input
-                                        type="number"
-                                        step="0.5"
-                                        min="0"
-                                        value={milheiro[row.key] ?? ''}
-                                        onChange={e => handleMilheiroChange(row.key, e.target.value)}
-                                        className="w-full h-8 bg-white/5 border border-white/10 rounded-lg pl-6 pr-2 text-right text-white text-xs font-black focus:outline-none focus:border-primary/50 focus:bg-white/[0.08] transition-all"
-                                    />
-                                </div>
+                    {/* Histórico */}
+                    <motion.div
+                        initial={{ opacity: 0, x: -16 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.15 }}
+                        className="glass-panel rounded-2xl border border-white/10 p-5 flex flex-col gap-3"
+                    >
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 className="text-xs font-black uppercase tracking-widest text-white mb-0.5">Histórico</h2>
+                                <p className="text-[10px] text-slate-500">Últimas {MAX_HISTORY} buscas</p>
                             </div>
-                        ))}
-                    </div>
+                            {history.length > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={clearHistory}
+                                    className="text-slate-600 hover:text-red-400 transition-colors"
+                                    title="Limpar histórico"
+                                >
+                                    <span className="material-symbols-outlined text-sm">delete_sweep</span>
+                                </button>
+                            )}
+                        </div>
 
-                    <div className="pt-1 border-t border-white/5">
-                        <button
-                            type="button"
-                            onClick={handleReset}
-                            className="w-full text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-slate-400 transition-colors py-1 flex items-center justify-center gap-1"
-                        >
-                            <span className="material-symbols-outlined text-xs">restart_alt</span> Redefinir padrão
-                        </button>
-                    </div>
-                </motion.div>
+                        {history.length === 0 ? (
+                            <p className="text-[10px] text-slate-700 text-center py-4">Nenhuma busca ainda.</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {history.map((h, i) => (
+                                    <button
+                                        key={i}
+                                        type="button"
+                                        onClick={() => loadFromHistory(h)}
+                                        className="w-full text-left p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/5 hover:border-primary/20 transition-all group"
+                                    >
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="text-xs font-black text-white group-hover:text-primary transition-colors">
+                                                {h.origin} → {h.destination}
+                                            </span>
+                                            <span className={cn(
+                                                'text-[8px] font-black uppercase px-1.5 py-0.5 rounded border',
+                                                h.cabin === 'executive'
+                                                    ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
+                                                    : 'border-white/10 bg-white/5 text-slate-500'
+                                            )}>
+                                                {h.cabin === 'executive' ? 'Exec' : 'Eco'}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[9px] text-slate-600">{h.date} · {h.passengers}pax</span>
+                                            <span className="text-[9px] font-black text-primary">
+                                                {h.cheapestMiles != null ? `${h.cheapestMiles.toLocaleString('pt-BR')} mi` : `${h.count} voos`}
+                                            </span>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </motion.div>
+                </div>
 
                 {/* ── Results ── */}
                 <div className="flex-1 min-w-0 flex flex-col gap-4 overflow-hidden">
@@ -397,7 +544,7 @@ export default function BuscaIdealPage() {
                                 className="glass-panel rounded-2xl border border-white/10 overflow-hidden"
                             >
                                 {/* Table header */}
-                                <div className="grid grid-cols-[80px_80px_1fr_1fr_70px_100px_110px_110px] gap-0 border-b border-white/5 px-4 py-3">
+                                <div className="grid grid-cols-[80px_80px_1fr_1fr_70px_100px_110px_100px_110px] gap-0 border-b border-white/5 px-4 py-3">
                                     {[
                                         { label: 'CIA', col: null },
                                         { label: 'VOO', col: null },
@@ -406,6 +553,7 @@ export default function BuscaIdealPage() {
                                         { label: 'DUR.', col: null },
                                         { label: 'PARADAS', col: null },
                                         { label: 'MILHAS', col: 'miles' as SortCol },
+                                        { label: 'TAXAS', col: 'taxes' as SortCol },
                                         { label: 'CUSTO R$', col: 'cost' as SortCol },
                                     ].map(({ label, col }) => (
                                         <button
@@ -438,7 +586,7 @@ export default function BuscaIdealPage() {
                                                 initial={{ opacity: 0, x: 12 }}
                                                 animate={{ opacity: 1, x: 0 }}
                                                 transition={{ delay: Math.min(i * 0.02, 0.4) }}
-                                                className="grid grid-cols-[80px_80px_1fr_1fr_70px_100px_110px_110px] gap-0 px-4 py-3 border-b border-white/[0.04] last:border-0 hover:bg-white/[0.03] transition-colors group"
+                                                className="grid grid-cols-[80px_80px_1fr_1fr_70px_100px_110px_100px_110px] gap-0 px-4 py-3 border-b border-white/[0.04] last:border-0 hover:bg-white/[0.03] transition-colors group"
                                             >
                                                 {/* CIA */}
                                                 <div className="flex items-center">
@@ -482,6 +630,17 @@ export default function BuscaIdealPage() {
                                                         {offer.miles.toLocaleString('pt-BR')}
                                                         <span className="text-slate-600 text-[10px] font-normal ml-1">mi</span>
                                                     </span>
+                                                </div>
+
+                                                {/* TAXAS */}
+                                                <div className="flex items-center">
+                                                    {(offer.taxes ?? 0) > 0 ? (
+                                                        <span className="text-rose-300 font-bold text-sm">
+                                                            {offer.taxes.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-slate-700 text-xs">—</span>
+                                                    )}
                                                 </div>
 
                                                 {/* CUSTO R$ */}

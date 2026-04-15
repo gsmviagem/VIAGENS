@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
         const origin: string = String(body.origin ?? '').trim().toUpperCase();
         const destination: string = String(body.destination ?? '').trim().toUpperCase();
         const passengers: number = Number(body.passengers) || 1;
+        const cabin: 'economy' | 'executive' = body.cabin === 'executive' ? 'executive' : 'economy';
 
         if (!origin || !destination || !body.date) {
             return NextResponse.json({ success: false, error: 'Origem, destino e data são obrigatórios' }, { status: 400 });
@@ -44,13 +45,13 @@ export async function POST(req: NextRequest) {
         }
 
         const dateISO = normalizeDate(String(body.date));
-        const cacheKey = `${origin}-${destination}-${dateISO}-${passengers}`;
+        const cacheKey = `${origin}-${destination}-${dateISO}-${passengers}-${cabin}`;
         const cached = cache.get(cacheKey);
         if (cached && Date.now() - cached.ts < CACHE_TTL) {
             return NextResponse.json({ ...cached.data, cached: true });
         }
 
-        const result = await searchBuscaIdeal(origin, destination, dateISO, passengers);
+        const result = await searchBuscaIdeal(origin, destination, dateISO, passengers, cabin);
 
         if (result.success) {
             cache.set(cacheKey, { data: result, ts: Date.now() });

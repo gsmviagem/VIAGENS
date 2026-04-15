@@ -23,6 +23,7 @@ export interface BuscaIdealOffer {
     stops: string;        // ex: "Direto" | "1 parada(s)"
     priceBrl: number;     // TotalValorSky (preço Sky)
     miles: number;        // TotalMilhas
+    taxes: number;        // Taxas aeroportuárias / embarque
     type: string;         // menorPreco: "Sky" | "Cia" etc.
 }
 
@@ -163,6 +164,7 @@ async function fetchFlightsByCia(
     dateISO: string,
     passengers: number,
     session: SessionCache,
+    cabin: 'economy' | 'executive' = 'economy',
 ): Promise<any[]> {
     const body = new URLSearchParams({
         cia,
@@ -174,7 +176,7 @@ async function fetchFlightsByCia(
         ida: 'true',
         di: dateISO,        // ← YYYY-MM-DD (ISO) conforme reverse-engineering da SPA
         df: '',
-        cex: 'false',
+        cex: cabin === 'executive' ? 'true' : 'false',
         idCliente: session.idCli,
     });
 
@@ -206,6 +208,7 @@ export async function searchBuscaIdeal(
     destination: string,
     dateISO: string, // YYYY-MM-DD
     passengers: number = 1,
+    cabin: 'economy' | 'executive' = 'economy',
 ): Promise<BuscaIdealResult> {
     const [y, m, d] = dateISO.split('-');
     const dateFmt = `${d}/${m}/${y}`;
@@ -231,7 +234,7 @@ export async function searchBuscaIdeal(
         // Busca em paralelo por companhia
         const airlines = ['GOL', 'LATAM', 'AZUL', 'TAP'];
         const settled = await Promise.allSettled(
-            airlines.map(cia => fetchFlightsByCia(cia, origin, destination, dateISO, passengers, session))
+            airlines.map(cia => fetchFlightsByCia(cia, origin, destination, dateISO, passengers, session, cabin))
         );
 
         // Verifica se a sessão expirou (redireciona para login)
@@ -263,6 +266,7 @@ export async function searchBuscaIdeal(
             stops: (v.NumeroConexoes ?? 0) > 0 ? `${v.NumeroConexoes} parada(s)` : 'Direto',
             priceBrl: v.TotalValorSky ?? v.TotalValorCia ?? 0,
             miles: v.TotalMilhas ?? 0,
+            taxes: v.Taxas ?? v.TaxasAeroportuarias ?? v.TaxaEmbarque ?? v.TaxasTotal ?? 0,
             type: v.menorPreco ?? '',
         })).filter(o => o.priceBrl > 0 || o.miles > 0);
 
