@@ -353,7 +353,7 @@ export default function BuscaIdealPage() {
                                             {air === 'ALL' ? 'Todas' : air}
                                             {air === 'ALL'
                                                 ? ` (${offers.length})`
-                                                : ` (${offers.filter(o => o.airline === air).length})`
+                                                : ` (${offers.filter(o => normalizeAirline(o.airline) === air).length})`
                                             }
                                         </button>
                                     ))}
