@@ -343,12 +343,12 @@ export default function AutoExtratorPage() {
 
             if (data.queued) {
                 addLog('info', `[${airline.id.toUpperCase()}] Aguardando agente local...`);
-                // Poll status
+                const jobKey = data.jobKey;
                 let attempts = 0;
                 const poll = setInterval(async () => {
                     attempts++;
                     try {
-                        const sr = await fetch('/api/sync/azul/status');
+                        const sr = await fetch(`/api/sync/azul/status?jobKey=${jobKey}`);
                         const s = await sr.json();
                         if (s.status === 'running') {
                             addLog('info', `[${airline.id.toUpperCase()}] Extraindo...`);

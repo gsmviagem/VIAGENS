@@ -23,12 +23,14 @@ export async function POST(req: NextRequest) {
             for (const b of preExtracted) {
                 if (await scraper.saveBookingPublic(b, accountId)) saved++;
             }
-            // Mark job done in settings
-            await supa().from('settings').upsert({
-                key: 'azul_sync_job',
-                value: { status: 'done', count: saved, total: preExtracted.length, completed_at: new Date().toISOString(), account_id: accountId },
-                updated_at: new Date().toISOString(),
-            }, { onConflict: 'key' });
+            if (accountId) {
+                const jobKey = `azul_sync_job_${accountId}`;
+                await supa().from('settings').upsert({
+                    key: jobKey,
+                    value: { status: 'done', count: saved, total: preExtracted.length, completed_at: new Date().toISOString() },
+                    updated_at: new Date().toISOString(),
+                }, { onConflict: 'key' });
+            }
             return NextResponse.json({ success: true, message: `${saved} de ${preExtracted.length} emissões salvas.`, count: saved });
         }
 
@@ -39,6 +41,7 @@ export async function POST(req: NextRequest) {
 
         let jobCpf = cpf;
         let jobPassword = password;
+        let resolvedAccountId = accountId;
 
         if (accountId && !cpf) {
             const { data: acc } = await supa()
@@ -51,13 +54,14 @@ export async function POST(req: NextRequest) {
             jobPassword = acc.password;
         }
 
+        const jobKey = `azul_sync_job_${resolvedAccountId ?? jobCpf}`;
         await supa().from('settings').upsert({
-            key: 'azul_sync_job',
-            value: { status: 'pending', cpf: jobCpf, password: jobPassword, account_id: accountId ?? null, requested_at: new Date().toISOString() },
+            key: jobKey,
+            value: { status: 'pending', cpf: jobCpf, password: jobPassword, account_id: resolvedAccountId ?? null, requested_at: new Date().toISOString() },
             updated_at: new Date().toISOString(),
         }, { onConflict: 'key' });
 
-        return NextResponse.json({ success: true, queued: true, message: 'Extração enfileirada. Aguarde o agente local...' });
+        return NextResponse.json({ success: true, queued: true, jobKey, message: 'Extração enfileirada. Aguarde o agente local...' });
 
     } catch (error: any) {
         console.error('[API/AZUL] Runtime error:', error.message);
