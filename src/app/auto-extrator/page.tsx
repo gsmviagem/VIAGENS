@@ -323,9 +323,17 @@ export default function AutoExtratorPage() {
             return;
         }
 
+        if (airline.id === 'azul') {
+            const cmd = `python scripts/azul-extract.py ${account.login_cpf} <senha>`;
+            addLog('info', `[AZUL] Execute localmente para extrair:`);
+            addLog('info', `[CMD]  ${cmd}`);
+            await navigator.clipboard.writeText(cmd).catch(() => {});
+            toast.info('Comando copiado! Cole no terminal e substitua <senha>.', { duration: 6000 });
+            return;
+        }
+
         setRunningAirline(airline.id);
         addLog('info', `[${airline.id.toUpperCase()}] Iniciando extração para conta ${account.login_cpf}...`);
-        addLog('info', `[${airline.id.toUpperCase()}] Fazendo login em azulpelomundo.voeazul.com.br...`);
 
         try {
             const res = await fetch(airline.syncEndpoint, {
