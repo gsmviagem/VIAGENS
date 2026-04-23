@@ -18,8 +18,7 @@ export async function POST(req: NextRequest) {
             for (const b of preExtracted) {
                 if (await scraper.saveBookingPublic(b, accountId)) saved++;
             }
-            const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'NOT_SET';
-            return NextResponse.json({ success: true, message: `${saved} de ${preExtracted.length} emissões salvas.`, count: saved, bookings: preExtracted, _debug_supa: supaUrl.substring(0, 30) });
+            return NextResponse.json({ success: true, message: `${saved} de ${preExtracted.length} emissões salvas.`, count: saved, bookings: preExtracted });
         }
 
         const scraper = new AzulScraper();
