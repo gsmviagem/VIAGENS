@@ -56,7 +56,7 @@ function AirlineCard({
     isRunning: boolean;
     onAddAccount: (airlineId: string, cpf: string, password: string, description: string) => Promise<void>;
     onDeleteAccount: (id: string) => Promise<void>;
-    onSync: (airline: AirlineConfig, account: Account) => Promise<void>;
+    onSync: (airline: AirlineConfig, account: Account, full?: boolean) => Promise<void>;
 }) {
     const [showForm, setShowForm] = useState(false);
     const [cpf, setCpf] = useState('');
@@ -200,18 +200,31 @@ function AirlineCard({
                             </div>
                             <div className="flex items-center gap-1.5">
                                 {airline.syncEndpoint && (
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        disabled={isRunning}
-                                        onClick={() => onSync(airline, account)}
-                                        className="h-7 px-2 text-slate-400 hover:text-primary border border-white/5 hover:border-primary/20 rounded-lg text-[10px] font-black"
-                                    >
-                                        {isRunning
-                                            ? <span className="material-symbols-outlined text-sm animate-spin">refresh</span>
-                                            : <><span className="material-symbols-outlined text-sm mr-1">sync</span> Sync</>
-                                        }
-                                    </Button>
+                                    <>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            disabled={isRunning}
+                                            onClick={() => onSync(airline, account, false)}
+                                            className="h-7 px-2 text-slate-400 hover:text-primary border border-white/5 hover:border-primary/20 rounded-lg text-[10px] font-black"
+                                            title="Extrai apenas emissões novas (para no primeiro localizador já existente)"
+                                        >
+                                            {isRunning
+                                                ? <span className="material-symbols-outlined text-sm animate-spin">refresh</span>
+                                                : <><span className="material-symbols-outlined text-sm mr-1">sync</span> Sync</>
+                                            }
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            disabled={isRunning}
+                                            onClick={() => onSync(airline, account, true)}
+                                            className="h-7 px-2 text-slate-600 hover:text-yellow-400 border border-white/5 hover:border-yellow-500/20 rounded-lg text-[10px] font-black"
+                                            title="Extrai todas as emissões ignorando a base"
+                                        >
+                                            <span className="material-symbols-outlined text-sm mr-1">download_for_offline</span> Tudo
+                                        </Button>
+                                    </>
                                 )}
                                 <Button
                                     size="sm"
@@ -317,20 +330,20 @@ export default function AutoExtratorPage() {
     };
 
     // ─── Run sync ────────────────────────────────────────────────────────────
-    const handleSync = async (airline: AirlineConfig, account: Account) => {
+    const handleSync = async (airline: AirlineConfig, account: Account, full = false) => {
         if (!airline.syncEndpoint) {
             toast.error('Sincronia ainda não disponível para ' + airline.name);
             return;
         }
 
         setRunningAirline(airline.id);
-        addLog('info', `[${airline.id.toUpperCase()}] Enfileirando extração para ${account.login_cpf}...`);
+        addLog('info', `[${airline.id.toUpperCase()}] Enfileirando extração ${full ? '(COMPLETA)' : '(incremental)'} para ${account.login_cpf}...`);
 
         try {
             const res = await fetch(airline.syncEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ accountId: account.id })
+                body: JSON.stringify({ accountId: account.id, full })
             });
             const data = await res.json();
 

@@ -14,7 +14,7 @@ function supa() {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { cpf, password, accountId, bookings: preExtracted } = body;
+        const { cpf, password, accountId, bookings: preExtracted, full } = body;
 
         // ── Path A: local agent posted pre-extracted bookings ────────────────
         if (preExtracted && Array.isArray(preExtracted) && preExtracted.length > 0) {
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
         const jobKey = `azul_sync_job_${resolvedAccountId ?? jobCpf}`;
         await supa().from('settings').upsert({
             key: jobKey,
-            value: { status: 'pending', cpf: jobCpf, password: jobPassword, account_id: resolvedAccountId ?? null, requested_at: new Date().toISOString() },
+            value: { status: 'pending', cpf: jobCpf, password: jobPassword, account_id: resolvedAccountId ?? null, full: !!full, requested_at: new Date().toISOString() },
             updated_at: new Date().toISOString(),
         }, { onConflict: 'key' });
 

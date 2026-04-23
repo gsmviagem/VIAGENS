@@ -78,10 +78,12 @@ def run_extraction(job):
 
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
-    result = subprocess.run(
-        [sys.executable, str(SCRIPT_DIR / "azul-extract.py"), cpf, password],
-        capture_output=True, encoding="utf-8", errors="replace", env=env
-    )
+    if job.get("account_id"):
+        env["AZUL_ACCOUNT_ID"] = str(job["account_id"])
+    cmd = [sys.executable, str(SCRIPT_DIR / "azul-extract.py"), cpf, password]
+    if job.get("full"):
+        cmd.append("--full")
+    result = subprocess.run(cmd, capture_output=True, encoding="utf-8", errors="replace", env=env)
 
     output = (result.stdout or "") + (result.stderr or "")
     count = 0

@@ -1,20 +1,27 @@
 #!/usr/bin/env python3
 """
 Azul Pelo Mundo extractor via stealth-browser server.
-Usage: python scripts/azul-extract.py <cpf> <senha>
+Usage:
+  python scripts/azul-extract.py <cpf> <senha>          # incremental (para no 1º já existente)
+  python scripts/azul-extract.py <cpf> <senha> --full   # extrai tudo sem verificar base
 """
-import sys, json, time, http.client, urllib.request, subprocess, os, signal
+import sys, json, time, urllib.request, subprocess, os
 from pathlib import Path
 
-CPF = sys.argv[1] if len(sys.argv) > 1 else None
+CPF      = sys.argv[1] if len(sys.argv) > 1 else None
 PASSWORD = sys.argv[2] if len(sys.argv) > 2 else None
+FULL     = "--full" in sys.argv
+
 if not CPF or not PASSWORD:
-    print("Uso: python scripts/azul-extract.py <cpf> <senha>", file=sys.stderr)
+    print("Uso: python scripts/azul-extract.py <cpf> <senha> [--full]", file=sys.stderr)
     sys.exit(1)
 
-SKILL_DIR = Path(os.environ.get("USERPROFILE", Path.home())) / ".claude/skills/stealth-browser"
+SKILL_DIR  = Path(os.environ.get("USERPROFILE", Path.home())) / ".claude/skills/stealth-browser"
 SERVER_URL = "http://localhost:6222"
-HUB_URL = "https://gsmviagem.vercel.app/api/sync/azul"
+HUB_URL    = "https://gsmviagem.vercel.app/api/sync/azul"
+LOCATORS_URL = "https://gsmviagem.vercel.app/api/sheets/locators"
+
+# ── Stealth browser helpers ───────────────────────────────────────────────────
 
 def server_ready():
     try:
@@ -37,15 +44,14 @@ def start_server():
         if server_ready():
             print("[AZUL] Browser pronto.")
             return proc
-    raise RuntimeError("Stealth browser não iniciou em 20s")
+    raise RuntimeError("Stealth browser nao iniciou em 20s")
 
 def api_post(path, body):
-    import json as _json
-    data = _json.dumps(body).encode()
+    data = json.dumps(body).encode()
     req = urllib.request.Request(f"{SERVER_URL}{path}", data=data,
                                   headers={"Content-Type": "application/json"}, method="POST")
     with urllib.request.urlopen(req, timeout=10) as r:
-        return _json.loads(r.read())
+        return json.loads(r.read())
 
 def set_react_input(page_name, selector, value):
     escaped = value.replace("'", "\\'").replace('"', '\\"')
@@ -67,20 +73,8 @@ def goto(page_name, url):
 def click(page_name, selector):
     return api_post(f"/pages/{page_name}/click", {"selector": selector})
 
-def is_logged_in(page_name):
-    result = api_post(f"/pages/{page_name}/evaluate", {"script": """
-      (() => {
-        const text = document.body.innerText || '';
-        return text.includes('Sair') || !!document.querySelector('[class*="logout"]');
-      })()
-    """})
-    val = result.get("result")
-    if isinstance(val, dict):
-        return val.get("value", False)
-    return bool(val)
-
 def login(page_name):
-    print("[AZUL] Abrindo página de login...")
+    print("[AZUL] Abrindo pagina de login...")
     goto(page_name, "https://azulpelomundo.voeazul.com.br/login")
     time.sleep(3)
     click(page_name, "#consultar-pnr")
@@ -101,9 +95,8 @@ def login(page_name):
     print("[AZUL] Login ok!")
 
 def capture_bookings(page_name):
-    print("[AZUL] Capturando emissões (aguarde ~30s)...")
-    import json as _json
-    data = _json.dumps({
+    print("[AZUL] Capturando emissoes (aguarde ~30s)...")
+    data = json.dumps({
         "url": "https://azulpelomundo.voeazul.com.br/searchResult",
         "intercept_url_fragment": "booking/search",
         "timeout": 120000
@@ -113,12 +106,14 @@ def capture_bookings(page_name):
         data=data, headers={"Content-Type": "application/json"}, method="POST"
     )
     with urllib.request.urlopen(req, timeout=130) as r:
-        resp = _json.loads(r.read())
+        resp = json.loads(r.read())
     bookings = resp.get("data", [])
     if not isinstance(bookings, list):
         raise RuntimeError(f"Dados inesperados: {str(bookings)[:100]}")
-    print(f"[AZUL] {len(bookings)} emissões capturadas!")
+    print(f"[AZUL] {len(bookings)} emissoes capturadas!")
     return bookings
+
+# ── Data helpers ──────────────────────────────────────────────────────────────
 
 def to_iso_date(d):
     if not d:
@@ -129,62 +124,105 @@ def to_iso_date(d):
     return d
 
 def map_booking(b):
-    item  = (b.get("cart") or {}).get("items", [{}])
-    item  = item[0] if item else {}
-    dep   = item.get("departureFlight") or {}
-    ret   = item.get("returnFlight") or None
-    fg    = (dep.get("flightGroup") or [{}])[0]
+    item   = (b.get("cart") or {}).get("items", [{}])
+    item   = item[0] if item else {}
+    dep    = item.get("departureFlight") or {}
+    ret    = item.get("returnFlight") or None
+    fg     = (dep.get("flightGroup") or [{}])[0]
     totals = (b.get("cart") or {}).get("total", [])
-    miles = next((t["value"] for t in totals if t.get("currency") == "POINTS"), 0)
-    cash  = next((t["value"] for t in totals if t.get("currency") == "BRL"), 0)
-    pax   = (b.get("passengers") or [{}])[0]
+    miles  = next((t["value"] for t in totals if t.get("currency") == "POINTS"), 0)
+    cash   = next((t["value"] for t in totals if t.get("currency") == "BRL"), 0)
+    pax    = (b.get("passengers") or [{}])[0]
     return {
-        "locator": b.get("pnrNumber"),
-        "passengerName": f"{pax.get('name','')} {pax.get('lastName','')}".strip(),
-        "passengerTicket": pax.get("ticketNumber", ""),
-        "origin": item.get("origin", ""),
-        "destination": item.get("destination", ""),
-        "flightDate": to_iso_date(dep.get("departureDate", "")),
-        "departureTime": dep.get("departureTime", ""),
-        "arrivalTime": dep.get("finalArrivalTime", ""),
-        "operatingAirline": fg.get("operatingCarrier", ""),
-        "flightNumber": str(fg.get("flightNumber", "")),
-        "flightCategory": dep.get("category", ""),
-        "isRoundTrip": bool(ret),
-        "returnDate": to_iso_date((ret or {}).get("departureDate")),
-        "returnOrigin": (ret or {}).get("originAirport"),
-        "returnDestination": (ret or {}).get("finalDestination"),
+        "locator":             b.get("pnrNumber"),
+        "passengerName":       f"{pax.get('name','')} {pax.get('lastName','')}".strip(),
+        "passengerTicket":     pax.get("ticketNumber", ""),
+        "origin":              item.get("origin", ""),
+        "destination":         item.get("destination", ""),
+        "flightDate":          to_iso_date(dep.get("departureDate", "")),
+        "departureTime":       dep.get("departureTime", ""),
+        "arrivalTime":         dep.get("finalArrivalTime", ""),
+        "operatingAirline":    fg.get("operatingCarrier", ""),
+        "flightNumber":        str(fg.get("flightNumber", "")),
+        "flightCategory":      dep.get("category", ""),
+        "isRoundTrip":         bool(ret),
+        "returnDate":          to_iso_date((ret or {}).get("departureDate")),
+        "returnOrigin":        (ret or {}).get("originAirport"),
+        "returnDestination":   (ret or {}).get("finalDestination"),
         "returnDepartureTime": (ret or {}).get("departureTime"),
-        "returnArrivalTime": (ret or {}).get("finalArrivalTime"),
-        "milesUsed": miles,
-        "cashPaid": cash,
-        "paymentCard": ((b.get("payment") or {}).get("items") or [{}])[0].get("vendorCode", ""),
-        "status": b.get("statusAntiFraud") or b.get("status", ""),
+        "returnArrivalTime":   (ret or {}).get("finalArrivalTime"),
+        "milesUsed":           miles,
+        "cashPaid":            cash,
+        "paymentCard":         ((b.get("payment") or {}).get("items") or [{}])[0].get("vendorCode", ""),
+        "status":              b.get("statusAntiFraud") or b.get("status", ""),
     }
 
-def post_to_hub(bookings):
-    import json as _json
-    body = _json.dumps({"cpf": CPF, "password": PASSWORD, "bookings": bookings}).encode()
+def fetch_existing_locators():
+    try:
+        req = urllib.request.Request(LOCATORS_URL, headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=15) as r:
+            data = json.loads(r.read())
+        locs = set(str(x).strip().upper() for x in data.get("locators", []) if x)
+        print(f"[AZUL] {len(locs)} localizadores ja na base.")
+        return locs
+    except Exception as e:
+        print(f"[AZUL] Aviso: nao foi possivel buscar localizadores existentes: {e}")
+        return set()
+
+def filter_new_bookings(bookings, existing):
+    """
+    Percorre bookings (mais recentes primeiro).
+    Para no primeiro que ja existe na base — assume que os seguintes tambem existem.
+    Retorna apenas os novos.
+    """
+    new = []
+    for b in bookings:
+        loc = str(b.get("locator") or "").upper()
+        if loc in existing:
+            print(f"[AZUL] Localizador {loc} ja na base — parando aqui. {len(new)} novos encontrados.")
+            break
+        new.append(b)
+    else:
+        print(f"[AZUL] Nenhum ja existente encontrado — {len(new)} novos.")
+    return new
+
+def post_to_hub(bookings, account_id=None):
+    body = json.dumps({"cpf": CPF, "password": PASSWORD, "bookings": bookings,
+                       **({"accountId": account_id} if account_id else {})}).encode()
     req = urllib.request.Request(HUB_URL, data=body,
                                   headers={"Content-Type": "application/json"}, method="POST")
-    with urllib.request.urlopen(req, timeout=30) as r:
-        return _json.loads(r.read())
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return json.loads(r.read())
+
+# ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
+    account_id = os.environ.get("AZUL_ACCOUNT_ID")
+
     server_proc = None
     if not server_ready():
         server_proc = start_server()
 
     try:
         page = "azul"
-        api_post("/pages", {"name": page})  # create/get page
+        api_post("/pages", {"name": page})
 
         login(page)
         raw = capture_bookings(page)
         bookings = [map_booking(b) for b in raw]
 
-        print("[AZUL] Enviando para o hub...")
-        result = post_to_hub(bookings)
+        if not FULL:
+            existing = fetch_existing_locators()
+            bookings = filter_new_bookings(bookings, existing)
+        else:
+            print(f"[AZUL] Modo --full: enviando todas as {len(bookings)} emissoes.")
+
+        if not bookings:
+            print("[AZUL] Nenhuma emissao nova para enviar.")
+            return
+
+        print(f"[AZUL] Enviando {len(bookings)} emissoes para o hub...")
+        result = post_to_hub(bookings, account_id)
         print(f"[AZUL] {result.get('message', json.dumps(result))}")
     finally:
         if server_proc:
