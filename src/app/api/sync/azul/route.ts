@@ -1,29 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AzulScraper } from '@/connectors/azul-scraper';
+import { createClient } from '@supabase/supabase-js';
 
-export const maxDuration = 300; // 5 min — scraping takes time
+export const maxDuration = 30;
+
+function supa() {
+    return createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+}
 
 export async function POST(req: NextRequest) {
     try {
-        const { cpf, password, accountId, bookings: preExtracted } = await req.json();
+        const body = await req.json();
+        const { cpf, password, accountId, bookings: preExtracted } = body;
 
-        if (!cpf || !password) {
-            return NextResponse.json({ error: 'CPF e senha são obrigatórios' }, { status: 400 });
+        // ── Path A: local agent posted pre-extracted bookings ────────────────
+        if (preExtracted && Array.isArray(preExtracted) && preExtracted.length > 0) {
+            const scraper = new AzulScraper();
+            let saved = 0;
+            for (const b of preExtracted) {
+                if (await scraper.saveBookingPublic(b, accountId)) saved++;
+            }
+            // Mark job done in settings
+            await supa().from('settings').upsert({
+                key: 'azul_sync_job',
+                value: { status: 'done', count: saved, total: preExtracted.length, completed_at: new Date().toISOString(), account_id: accountId },
+                updated_at: new Date().toISOString(),
+            }, { onConflict: 'key' });
+            return NextResponse.json({ success: true, message: `${saved} de ${preExtracted.length} emissões salvas.`, count: saved });
         }
 
-        if (!preExtracted || !Array.isArray(preExtracted) || preExtracted.length === 0) {
-            return NextResponse.json({
-                success: false,
-                error: 'Extração via web não disponível. Use o script local: node scripts/azul-extract.js ' + cpf + ' <senha>',
-            }, { status: 422 });
+        // ── Path B: UI triggered sync — queue job for local agent ────────────
+        if (!accountId && (!cpf || !password)) {
+            return NextResponse.json({ error: 'accountId ou cpf+senha obrigatório' }, { status: 400 });
         }
 
-        const scraper = new AzulScraper();
-        let saved = 0;
-        for (const b of preExtracted) {
-            if (await scraper.saveBookingPublic(b, accountId)) saved++;
+        let jobCpf = cpf;
+        let jobPassword = password;
+
+        if (accountId && !cpf) {
+            const { data: acc } = await supa()
+                .from('airline_accounts')
+                .select('login_cpf, password')
+                .eq('id', accountId)
+                .single();
+            if (!acc) return NextResponse.json({ error: 'Conta não encontrada' }, { status: 404 });
+            jobCpf = acc.login_cpf;
+            jobPassword = acc.password;
         }
-        return NextResponse.json({ success: true, message: `${saved} de ${preExtracted.length} emissões salvas.`, count: saved });
+
+        await supa().from('settings').upsert({
+            key: 'azul_sync_job',
+            value: { status: 'pending', cpf: jobCpf, password: jobPassword, account_id: accountId ?? null, requested_at: new Date().toISOString() },
+            updated_at: new Date().toISOString(),
+        }, { onConflict: 'key' });
+
+        return NextResponse.json({ success: true, queued: true, message: 'Extração enfileirada. Aguarde o agente local...' });
 
     } catch (error: any) {
         console.error('[API/AZUL] Runtime error:', error.message);

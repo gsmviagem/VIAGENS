@@ -323,47 +323,61 @@ export default function AutoExtratorPage() {
             return;
         }
 
-        if (airline.id === 'azul') {
-            const cmd = `python scripts/azul-extract.py ${account.login_cpf} <senha>`;
-            addLog('info', `[AZUL] Execute localmente para extrair:`);
-            addLog('info', `[CMD]  ${cmd}`);
-            await navigator.clipboard.writeText(cmd).catch(() => {});
-            toast.info('Comando copiado! Cole no terminal e substitua <senha>.', { duration: 6000 });
-            return;
-        }
-
         setRunningAirline(airline.id);
-        addLog('info', `[${airline.id.toUpperCase()}] Iniciando extração para conta ${account.login_cpf}...`);
+        addLog('info', `[${airline.id.toUpperCase()}] Enfileirando extração para ${account.login_cpf}...`);
 
         try {
             const res = await fetch(airline.syncEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    cpf: account.login_cpf,
-                    password: account.password ?? '',
-                    accountId: account.id
-                })
+                body: JSON.stringify({ accountId: account.id })
             });
-
             const data = await res.json();
 
-            if (res.ok && data.success) {
-                addLog('success', `[${airline.id.toUpperCase()}] ${data.message}`);
-                if (data.bookings?.length > 0) {
-                    data.bookings.forEach((b: any) => {
-                        addLog('success', `[${airline.id.toUpperCase()}] ✓ ${b.locator}: ${b.route} (${b.date}) — ${b.miles?.toLocaleString()} pts — ${b.cabin}`);
-                    });
-                }
-                toast.success(data.message);
+            if (!res.ok || !data.success) {
+                addLog('error', `[${airline.id.toUpperCase()}] ${data.error ?? 'Erro desconhecido'}`);
+                toast.error(data.error ?? 'Erro');
+                setRunningAirline(null);
+                return;
+            }
+
+            if (data.queued) {
+                addLog('info', `[${airline.id.toUpperCase()}] Aguardando agente local...`);
+                // Poll status
+                let attempts = 0;
+                const poll = setInterval(async () => {
+                    attempts++;
+                    try {
+                        const sr = await fetch('/api/sync/azul/status');
+                        const s = await sr.json();
+                        if (s.status === 'running') {
+                            addLog('info', `[${airline.id.toUpperCase()}] Extraindo...`);
+                        } else if (s.status === 'done') {
+                            clearInterval(poll);
+                            addLog('success', `[${airline.id.toUpperCase()}] ${s.count} emissões salvas!`);
+                            toast.success(`${s.count} emissões salvas! Baixe o Excel abaixo.`);
+                            setRunningAirline(null);
+                        } else if (s.status === 'error') {
+                            clearInterval(poll);
+                            addLog('error', `[${airline.id.toUpperCase()}] Erro na extração.`);
+                            toast.error('Erro na extração');
+                            setRunningAirline(null);
+                        } else if (attempts > 60) {
+                            clearInterval(poll);
+                            addLog('error', `[${airline.id.toUpperCase()}] Timeout — agente local não respondeu.`);
+                            toast.error('Agente local não respondeu em 5 min.');
+                            setRunningAirline(null);
+                        }
+                    } catch { /* ignore poll errors */ }
+                }, 5000);
             } else {
-                addLog('error', `[${airline.id.toUpperCase()}] Falha: ${data.error}`);
-                toast.error(data.error);
+                addLog('success', `[${airline.id.toUpperCase()}] ${data.message}`);
+                toast.success(data.message);
+                setRunningAirline(null);
             }
         } catch (err) {
             addLog('error', `[${airline.id.toUpperCase()}] Erro de conexão.`);
             toast.error('Erro de conexão com o servidor.');
-        } finally {
             setRunningAirline(null);
         }
     };
@@ -423,12 +437,27 @@ export default function AutoExtratorPage() {
                     )}
                 </div>
 
+                {/* Export Excel */}
+                <div className="flex items-center gap-3">
+                    <a
+                        href="/api/export/azul"
+                        download
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-green-600/20 hover:bg-green-600/30 border border-green-500/30 text-green-400 font-bold text-sm transition-all"
+                    >
+                        <span className="material-symbols-outlined text-base">download</span>
+                        Baixar Excel — Emissões
+                    </a>
+                    <span className="text-xs text-slate-500">Exporta todas as emissões salvas no banco de dados</span>
+                </div>
+
                 {/* Extraction Info Banner */}
-                <div className="p-4 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 flex items-start gap-3">
-                    <span className="material-symbols-outlined text-yellow-500 text-xl mt-0.5 shrink-0">warning</span>
+                <div className="p-4 rounded-2xl border border-sky-500/20 bg-sky-500/5 flex items-start gap-3">
+                    <span className="material-symbols-outlined text-sky-400 text-xl mt-0.5 shrink-0">info</span>
                     <div>
-                        <p className="text-sm font-bold text-yellow-400">Sobre a extração Azul</p>
-                        <p className="text-xs text-slate-400 mt-1">O extrator faz login real em <strong>voeazul.com.br</strong>, navega para "Minhas Viagens", abre cada reserva e extrai todos os dados. O processo pode levar 2–5 minutos dependendo do número de emissões. Os dados são salvos automaticamente no banco de dados.</p>
+                        <p className="text-sm font-bold text-sky-400">Como funciona a extração automática</p>
+                        <p className="text-xs text-slate-400 mt-1">
+                            Clique em <strong>Sync</strong> — o hub enfileira o job. O <strong>agente local</strong> (rodando em background) faz o login, captura as emissões e salva no banco. Instale o agente uma vez com <code className="bg-white/10 px-1 rounded">scripts\azul-agent-install.bat</code>.
+                        </p>
                     </div>
                 </div>
 
