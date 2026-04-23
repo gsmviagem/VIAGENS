@@ -186,6 +186,25 @@ def filter_new_bookings(bookings, existing):
         print(f"[AZUL] Nenhum ja existente encontrado — {len(new)} novos.")
     return new
 
+def clear_existing_bookings():
+    """Apaga todos os registros antes de reinserir."""
+    supa_url = "https://gvoqerbrzvyzarxqpwvd.supabase.co"
+    supa_key = "sb_publishable_8L84Hb3ctwEsUf86wWVjrA_iC-DFbl3"
+    # id > 0 is a workaround to delete all rows via REST (can't DELETE without a filter)
+    req = urllib.request.Request(
+        f"{supa_url}/rest/v1/extracted_bookings?id=gt.00000000-0000-0000-0000-000000000000",
+        headers={
+            "apikey": supa_key, "Authorization": f"Bearer {supa_key}",
+            "Prefer": "return=minimal"
+        },
+        method="DELETE"
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as r:
+            print(f"[AZUL] Banco limpo (HTTP {r.status}).")
+    except Exception as e:
+        print(f"[AZUL] Aviso: nao foi possivel limpar banco: {e}")
+
 def post_to_hub(bookings, account_id=None):
     body = json.dumps({"cpf": CPF, "password": PASSWORD, "bookings": bookings,
                        **({"accountId": account_id} if account_id else {})}).encode()
@@ -220,6 +239,9 @@ def main():
         if not bookings:
             print("[AZUL] Nenhuma emissao nova para enviar.")
             return
+
+        print(f"[AZUL] Limpando banco antes de inserir...")
+        clear_existing_bookings()
 
         print(f"[AZUL] Enviando {len(bookings)} emissoes para o hub...")
         result = post_to_hub(bookings, account_id)

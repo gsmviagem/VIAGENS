@@ -45,9 +45,9 @@ def supa_upsert(table, body):
         return r.status
 
 def get_pending_jobs():
-    # Each account gets its own settings key: azul_sync_job_<account_id>
     rows = supa_get("settings?key=like.azul_sync_job_%25&select=key,value,updated_at")
     jobs = []
+    now = time.time()
     for row in rows:
         val = row.get("value", {})
         if isinstance(val, str):
@@ -55,17 +55,36 @@ def get_pending_jobs():
                 val = json.loads(val)
             except Exception:
                 continue
-        if val.get("status") == "pending":
+        status = val.get("status")
+        if status == "pending":
             jobs.append({"key": row["key"], **val})
+        elif status == "running":
+            # Resume stuck jobs (running > 10 min without update)
+            updated = row.get("updated_at", "")
+            try:
+                import datetime
+                dt = datetime.datetime.fromisoformat(updated.replace("Z", "+00:00"))
+                age = now - dt.timestamp()
+                if age > 600:
+                    log(f"[AGENT] Job travado detectado: {row['key']} ({int(age)}s) — retomando.")
+                    jobs.append({"key": row["key"], **val})
+            except Exception:
+                pass
     return jobs
 
-def set_job_status(key, status, count=None, error=None):
+def set_job_status(key, status, count=None, error=None, base_val=None):
     now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    val = {"status": status, "updated_at": now}
+    # Start from existing job data so cpf/password are never lost
+    val = dict(base_val) if base_val else {}
+    val["status"] = status
+    val["updated_at"] = now
     if count is not None:
         val["count"] = count
     if error:
-        val["error"] = error
+        val["error"] = error[:300]
+    # Strip password from done/error states for cleanliness
+    if status in ("done", "error"):
+        val.pop("password", None)
     supa_upsert("settings", {"key": key, "value": json.dumps(val), "updated_at": now})
 
 def run_extraction(job):
@@ -74,7 +93,7 @@ def run_extraction(job):
     password = job["password"]
     log(f"[AGENT] Extraindo CPF {cpf} (job: {key})...")
 
-    set_job_status(key, "running")
+    set_job_status(key, "running", base_val=job)
 
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
@@ -93,11 +112,11 @@ def run_extraction(job):
             count = int(m.group(1))
 
     if result.returncode == 0:
-        set_job_status(key, "done", count=count)
+        set_job_status(key, "done", count=count, base_val=job)
         log(f"[AGENT] {key}: OK, {count} emissoes salvas.")
     else:
         err = output[-300:].strip()
-        set_job_status(key, "error", error=err)
+        set_job_status(key, "error", error=err, base_val=job)
         log(f"[AGENT] {key}: ERRO — {err[:120]}")
 
 def main():
