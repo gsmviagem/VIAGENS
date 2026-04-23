@@ -12,7 +12,10 @@ export async function POST(req: NextRequest) {
         }
 
         if (!preExtracted || !Array.isArray(preExtracted) || preExtracted.length === 0) {
-            return NextResponse.json({ error: 'bookings array is required' }, { status: 400 });
+            return NextResponse.json({
+                success: false,
+                error: 'Extração via web não disponível. Use o script local: node scripts/azul-extract.js ' + cpf + ' <senha>',
+            }, { status: 422 });
         }
 
         const scraper = new AzulScraper();
