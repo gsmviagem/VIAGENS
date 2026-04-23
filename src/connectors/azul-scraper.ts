@@ -165,7 +165,7 @@ export class AzulScraper {
                 notes: [booking.flightCategory, `${booking.departureTime}→${booking.arrivalTime}`, booking.isRoundTrip ? `Volta: ${booking.returnDate} ${booking.returnOrigin}→${booking.returnDestination}` : 'Só ida', booking.passengerTicket, booking.status].filter(Boolean).join(' | '),
             }, { onConflict: 'airline,locator' });
 
-            if (error) { this.log(`DB error ${booking.locator}: ${error.message}`); return false; }
+            if (error) { this.log(`DB error ${booking.locator}: ${JSON.stringify(error)}`); return false; }
             return true;
         } catch (err: any) {
             this.log(`Save failed: ${err.message}`);
