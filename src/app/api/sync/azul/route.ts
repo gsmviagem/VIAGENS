@@ -11,36 +11,16 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'CPF e senha são obrigatórios' }, { status: 400 });
         }
 
-        // If bookings were pre-extracted by the local script, save them directly
-        if (preExtracted && Array.isArray(preExtracted) && preExtracted.length > 0) {
-            const scraper = new AzulScraper();
-            let saved = 0;
-            for (const b of preExtracted) {
-                if (await scraper.saveBookingPublic(b, accountId)) saved++;
-            }
-            return NextResponse.json({ success: true, message: `${saved} de ${preExtracted.length} emissões salvas.`, count: saved, bookings: preExtracted });
+        if (!preExtracted || !Array.isArray(preExtracted) || preExtracted.length === 0) {
+            return NextResponse.json({ error: 'bookings array is required' }, { status: 400 });
         }
 
         const scraper = new AzulScraper();
-        const result = await scraper.extract({ cpf, password, accountId });
-
-        if (result.success) {
-            return NextResponse.json({
-                success: true,
-                message: result.message,
-                count: result.count,
-                bookings: result.bookings?.map(b => ({
-                    locator: b.locator,
-                    route: `${b.origin} → ${b.destination}`,
-                    date: b.flightDate,
-                    passenger: b.passengerName,
-                    miles: b.milesUsed,
-                    cabin: b.flightCategory,
-                }))
-            });
-        } else {
-            return NextResponse.json({ success: false, error: result.error }, { status: 500 });
+        let saved = 0;
+        for (const b of preExtracted) {
+            if (await scraper.saveBookingPublic(b, accountId)) saved++;
         }
+        return NextResponse.json({ success: true, message: `${saved} de ${preExtracted.length} emissões salvas.`, count: saved });
 
     } catch (error: any) {
         console.error('[API/AZUL] Runtime error:', error.message);
