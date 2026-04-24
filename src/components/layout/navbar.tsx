@@ -7,28 +7,40 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { logout } from '@/app/login/actions';
 import { CommandPalette } from './command-palette';
+import { ALL_NAV_ITEMS } from '@/utils/nav-items';
+import { getActiveProfile, setActiveProfile, profileKey, PROFILE_LABELS, type Profile } from '@/utils/profile';
+import { createClient } from '@/utils/supabase/client';
 
-const navItems = [
-    { href: '/', label: 'Overview', icon: 'dashboard' },
-    { href: '/cotacao', label: 'Quoting', icon: 'search' },
-    { href: '/processamento', label: 'Book', icon: 'auto_stories' },
-    { href: '/inventario', label: 'Inventory', icon: 'inventory' },
-    { href: '/dashboard', label: 'Financials', icon: 'payments' },
-    { href: '/fornecedores', label: 'Suppliers', icon: 'handshake' },
-    { href: '/cancelamentos', label: 'Cancel', icon: 'cancel_schedule_send' },
-    { href: '/auto-extrator', label: 'Automations', icon: 'precision_manufacturing' },
-    { href: '/calculo', label: 'Calculator', icon: 'calculate' },
-    { href: '/invoice', label: 'Invoice', icon: 'description' },
-    { href: '/ferramentas', label: 'Tools', icon: 'build' },
-];
+async function loadNavItems(profile: Profile): Promise<string[] | null> {
+    const cached = localStorage.getItem(`hub_nav_${profile}`);
+    if (cached) {
+        try { return JSON.parse(cached); } catch { /* ignore */ }
+    }
+    const supabase = createClient();
+    const { data } = await supabase.from('hub_settings').select('value')
+        .eq('key', profileKey('nav_items', profile)).maybeSingle();
+    if (data?.value) {
+        try {
+            const parsed = JSON.parse(data.value);
+            localStorage.setItem(`hub_nav_${profile}`, data.value);
+            return parsed;
+        } catch { /* ignore */ }
+    }
+    return null; // null = show all
+}
 
 export function Navbar() {
     const pathname = usePathname();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isPaletteOpen, setIsPaletteOpen] = useState(false);
-    const [scrolled, setScrolled] = useState(false);
+    const [activeProfile, setActiveProfileState] = useState<Profile>('salem');
+    const [visibleHrefs, setVisibleHrefs] = useState<string[] | null>(null);
 
     useEffect(() => {
+        const profile = getActiveProfile();
+        setActiveProfileState(profile);
+        loadNavItems(profile).then(setVisibleHrefs);
+
         const handleKey = (e: KeyboardEvent) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
@@ -36,8 +48,33 @@ export function Navbar() {
             }
         };
         window.addEventListener('keydown', handleKey);
-        return () => window.removeEventListener('keydown', handleKey);
+
+        const onProfile = (e: Event) => {
+            const p = (e as CustomEvent<Profile>).detail;
+            setActiveProfileState(p);
+            loadNavItems(p).then(setVisibleHrefs);
+        };
+        const onNav = (e: Event) => {
+            const { profile, hrefs } = (e as CustomEvent<{ profile: Profile; hrefs: string[] }>).detail;
+            if (profile === getActiveProfile()) setVisibleHrefs(hrefs);
+        };
+        window.addEventListener('hub_profile_changed', onProfile);
+        window.addEventListener('hub_nav_items_changed', onNav);
+        return () => {
+            window.removeEventListener('keydown', handleKey);
+            window.removeEventListener('hub_profile_changed', onProfile);
+            window.removeEventListener('hub_nav_items_changed', onNav);
+        };
     }, []);
+
+    const switchProfile = () => {
+        const next: Profile = activeProfile === 'salem' ? 'ulrych' : 'salem';
+        setActiveProfile(next);
+    };
+
+    const navItems = visibleHrefs
+        ? ALL_NAV_ITEMS.filter(i => visibleHrefs.includes(i.href))
+        : ALL_NAV_ITEMS;
 
     return (
         <>
@@ -73,13 +110,34 @@ export function Navbar() {
 
                 {/* Right Actions */}
                 <div className="flex items-center gap-2">
-                    {/* Ctrl+K button */}
+                    {/* Ctrl+K */}
                     <button
                         onClick={() => setIsPaletteOpen(true)}
                         className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] transition-all text-white/40 hover:text-white/70"
                     >
                         <span className="material-symbols-outlined text-[13px]">search</span>
                         <kbd className="text-[9px] font-mono bg-white/5 px-1.5 py-0.5 rounded">⌘K</kbd>
+                    </button>
+
+                    {/* Profile switcher */}
+                    <button
+                        onClick={switchProfile}
+                        className="hidden sm:flex items-center gap-0 rounded-full overflow-hidden ring-1 ring-white/10 text-[9px] font-black tracking-widest"
+                        title="Trocar perfil"
+                    >
+                        {(['salem', 'ulrych'] as Profile[]).map(p => (
+                            <span
+                                key={p}
+                                className={cn(
+                                    "px-2.5 py-1.5 transition-all",
+                                    activeProfile === p
+                                        ? 'bg-white text-black'
+                                        : 'bg-white/[0.05] text-white/30 hover:text-white/60'
+                                )}
+                            >
+                                {PROFILE_LABELS[p]}
+                            </span>
+                        ))}
                     </button>
 
                     {/* Avatar */}
@@ -108,6 +166,24 @@ export function Navbar() {
                         exit={{ opacity: 0, y: -10 }}
                         className="fixed inset-0 z-[40] lg:hidden bg-[#080808]/97 backdrop-blur-2xl pt-20 px-5 overflow-y-auto"
                     >
+                        {/* Profile switcher mobile */}
+                        <div className="flex gap-2 mb-4">
+                            {(['salem', 'ulrych'] as Profile[]).map(p => (
+                                <button
+                                    key={p}
+                                    onClick={() => { setActiveProfile(p); setIsMobileMenuOpen(false); }}
+                                    className={cn(
+                                        "flex-1 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all",
+                                        activeProfile === p
+                                            ? 'bg-white text-black'
+                                            : 'bg-white/[0.04] text-white/40 hover:bg-white/[0.07]'
+                                    )}
+                                >
+                                    {PROFILE_LABELS[p]}
+                                </button>
+                            ))}
+                        </div>
+
                         <button
                             onClick={() => { setIsMobileMenuOpen(false); setIsPaletteOpen(true); }}
                             className="w-full flex items-center gap-3 p-4 mb-3 rounded-2xl bg-white/[0.04] text-white/40 text-[11px] font-bold uppercase tracking-widest hover:bg-white/[0.07] transition-all"

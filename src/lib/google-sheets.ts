@@ -118,6 +118,36 @@ export class GoogleSheetsService {
         }
     }
 
+    async appendValues(range: string, values: any[][]): Promise<boolean> {
+        try {
+            if (!this.spreadsheetId) throw new Error('Spreadsheet ID not configured');
+            await this.sheets.spreadsheets.values.append({
+                spreadsheetId: this.spreadsheetId,
+                range,
+                valueInputOption: 'USER_ENTERED',
+                requestBody: { values },
+            });
+            return true;
+        } catch (error: any) {
+            console.error(`[GoogleSheets] Error appending to ${range}:`, error.message);
+            return false;
+        }
+    }
+
+    async clearRange(range: string): Promise<boolean> {
+        try {
+            if (!this.spreadsheetId) throw new Error('Spreadsheet ID not configured');
+            await this.sheets.spreadsheets.values.clear({
+                spreadsheetId: this.spreadsheetId,
+                range,
+            });
+            return true;
+        } catch (error: any) {
+            console.error(`[GoogleSheets] Error clearing ${range}:`, error.message);
+            return false;
+        }
+    }
+
     /**
      * Checks if the service is properly configured
      */

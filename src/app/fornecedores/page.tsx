@@ -24,6 +24,10 @@ export default function FornecedoresPage() {
     const [pendingOnly, setPendingOnly] = useState(true);
 
     const [uniqueSuppliers, setUniqueSuppliers] = useState<string[]>([]);
+    const [togglingLoc, setTogglingLoc] = useState<string | null>(null);
+    const [excludedLocs, setExcludedLocs] = useState<Set<string>>(new Set());
+    const [selectedCreditIds, setSelectedCreditIds] = useState<Set<number>>(new Set());
+    const needsCreditResetRef = useRef(true);
     
     // Preparar Statement
     const [statementModalOpen, setStatementModalOpen] = useState(false);
@@ -55,8 +59,14 @@ export default function FornecedoresPage() {
                 if (json.data.suppliers) {
                     const names: string[] = json.data.suppliers.map((s:any) => s.name);
                     setUniqueSuppliers(names);
-                    // Se o fornecedor selecionado não existe mais (ex: alias mergeado), reset
                     setSupplier(prev => (prev !== 'TODOS' && !names.includes(prev)) ? 'TODOS' : prev);
+                }
+                // Reset credit selection only when explicitly flagged (supplier changed)
+                if (needsCreditResetRef.current) {
+                    const selSupplier = json.data.suppliers?.find((s: any) => s.name === supplier);
+                    const creditCount = selSupplier?.creditDetails?.length ?? 0;
+                    setSelectedCreditIds(new Set(Array.from({ length: creditCount }, (_, i) => i)));
+                    needsCreditResetRef.current = false;
                 }
             } else {
                 toast.error(json.error || "Erro ao buscar dados");
@@ -73,9 +83,55 @@ export default function FornecedoresPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // Sync excluded LOCs from server whenever data reloads (supplier change, full refresh)
+    useEffect(() => {
+        if (data?.excludedLocs) {
+            setExcludedLocs(new Set<string>(data.excludedLocs));
+        }
+    }, [data]);
+
     const handleFilterSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         fetchData();
+    };
+
+    const toggleExclude = async (loc: string) => {
+        // Optimistic update — flip immediately, no full reload
+        const wasExcluded = excludedLocs.has(loc);
+        setExcludedLocs(prev => {
+            const next = new Set(prev);
+            if (next.has(loc)) next.delete(loc); else next.add(loc);
+            return next;
+        });
+        setTogglingLoc(loc);
+        try {
+            const res = await fetch('/api/sheets/supplier/exclude', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ loc }),
+            });
+            const json = await res.json();
+            if (json.success) {
+                toast.success(json.excluded ? `${loc} excluído da conta` : `${loc} reincluído na conta`);
+            } else {
+                // Revert on failure
+                setExcludedLocs(prev => {
+                    const next = new Set(prev);
+                    if (wasExcluded) next.add(loc); else next.delete(loc);
+                    return next;
+                });
+                toast.error(json.error || 'Erro ao atualizar');
+            }
+        } catch {
+            setExcludedLocs(prev => {
+                const next = new Set(prev);
+                if (wasExcluded) next.add(loc); else next.delete(loc);
+                return next;
+            });
+            toast.error('Erro na conexão');
+        } finally {
+            setTogglingLoc(null);
+        }
     };
 
     const copyToClipboard = (text: string) => {
@@ -91,7 +147,7 @@ export default function FornecedoresPage() {
         return isNaN(num) ? 0 : num;
     };
 
-    const generateSupplierPDF = (returnBytes = false) => {
+    const generateSupplierPDF = (returnBytes = false, activeCreditIds: Set<number> = selectedCreditIds) => {
         if (!data || !data.ledger || data.ledger.length === 0) {
             toast.error('Nenhum dado para exportar.');
             return;
@@ -145,8 +201,11 @@ export default function FornecedoresPage() {
         doc.text(`Emitido em ${emitDate}`, 22, infoY + 20);
 
         // Right summary box
-        const totalBruto = data.ledger.reduce((acc: number, row: any) => acc + parseCurrencyBR(row.total), 0);
-        const creditOkVal = supplierInfo ? parseCurrencyBR(supplierInfo.creditOk) : 0;
+        const activeLedger = data.ledger.filter((row: any) => !excludedLocs.has(row.loc));
+        const totalBruto = activeLedger.reduce((acc: number, row: any) => acc + parseCurrencyBR(row.total), 0);
+        const allCreditDetails: { valor: number; valorFmt: string; detalhes: string }[] = supplierInfo?.creditDetails || [];
+        const activeCreditDetails = allCreditDetails.filter((_: any, i: number) => activeCreditIds.has(i));
+        const creditOkVal = activeCreditDetails.reduce((acc: number, c: any) => acc + (c.valor || 0), 0);
         const netTotal = totalBruto - creditOkVal;
 
         const sumBoxX = pageWidth - 65;
@@ -186,7 +245,7 @@ export default function FornecedoresPage() {
         doc.text(`R$ ${Math.abs(netTotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sumBoxX + 47, infoY + 20, { align: 'right' });
 
         // --- LEDGER TABLE ---
-        const ledgerRows = data.ledger.map((row: any) => {
+        const ledgerRows = activeLedger.map((row: any) => {
             const priceVal = parseCurrencyBR(String(row.price || '0'));
             const milesVal = parseFloat(String(row.miles || '0').replace(',', '.'));
             const calcValor = priceVal * milesVal;
@@ -225,7 +284,7 @@ export default function FornecedoresPage() {
             columnStyles: { 6: { halign: 'center', fontStyle: 'bold' } },
             didParseCell: (hookData: any) => {
                 if (hookData.section === 'body') {
-                    const rowData = data.ledger[hookData.row.index];
+                    const rowData = activeLedger[hookData.row.index];
                     if (!rowData) return;
                     
                     const reqSupp = supplier !== 'TODOS' ? supplier : null;
@@ -247,21 +306,21 @@ export default function FornecedoresPage() {
         });
 
         // --- CREDITS SECTION ---
-        const creditEntries: { valor: number; valorFmt: string; detalhes: string }[] = supplierInfo?.creditDetails || [];
-        if (creditEntries.length > 0) {
+        if (activeCreditDetails.length > 0) {
             const nextY = (doc as any).lastAutoTable.finalY + 10;
             doc.setTextColor(16, 120, 60);
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
             doc.text('CRÉDITOS APLICADOS', 20, nextY);
 
-            const creditRows = creditEntries.map(c => [
+            const creditRows = activeCreditDetails.map((c: any) => [
                 c.detalhes || '-',
                 c.valorFmt
             ]);
 
             // Add summary row
-            creditRows.push(['TOTAL CRÉDITOS', supplierInfo!.creditOk]);
+            const creditTotalFmt = `R$ ${creditOkVal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+            creditRows.push(['TOTAL CRÉDITOS', creditTotalFmt]);
 
             autoTable(doc, {
                 startY: nextY + 3,
@@ -334,45 +393,101 @@ export default function FornecedoresPage() {
 
     const handleFullStatement = async () => {
         setStatementLoading(true);
+
+        // Step 1: generate base supplier PDF
+        let merged: PDFDocument;
         try {
             const statementBytes = generateSupplierPDF(true) as ArrayBuffer;
-            if (!statementBytes) {
-                setStatementLoading(false);
-                return;
+            if (!statementBytes) { setStatementLoading(false); return; }
+            // Try loading without ignoreEncryption first; fall back if it fails
+            try {
+                merged = await PDFDocument.load(new Uint8Array(statementBytes));
+            } catch {
+                merged = await PDFDocument.load(new Uint8Array(statementBytes), { ignoreEncryption: true });
             }
+        } catch (err: any) {
+            toast.error(`Erro ao gerar PDF base: ${err?.message || err}`);
+            setStatementLoading(false);
+            return;
+        }
 
-            const merged = await PDFDocument.load(statementBytes);
+        // Step 2: merge uploaded files
+        for (const f of statementFiles) {
+            try {
+                const fileBytes = new Uint8Array(await f.arrayBuffer());
+                const isPdf = f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
+                const isPng = f.type === 'image/png' || f.name.toLowerCase().endsWith('.png');
+                const isImg = f.type.startsWith('image/') || f.name.match(/\.(jpg|jpeg|png|webp)$/i);
 
-            for (const f of statementFiles) {
-                const fileBytes = await f.arrayBuffer();
-                if (f.type === 'application/pdf') {
-                    const srcDoc = await PDFDocument.load(fileBytes);
-                    const pages = await merged.copyPages(srcDoc, srcDoc.getPageIndices());
-                    pages.forEach((p: any) => merged.addPage(p));
-                } else if (f.type.startsWith('image/')) {
-                    let img;
-                    if (f.type === 'image/png') {
-                        img = await merged.embedPng(fileBytes);
-                    } else {
-                        img = await merged.embedJpg(fileBytes);
+                if (isPdf) {
+                    // Use pdfjs-dist to render each page as canvas → embed as PNG (handles encrypted/complex PDFs)
+                    try {
+                        const pdfjsLib = await import('pdfjs-dist');
+                        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+                            'pdfjs-dist/build/pdf.worker.min.mjs',
+                            import.meta.url
+                        ).toString();
+                        const loadingTask = pdfjsLib.getDocument({ data: fileBytes });
+                        const pdfDoc = await loadingTask.promise;
+                        const A4_W = 595.28, A4_H = 841.89;
+                        for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                            const pdfPage = await pdfDoc.getPage(pageNum);
+                            const viewport = pdfPage.getViewport({ scale: 2 }); // 2x for quality
+                            const canvas = document.createElement('canvas');
+                            canvas.width = viewport.width;
+                            canvas.height = viewport.height;
+                            const ctx = canvas.getContext('2d')!;
+                            await pdfPage.render({ canvasContext: ctx, canvas, viewport }).promise;
+                            const pngDataUrl = canvas.toDataURL('image/png');
+                            const base64 = pngDataUrl.split(',')[1];
+                            const pngBytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+                            const img = await merged.embedPng(pngBytes);
+                            const scale = Math.min(A4_W / img.width, A4_H / img.height);
+                            const page = merged.addPage([A4_W, A4_H]);
+                            page.drawImage(img, {
+                                x: (A4_W - img.width * scale) / 2,
+                                y: (A4_H - img.height * scale) / 2,
+                                width: img.width * scale,
+                                height: img.height * scale,
+                            });
+                        }
+                    } catch (pdfJsErr: any) {
+                        // fallback: try direct copyPages
+                        const srcDoc = await PDFDocument.load(fileBytes, { ignoreEncryption: true });
+                        const pages = await merged.copyPages(srcDoc, srcDoc.getPageIndices());
+                        pages.forEach(p => merged.addPage(p));
                     }
-                    const { width, height } = img;
-                    const A4_W = 595.28;
-                    const A4_H = 841.89;
-
-                    const scale = Math.min(A4_W / width, A4_H / height);
-                    const drawW = width * scale;
-                    const drawH = height * scale;
-                    const x = (A4_W - drawW) / 2;
-                    const y = (A4_H - drawH) / 2;
-
+                } else if (isImg) {
+                    const img = isPng
+                        ? await merged.embedPng(fileBytes)
+                        : await merged.embedJpg(fileBytes);
+                    const A4_W = 595.28, A4_H = 841.89;
+                    const scale = Math.min(A4_W / img.width, A4_H / img.height);
                     const page = merged.addPage([A4_W, A4_H]);
-                    page.drawImage(img, { x, y, width: drawW, height: drawH });
+                    page.drawImage(img, {
+                        x: (A4_W - img.width * scale) / 2,
+                        y: (A4_H - img.height * scale) / 2,
+                        width: img.width * scale,
+                        height: img.height * scale,
+                    });
                 }
+            } catch (fileErr: any) {
+                toast.error(`Erro ao anexar "${f.name}": ${fileErr.message || 'formato inválido'}`);
             }
+        }
 
-            const pdfBytes = await merged.save();
-            const blob = new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' });
+        // Step 3: save
+        let pdfBytes: Uint8Array;
+        try {
+            pdfBytes = await merged.save();
+        } catch (err: any) {
+            toast.error(`Erro ao salvar PDF: ${err?.message || err}`);
+            setStatementLoading(false);
+            return;
+        }
+
+        try {
+            const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -393,10 +508,9 @@ export default function FornecedoresPage() {
             setStatementFiles([]);
 
             try {
-                const arr = new Uint8Array(pdfBytes);
                 let binary = '';
-                for (let i = 0; i < arr.byteLength; i++) {
-                    binary += String.fromCharCode(arr[i]);
+                for (let i = 0; i < pdfBytes.byteLength; i++) {
+                    binary += String.fromCharCode(pdfBytes[i]);
                 }
                 const pdfBase64 = btoa(binary);
                 
@@ -417,9 +531,9 @@ export default function FornecedoresPage() {
             } catch (e) {
                 console.error('Failed to send statement email:', e);
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            toast.error('Erro ao gerar Statement Final.');
+            toast.error(`Erro: ${err?.message || 'Falha ao gerar Statement Final'}`);
         } finally {
             setStatementLoading(false);
         }
@@ -542,19 +656,40 @@ export default function FornecedoresPage() {
                 </div>
 
                 {/* Metrics Overview */}
-                <div className="grid gap-3 md:grid-cols-2">
-                    <div className="bg-white/[0.03] rounded-2xl px-5 py-3 relative overflow-hidden">
-                        <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">Total Filtrado nas Saídas</p>
-                        <div className="text-xl font-black text-white tracking-tighter flex items-center gap-2">
-                            {data?.summary?.totalValue}
-                            {loading && <span className="material-symbols-outlined text-sm animate-spin text-white/40">refresh</span>}
+                {(() => {
+                    const activeLedgerSum = (data?.ledger || [])
+                        .filter((r: any) => !excludedLocs.has(r.loc))
+                        .reduce((acc: number, r: any) => acc + parseCurrencyBR(r.total), 0);
+                    const selSupplier = data?.suppliers?.find((s: any) => s.name === supplier);
+                    const creditSum = (selSupplier?.creditDetails || [])
+                        .filter((_: any, i: number) => selectedCreditIds.has(i))
+                        .reduce((acc: number, c: any) => acc + parseCurrencyBR(c.valorFmt), 0);
+                    const net = activeLedgerSum - creditSum;
+                    const fmtNet = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Math.abs(net));
+                    const fmtDebt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(activeLedgerSum);
+                    return (
+                        <div className="grid gap-3 md:grid-cols-2">
+                            <div className="bg-white/[0.03] rounded-2xl px-5 py-3 relative overflow-hidden">
+                                <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">
+                                    Saldo Líquido {supplier && supplier !== 'TODOS' ? `— ${supplier}` : ''}
+                                </p>
+                                <div className={cn("text-xl font-black tracking-tighter flex items-center gap-2", net > 0 ? 'text-red-400' : net < 0 ? 'text-emerald-400' : 'text-white')}>
+                                    {net > 0 ? '-' : net < 0 ? '+' : ''}{fmtNet}
+                                    {loading && <span className="material-symbols-outlined text-sm animate-spin text-white/40">refresh</span>}
+                                </div>
+                                {creditSum > 0 && (
+                                    <p className="text-[9px] text-white/20 font-mono mt-0.5">
+                                        {fmtDebt} — créditos {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(creditSum)}
+                                    </p>
+                                )}
+                            </div>
+                            <div className="bg-white/[0.03] rounded-2xl px-5 py-3">
+                                <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">Fornecedores Vinculados</p>
+                                <div className="text-xl font-black text-white tracking-tighter">{data?.suppliers?.length || 0}</div>
+                            </div>
                         </div>
-                    </div>
-                    <div className="bg-white/[0.03] rounded-2xl px-5 py-3">
-                        <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">Fornecedores Vinculados</p>
-                        <div className="text-xl font-black text-white tracking-tighter">{data?.suppliers?.length || 0}</div>
-                    </div>
-                </div>
+                    );
+                })()}
 
                 <div className="grid gap-3 lg:grid-cols-12 min-h-0">
                     {/* Suppliers List */}
@@ -573,51 +708,58 @@ export default function FornecedoresPage() {
                                     <div
                                         key={idx}
                                         className={cn(
-                                            "flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer",
+                                            "flex flex-col gap-0.5 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer",
                                             supplier === s.name
                                                 ? "bg-white/10"
                                                 : "bg-white/[0.02] hover:bg-white/[0.05]"
                                         )}
-                                        onClick={() => setSupplier(s.name)}
+                                        onClick={() => { needsCreditResetRef.current = true; setSupplier(s.name); }}
                                     >
-                                        {/* Status dot */}
-                                        <div className={cn("w-1.5 h-1.5 rounded-full shrink-0",
-                                            s.saldoType === 'POSITIVE' ? 'bg-emerald-400' :
-                                            s.saldoType === 'NEGATIVE' ? 'bg-blue-400' : 'bg-white/20'
-                                        )} />
-
-                                        {/* Name */}
-                                        <span className={cn("text-[11px] font-black uppercase tracking-wide flex-1 truncate", supplier === s.name ? "text-white" : "text-white/70")}>
-                                            {s.name}
-                                        </span>
-
-                                        {/* Crédito */}
-                                        <span className="text-emerald-400 font-mono text-[10px] shrink-0">{s.creditOk}</span>
-                                        <span className="text-white/10 text-[9px]">|</span>
-                                        {/* Devendo */}
-                                        <span className="text-blue-400 font-mono text-[10px] shrink-0">{s.debt}</span>
-                                        <span className="text-white/10 text-[9px]">|</span>
-
-                                        {/* Saldo + copy */}
-                                        <div
-                                            className="flex items-center gap-1 cursor-pointer group/copy shrink-0"
-                                            onClick={(e) => { e.stopPropagation(); copyToClipboard(s.saldo); }}
-                                            title="Copiar Saldo"
-                                        >
-                                            <span className="text-white font-black text-[11px]">{s.saldo}</span>
-                                            <span className="material-symbols-outlined text-[10px] text-white/20 group-hover/copy:text-white/60 transition-colors">content_copy</span>
+                                        {/* Row 1: dot + name + pix */}
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            <div className={cn("w-2 h-2 rounded-full shrink-0",
+                                                s.saldoType === 'POSITIVE' ? 'bg-emerald-400' :
+                                                s.saldoType === 'NEGATIVE' ? 'bg-red-400' : 'bg-white/20'
+                                            )} />
+                                            <span className={cn("text-[12px] font-black uppercase tracking-wide flex-1 truncate",
+                                                s.saldoType === 'NEGATIVE'
+                                                    ? (supplier === s.name ? "text-red-300" : "text-red-400/80")
+                                                    : (supplier === s.name ? "text-white" : "text-white/70")
+                                            )}>
+                                                {s.name}
+                                            </span>
+                                            {s.pix && (
+                                                <div
+                                                    className="flex items-center cursor-pointer group/pix shrink-0"
+                                                    onClick={(e) => { e.stopPropagation(); copyToClipboard(s.pix); }}
+                                                    title={`Copiar PIX: ${s.pix}`}
+                                                >
+                                                    <span className="material-symbols-outlined text-[11px] text-emerald-400/40 group-hover/pix:text-emerald-400 transition-colors">tag</span>
+                                                </div>
+                                            )}
                                         </div>
 
-                                        {/* PIX copy */}
-                                        {s.pix && (
+                                        {/* Row 2: crédito | dívida | saldo */}
+                                        <div className="flex items-center gap-0 pl-3.5">
+                                            <span className="text-white/30 text-[9px] uppercase tracking-wider w-[30px] shrink-0">crd</span>
+                                            <span className="w-[72px] text-right text-emerald-400 font-mono text-[11px] shrink-0">{s.creditOk}</span>
+                                            <span className="text-white/10 mx-1.5 text-[9px]">|</span>
+                                            <span className="text-white/30 text-[9px] uppercase tracking-wider w-[26px] shrink-0">dív</span>
+                                            <span className={cn("w-[72px] text-right font-mono text-[11px] shrink-0",
+                                                s.saldoType === 'NEGATIVE' ? 'text-red-400' : 'text-blue-400'
+                                            )}>{s.debt}</span>
+                                            <span className="text-white/10 mx-1.5 text-[9px]">|</span>
                                             <div
-                                                className="flex items-center gap-0.5 cursor-pointer group/pix shrink-0"
-                                                onClick={(e) => { e.stopPropagation(); copyToClipboard(s.pix); }}
-                                                title={`Copiar PIX: ${s.pix}`}
+                                                className="flex items-center gap-1 cursor-pointer group/copy ml-auto shrink-0"
+                                                onClick={(e) => { e.stopPropagation(); copyToClipboard(s.saldo); }}
+                                                title="Copiar Saldo"
                                             >
-                                                <span className="material-symbols-outlined text-[11px] text-emerald-400/40 group-hover/pix:text-emerald-400 transition-colors">tag</span>
+                                                <span className={cn("font-black text-[12px]",
+                                                    s.saldoType === 'NEGATIVE' ? 'text-red-300' : 'text-white'
+                                                )}>{s.saldo}</span>
+                                                <span className="material-symbols-outlined text-[10px] text-white/20 group-hover/copy:text-white/60 transition-colors">content_copy</span>
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -649,9 +791,10 @@ export default function FornecedoresPage() {
                         {/* Ledger Table */}
                         <div className="bg-white/[0.03] rounded-2xl overflow-hidden flex-1 flex flex-col min-h-[250px] max-h-[520px]">
                             <div className="overflow-y-auto custom-scrollbar flex-1">
-                                <table className="w-full text-left text-xs">
+                                <table className="w-full text-center text-xs">
                                     <thead className="sticky top-0 z-10 bg-[#0d0d0d]/95 backdrop-blur-md">
                                         <tr className="text-[10px] uppercase tracking-widest text-white/30">
+                                            <th className="px-3 py-2 w-10"></th>
                                             <th className="px-3 py-2 font-black">Data</th>
                                             <th className="px-3 py-2 font-black">LOC</th>
                                             <th className="px-3 py-2 font-black text-right">Preço/Mi</th>
@@ -684,10 +827,39 @@ export default function FornecedoresPage() {
                                                 ? (String(row.total).startsWith('R$') ? row.total : `R$ ${row.total}`)
                                                 : '—';
 
+                                            const isExcluded = excludedLocs.has(row.loc);
+                                            const isToggling = togglingLoc === row.loc;
+                                            const isChecked = !isExcluded;
+
+                                            const missingFields: string[] = [];
+                                            if (!row.price || row.price === '0') missingFields.push('Preço/Mi');
+                                            if (!row.value || row.value === '0') missingFields.push('Valor');
+                                            if (!row.tax || row.tax === '0') missingFields.push('Taxas');
+                                            if (!row.taxesCc) missingFields.push('Account');
+                                            if (!row.miles || row.miles === '0') missingFields.push('Milhas');
+                                            const hasWarning = missingFields.length > 0 && !isExcluded;
+
                                             return (
-                                            <tr key={i} className="hover:bg-white/[0.03] transition-colors group">
-                                                <td className="px-3 py-1.5 text-white/40 font-mono whitespace-nowrap">{row.date}</td>
-                                                <td className="px-3 py-1.5 text-white font-black group-hover:text-amber-200 transition-colors whitespace-nowrap">{row.loc}</td>
+                                            <tr
+                                                key={i}
+                                                onClick={() => toggleExclude(row.loc)}
+                                                className={cn(
+                                                    "transition-colors cursor-pointer",
+                                                    isExcluded ? "opacity-20 hover:opacity-30" :
+                                                    hasWarning ? "bg-red-500/10 hover:bg-red-500/15 border-l-2 border-l-red-500/60" :
+                                                    "hover:bg-white/[0.03]"
+                                                )}
+                                            >
+                                                <td className="px-3 py-1.5 text-center w-10">
+                                                    <div className={cn(
+                                                        "w-3 h-3 rounded-[2px] border transition-all mx-auto",
+                                                        isChecked ? "bg-white/70 border-white/70" : "border-white/20"
+                                                    )} />
+                                                </td>
+                                                <td className="px-3 py-1.5 text-white/40 font-mono whitespace-nowrap">{row.date || <span className="text-amber-400/60">—</span>}</td>
+                                                <td className="px-3 py-1.5 font-black whitespace-nowrap">
+                                                    <span className="text-white">{row.loc}</span>
+                                                </td>
                                                 <td className={cn("px-3 py-1.5 text-right whitespace-nowrap font-mono", valueFaded ? "text-white/20" : "text-white/60")}>{fmtPrice}</td>
                                                 <td className={cn("px-3 py-1.5 text-right whitespace-nowrap font-mono", valueFaded ? "text-white/20" : "text-white/70")}>{fmtValue}</td>
                                                 <td className={cn("px-3 py-1.5 text-right whitespace-nowrap font-mono", taxFaded ? "text-white/20" : "text-white/70")}>{fmtTax}</td>
@@ -710,8 +882,24 @@ export default function FornecedoresPage() {
                                         {/* Credit rows */}
                                         {supplier && supplier !== 'TODOS' && (() => {
                                             const selSupplier = data?.suppliers?.find((s: any) => s.name === supplier);
-                                            return selSupplier?.creditDetails?.map((c: any, ci: number) => (
-                                                <tr key={`credit-${ci}`} className="hover:bg-emerald-500/5 transition-colors">
+                                            return selSupplier?.creditDetails?.map((c: any, ci: number) => {
+                                                const isCreditSelected = selectedCreditIds.has(ci);
+                                                return (
+                                                <tr
+                                                    key={`credit-${ci}`}
+                                                    onClick={() => {
+                                                        const next = new Set(selectedCreditIds);
+                                                        if (next.has(ci)) next.delete(ci); else next.add(ci);
+                                                        setSelectedCreditIds(next);
+                                                    }}
+                                                    className={cn("transition-colors cursor-pointer hover:bg-emerald-500/5", !isCreditSelected && "opacity-20")}
+                                                >
+                                                    <td className="px-3 py-1.5 text-center w-10">
+                                                        <div className={cn(
+                                                            "w-3 h-3 rounded-[2px] border transition-all mx-auto",
+                                                            isCreditSelected ? "bg-emerald-400/80 border-emerald-400/80" : "border-white/20"
+                                                        )} />
+                                                    </td>
                                                     <td className="px-3 py-1.5 text-white/20 font-mono whitespace-nowrap text-[10px]">—</td>
                                                     <td className="px-3 py-1.5 text-emerald-400 font-black whitespace-nowrap max-w-[110px] truncate" title={c.detalhes}>{c.detalhes || '—'}</td>
                                                     <td className="px-3 py-1.5 text-right text-white/20 text-[10px]">—</td>
@@ -724,7 +912,8 @@ export default function FornecedoresPage() {
                                                         </Badge>
                                                     </td>
                                                 </tr>
-                                            ));
+                                                );
+                                            });
                                         })()}
                                         {data?.ledger?.length === 0 && (
                                             <tr>

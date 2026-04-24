@@ -109,7 +109,7 @@ export default function EmissoesPage() {
             {/* Ledger Table */}
             <div className="glass-panel rounded-3xl border border-white/5 overflow-hidden flex-1 flex flex-col min-h-0">
                 <div className="overflow-y-auto custom-scrollbar flex-1">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-center border-collapse">
                         <thead className="sticky top-0 z-10 bg-[#0e0e0e]">
                             <tr className="bg-white/[0.02]">
                                 <th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-white/5">Locator</th>

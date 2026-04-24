@@ -14,6 +14,9 @@
     },
     "src/app/api/sync/sheets/route.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/sync/azul/route.ts": {
+      "maxDuration": 300
     }
   }
 }

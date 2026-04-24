@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
 import { Toaster } from "@/components/ui/sonner";
+import { WallpaperBackground } from "@/components/layout/wallpaper-background";
+import { TextThemeProvider } from "@/components/layout/text-theme-provider";
 import { createClient } from "@/utils/supabase/server";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -36,6 +38,8 @@ export default async function RootLayout({
           <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-white opacity-[0.02] blur-[150px] -z-10 rounded-full pointer-events-none"></div>
           <div className="fixed bottom-0 left-0 w-[800px] h-[800px] bg-secondary opacity-[0.01] blur-[200px] -z-10 rounded-full pointer-events-none"></div>
 
+          <WallpaperBackground />
+          <TextThemeProvider />
           {/* Global Map Wireframe (Subtle Background) */}
           <div className="fixed inset-0 pointer-events-none -z-20 opacity-[0.03]">
             <img 

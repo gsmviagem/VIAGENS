@@ -433,7 +433,7 @@ export default function FinancialsPage() {
                                 <span className="material-symbols-outlined text-sm">calendar_month</span> Evolução Mensal
                             </h2>
                             <div className="flex-grow overflow-y-auto custom-scrollbar pr-1">
-                                <table className="w-full text-left text-[11px]">
+                                <table className="w-full text-center text-[11px]">
                                     <thead>
                                         <tr className="border-b border-white/5 text-[9px] uppercase text-white/50 sticky top-0 bg-black/40 backdrop-blur-md">
                                             <th className="py-1.5">Mês/Ano</th>
@@ -460,7 +460,7 @@ export default function FinancialsPage() {
                                 <span className="material-symbols-outlined text-sm">inventory_2</span> Performance Produto (Cias)
                             </h2>
                             <div className="flex-grow overflow-y-auto custom-scrollbar pr-1">
-                                <table className="w-full text-left text-[11px]">
+                                <table className="w-full text-center text-[11px]">
                                     <thead>
                                         <tr className="border-b border-white/5 text-[9px] uppercase text-white/50 sticky top-0 bg-black/40 backdrop-blur-md">
                                             <th className="py-1.5">Programa</th>

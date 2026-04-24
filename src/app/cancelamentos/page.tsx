@@ -129,7 +129,7 @@ export default function CancelamentosPage() {
                         ) : (
                             <div className="w-full overflow-auto custom-scrollbar flex-1">
                                 <div className="min-w-max">
-                                    <table className="w-full text-left border-collapse table-auto">
+                                    <table className="w-full text-center border-collapse table-auto">
                                         <thead className="sticky top-0 z-10 bg-[#0e0e0e]">
                                             <tr className="border-b border-[#474747]/30 bg-black/80 backdrop-blur-md">
                                                 {headers.map(h => (

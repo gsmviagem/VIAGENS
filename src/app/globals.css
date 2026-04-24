@@ -178,3 +178,20 @@
     height: 3px;
   }
 }
+
+/* ── Light Text Mode (white wallpaper support) ── */
+html.hub-light-text body {
+  color: #111 !important;
+}
+html.hub-light-text [class*="text-white"] {
+  color: rgba(0, 0, 0, 0.8) !important;
+}
+html.hub-light-text .text-slate-100,
+html.hub-light-text .text-slate-200 {
+  color: #1a1a1a !important;
+}
+html.hub-light-text .text-slate-400,
+html.hub-light-text .text-slate-500,
+html.hub-light-text .text-slate-600 {
+  color: rgba(0, 0, 0, 0.5) !important;
+}

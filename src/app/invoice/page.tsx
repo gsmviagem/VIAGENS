@@ -132,10 +132,14 @@ export default function InvoicePage() {
     }, [data.credits, selectedCreditIds]);
 
     const totalSelectedCredits = useMemo(() => {
-        return activeCredits.reduce((acc, curr) => acc + curr.amount, 0);
+        return activeCredits.filter(c => c.amount >= 0).reduce((acc, curr) => acc + curr.amount, 0);
     }, [activeCredits]);
 
-    const finalTotal = totalEmissions - totalSelectedCredits;
+    const totalSelectedCharges = useMemo(() => {
+        return activeCredits.filter(c => c.amount < 0).reduce((acc, curr) => acc + Math.abs(curr.amount), 0);
+    }, [activeCredits]);
+
+    const finalTotal = totalEmissions - totalSelectedCredits + totalSelectedCharges;
 
     const toggleCredit = (id: string) => {
         const next = new Set(selectedCreditIds);
@@ -208,26 +212,39 @@ export default function InvoicePage() {
         doc.setFontSize(9);
         doc.text(`$ ${totalEmissions.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumBoxX + 47, infoY + 7, { align: 'right' });
 
+        let pdfOffsetY = 0;
         if (totalSelectedCredits > 0) {
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(6.5);
             doc.setTextColor(120, 120, 120);
             doc.text('Credits', sumBoxX + 3, infoY + 13);
-            doc.setTextColor(220, 38, 38);
+            doc.setTextColor(16, 185, 129);
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(9);
             doc.text(`-$ ${totalSelectedCredits.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumBoxX + 47, infoY + 13, { align: 'right' });
+            pdfOffsetY += 6;
+        }
+        if (totalSelectedCharges > 0) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(6.5);
+            doc.setTextColor(120, 120, 120);
+            doc.text('Debit', sumBoxX + 3, infoY + 13 + pdfOffsetY);
+            doc.setTextColor(220, 38, 38);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.text(`+$ ${totalSelectedCharges.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumBoxX + 47, infoY + 13 + pdfOffsetY, { align: 'right' });
+            pdfOffsetY += 6;
         }
 
         const finalColor = finalTotal <= 0 ? ACCENT_COLOR : PRIMARY_BLUE;
         doc.setFillColor(finalColor[0], finalColor[1], finalColor[2]);
-        doc.rect(sumBoxX, infoY + 15.5, 50, 6.5, 'F');
+        doc.rect(sumBoxX, infoY + 15.5 + pdfOffsetY, 50, 6.5, 'F');
         doc.setFontSize(6);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(255, 255, 255);
-        doc.text('TOTAL', sumBoxX + 3, infoY + 20);
+        doc.text('TOTAL', sumBoxX + 3, infoY + 20 + pdfOffsetY);
         doc.setFontSize(11);
-        doc.text(`$ ${Math.abs(finalTotal).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumBoxX + 47, infoY + 20, { align: 'right' });
+        doc.text(`$ ${Math.abs(finalTotal).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, sumBoxX + 47, infoY + 20 + pdfOffsetY, { align: 'right' });
 
         const emissionsRows = data.emissions.map((e: any) => [
             formatUSDate(e.date),
@@ -238,7 +255,7 @@ export default function InvoicePage() {
         ]);
 
         autoTable(doc, {
-            startY: infoY + 30,
+            startY: infoY + 30 + pdfOffsetY,
             head: [['Date', 'Passenger', 'Loc', 'Route', 'Price']],
             body: emissionsRows,
             theme: 'grid',
@@ -526,9 +543,19 @@ export default function InvoicePage() {
                             <span className="text-[9px] font-black text-outline uppercase tracking-widest">Total Expenses</span>
                             <p className="text-2xl font-black text-white mt-1">$ {totalEmissions.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
                          </div>
-                         <div className="glass-panel p-6 border-x-0 rounded-none bg-emerald-500/2">
-                            <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Applied Credits</span>
-                            <p className="text-2xl font-black text-emerald-400 mt-1">- $ {totalSelectedCredits.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                         <div className="glass-panel p-6 border-x-0 rounded-none bg-emerald-500/2 flex flex-col gap-1">
+                            {totalSelectedCredits > 0 && <>
+                                <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Applied Credits</span>
+                                <p className="text-xl font-black text-emerald-400">- $ {totalSelectedCredits.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                            </>}
+                            {totalSelectedCharges > 0 && <>
+                                <span className="text-[9px] font-black text-red-400 uppercase tracking-widest">Debit</span>
+                                <p className="text-xl font-black text-red-400">+ $ {totalSelectedCharges.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                            </>}
+                            {totalSelectedCredits === 0 && totalSelectedCharges === 0 && <>
+                                <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Applied Credits</span>
+                                <p className="text-2xl font-black text-emerald-400">$ 0.00</p>
+                            </>}
                          </div>
                          <div className="glass-panel p-6 border-l-0 rounded-l-none bg-white/2">
                             <span className="text-[9px] font-black text-outline uppercase tracking-widest">Net Total Due</span>
@@ -574,7 +601,7 @@ export default function InvoicePage() {
                                             <span className="text-[9px] font-black text-white uppercase tracking-widest">Listing: Expenses</span>
                                             <span className="text-[8px] text-outline font-mono uppercase">Emissions Data</span>
                                         </div>
-                                        <table className="w-full text-left border-collapse table-fixed">
+                                        <table className="w-full text-center border-collapse table-fixed">
                                             <thead>
                                                 <tr className="bg-black/20">
                                                     <th className="w-24 px-6 py-4 text-[8px] font-black text-outline uppercase">Date</th>
@@ -626,7 +653,7 @@ export default function InvoicePage() {
                                                      </button>
                                                 </div>
                                             </div>
-                                            <table className="w-full text-left border-collapse table-fixed">
+                                            <table className="w-full text-center border-collapse table-fixed">
                                                 <tbody className="divide-y divide-white/5">
                                                     {data.credits.map((c, i) => {
                                                         const isSelected = selectedCreditIds.has(c.id);
@@ -651,11 +678,13 @@ export default function InvoicePage() {
                                                                 <td className="px-4 py-4">
                                                                     <div className="flex flex-col">
                                                                         <span className="text-[10px] font-black text-white uppercase italic tracking-tighter">{c.payment || 'Payment Reference'}</span>
-                                                                        <span className="text-[8px] text-outline uppercase mt-1">{c.type}</span>
+                                                                        <span className={cn("text-[8px] uppercase mt-1", c.amount < 0 ? "text-red-400/60" : "text-outline")}>{c.amount < 0 ? 'Debit' : (c.type || 'Credit')}</span>
                                                                     </div>
                                                                 </td>
-                                                                <td className="w-32 px-6 py-4 text-right text-[11px] font-black text-emerald-400">
-                                                                    - $ {c.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                                                <td className={cn("w-32 px-6 py-4 text-right text-[11px] font-black", c.amount < 0 ? "text-red-400" : "text-emerald-400")}>
+                                                                    {c.amount < 0
+                                                                        ? `+ $ ${Math.abs(c.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+                                                                        : `- $ ${c.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
                                                                 </td>
                                                             </tr>
                                                         );

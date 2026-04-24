@@ -8,6 +8,7 @@ export const maxDuration = 60;
 const SUPPLIER_ALIASES: Record<string, string> = {
     'LIMINAR NOSSA': 'JULIO BALCAO',
     'JULIO BALCÃO':  'JULIO BALCAO',
+    'DAVI BALCÃO':   'DAVI BALCAO',
 };
 
 function normalizeSupplier(name: string): string {
@@ -66,13 +67,24 @@ export async function POST(req: NextRequest) {
                 
                 const pnr = (row[0] || '').trim().toUpperCase();
                 if (pnr) {
-                    baseMap[pnr] = {
-                        price: row[3] || '0', 
-                        miles: row[4] || '0',
-                        paidMiles: (row[16] || '').trim() !== '',
-                        paidTaxes: (row[17] || '').trim() !== '',
-                        paidServ: (row[18] || '').trim() !== ''
-                    };
+                    const rowPaidMiles = (row[16] || '').trim() !== '';
+                    const rowPaidTaxes = (row[17] || '').trim() !== '';
+                    const rowPaidServ  = (row[18] || '').trim() !== '';
+                    if (!baseMap[pnr]) {
+                        baseMap[pnr] = {
+                            price: row[3] || '0',
+                            miles: row[4] || '0',
+                            paidMiles: rowPaidMiles,
+                            paidTaxes: rowPaidTaxes,
+                            paidServ:  rowPaidServ
+                        };
+                    } else {
+                        // Same LOC more than once (e.g. adult + infant):
+                        // only consider paid if ALL rows for this LOC are paid
+                        baseMap[pnr].paidMiles = baseMap[pnr].paidMiles && rowPaidMiles;
+                        baseMap[pnr].paidTaxes = baseMap[pnr].paidTaxes && rowPaidTaxes;
+                        baseMap[pnr].paidServ  = baseMap[pnr].paidServ  && rowPaidServ;
+                    }
                 }
             }
         }
@@ -132,6 +144,16 @@ export async function POST(req: NextRequest) {
             }
         }
 
+        // Fetch excluded LOCs (emissions manually excluded from account)
+        const excludedLocs = new Set<string>();
+        const excludedData = await sheetsService.readSheetData('SUPPLIER!AK:AK');
+        if (excludedData) {
+            for (let i = 1; i < excludedData.length; i++) {
+                const loc = (excludedData[i]?.[0] || '').trim().toUpperCase();
+                if (loc) excludedLocs.add(loc);
+            }
+        }
+
         const ledger: any[] = [];
         const supplierDebts: Record<string, number> = {};
         let filteredTotal = 0;
@@ -146,7 +168,9 @@ export async function POST(req: NextRequest) {
 
         for (let i = 2; i < rawData.length; i++) {
             const row = rawData[i];
-            if (!row || !row[0] || row[0].trim() === '') continue; 
+            // Skip rows where LOC (col D = row[2]) is empty — date may be blank and that's OK
+            const rowLocCheck = (row?.[2] || '').trim();
+            if (!row || rowLocCheck === '') continue;
 
             const dateStr = row[0];
             let rowDate = parseDateStr(dateStr);
@@ -173,15 +197,19 @@ export async function POST(req: NextRequest) {
             const product = row[3] || '';
             const totalStr = row[12] || '0';
 
-            // Accumulate Debts - Only add to debt if it's NOT paid yet
-            if (!isMilesPaid) {
-                if (rowSupplierMiles) supplierDebts[rowSupplierMiles] = (supplierDebts[rowSupplierMiles] || 0) + valMiles;
-            }
-            if (!isTaxesPaid) {
-                if (rowSupplierTax) supplierDebts[rowSupplierTax] = (supplierDebts[rowSupplierTax] || 0) + valTax;
-            }
-            if (!isRepPaid) {
-                if (rowSupplierRep) supplierDebts[rowSupplierRep] = (supplierDebts[rowSupplierRep] || 0) + valRep;
+            const isLocExcluded = excludedLocs.has(rowLoc);
+
+            // Accumulate Debts - Only add to debt if NOT paid and NOT excluded
+            if (!isLocExcluded) {
+                if (!isMilesPaid) {
+                    if (rowSupplierMiles) supplierDebts[rowSupplierMiles] = (supplierDebts[rowSupplierMiles] || 0) + valMiles;
+                }
+                if (!isTaxesPaid) {
+                    if (rowSupplierTax) supplierDebts[rowSupplierTax] = (supplierDebts[rowSupplierTax] || 0) + valTax;
+                }
+                if (!isRepPaid) {
+                    if (rowSupplierRep) supplierDebts[rowSupplierRep] = (supplierDebts[rowSupplierRep] || 0) + valRep;
+                }
             }
 
             // Apply Filters for Ledger
@@ -201,26 +229,29 @@ export async function POST(req: NextRequest) {
                     } else {
                         // Check if THIS searched supplier actually has anything pending here
                         let isSupplierPending = false;
-                        if (rowSupplierMiles === reqSupp && !isMilesPaid) {
-                            isSupplierPending = true;
-                            supplierOwedInThisRow += valMiles;
-                        }
-                        if (rowSupplierTax === reqSupp && !isTaxesPaid) {
-                            isSupplierPending = true;
-                            supplierOwedInThisRow += valTax;
-                        }
-                        if (rowSupplierRep === reqSupp && !isRepPaid) {
-                            isSupplierPending = true;
-                            supplierOwedInThisRow += valRep;
+                        if (!isLocExcluded) {
+                            if (rowSupplierMiles === reqSupp && !isMilesPaid) {
+                                isSupplierPending = true;
+                                supplierOwedInThisRow += valMiles;
+                            }
+                            if (rowSupplierTax === reqSupp && !isTaxesPaid) {
+                                isSupplierPending = true;
+                                supplierOwedInThisRow += valTax;
+                            }
+                            if (rowSupplierRep === reqSupp && !isRepPaid) {
+                                isSupplierPending = true;
+                                supplierOwedInThisRow += valRep;
+                            }
                         }
 
-                        if (pendingOnly && !isSupplierPending) {
+                        // Excluded rows always visible (user needs to be able to re-include them)
+                        if (pendingOnly && !isSupplierPending && !isLocExcluded) {
                             include = false;
                         }
                     }
                 } else if (pendingOnly) {
                     // If any of the parts are pending, keep it
-                    if (isMilesPaid && isTaxesPaid && isRepPaid) {
+                    if (isMilesPaid && isTaxesPaid && isRepPaid && !isLocExcluded) {
                         include = false;
                     }
                 }
@@ -247,21 +278,24 @@ export async function POST(req: NextRequest) {
                     date: dateStr,
                     loc: rowLoc,
                     product: product,
-                    price: valMilesPrice, 
-                    miles: valMilesQty, 
-                    value: row[7] || '0', 
-                    taxesCc: row[8] || '', 
-                    tax: row[9] || '0',   
+                    price: valMilesPrice,
+                    miles: valMilesQty,
+                    value: row[7] || '0',
+                    taxesCc: row[8] || '',
+                    tax: row[9] || '0',
                     total: visualRowTotal,
                     issueStatus: printIssueStatus,
                     supplier: rowSupplierMiles || rowSupplierTax || rowSupplierRep,
                     milesSupplier: rowSupplierMiles,
                     taxSupplier: rowSupplierTax,
                     isMilesPaid: isMilesPaid,
-                    isTaxesPaid: isTaxesPaid
+                    isTaxesPaid: isTaxesPaid,
+                    isExcluded: isLocExcluded,
                 });
                 
-                filteredTotal += (supplier && supplier !== 'TODOS') ? supplierOwedInThisRow : parseCurrency(totalStr);
+                if (!isLocExcluded) {
+                    filteredTotal += (supplier && supplier !== 'TODOS') ? supplierOwedInThisRow : parseCurrency(totalStr);
+                }
 
                 const priceFormatted = valMilesPrice !== '0' ? `R$ ${valMilesPrice.replace('R$', '').trim()}` : '-';
                 const taxFormatted = (row[9] && row[9] !== '0') ? `R$ ${row[9].replace('R$', '').trim()}` : 'R$ 0,00';
@@ -328,7 +362,12 @@ export async function POST(req: NextRequest) {
                 };
             })
             .filter(s => parseCurrency(s.debt) > 0 || parseCurrency(s.creditOk) !== 0)
-            .sort((a, b) => parseCurrency(b.debt) - parseCurrency(a.debt));
+            .sort((a, b) => {
+                const sign = (s: typeof a) => s.saldoType === 'NEGATIVE' ? -1 : (s.saldoType === 'POSITIVE' ? 1 : 0);
+                const aVal = sign(a) * parseCurrency(a.saldo);
+                const bVal = sign(b) * parseCurrency(b.saldo);
+                return aVal - bVal; // most owed (most negative) first
+            });
 
         return NextResponse.json({
             success: true,
@@ -338,6 +377,7 @@ export async function POST(req: NextRequest) {
                 },
                 suppliers: suppliersList,
                 ledger,
+                excludedLocs: Array.from(excludedLocs),
                 generated: {
                     full: generatedFullText.trim(),
                     summary: generatedSummaryText.trim()

@@ -518,7 +518,7 @@ export default function CotacaoPage() {
                         </div>
                         {results.length > 0 ? (
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm">
+                                <table className="w-full text-center text-sm">
                                     <thead>
                                         <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-slate-500">
                                             <th className="px-6 py-4 font-bold">Source</th>

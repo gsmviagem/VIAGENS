@@ -19,6 +19,7 @@ const navItems = [
     { href: '/calculo', label: 'Calculator', icon: 'calculate' },
     { href: '/invoice', label: 'Invoice', icon: 'description' },
     { href: '/ferramentas', label: 'Tools', icon: 'build' },
+    { href: '/monitor', label: 'Monitor', icon: 'monitor' },
 ];
 
 export function Sidebar() {

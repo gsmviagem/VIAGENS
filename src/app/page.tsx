@@ -167,19 +167,14 @@ export default function DashboardPage() {
 
                         {/* Brand Visualizer */}
                         <motion.section variants={fadeUp} custom={3} initial="hidden" animate="show" className="md:col-span-8 overflow-hidden flex flex-col">
-                            <div className="bg-[#080808] rounded-2xl h-full flex flex-col items-center justify-center relative overflow-hidden group shadow-[inset_0_0_80px_rgba(0,0,0,0.9)]">
-                                {/* Grid BG */}
-                                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:44px_44px] [mask-image:radial-gradient(ellipse_70%_70%_at_50%_50%,#000_60%,transparent_100%)] z-0" />
-                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.02)_0%,_#000_70%)] z-10 pointer-events-none" />
-
+                            <div className="rounded-2xl h-full flex flex-col items-center justify-center relative overflow-hidden group">
                                 <img
                                     src="/logo.png"
                                     alt="Dimais Hub"
-                                    className="w-2/5 max-w-[200px] object-contain z-20 opacity-80 group-hover:opacity-100 group-hover:scale-[1.03] transition-all duration-[2500ms] drop-shadow-[0_0_30px_rgba(255,255,255,0.08)]"
+                                    className="w-3/5 max-w-[320px] object-contain z-10 opacity-90 group-hover:opacity-100 group-hover:scale-[1.02] transition-all duration-[2000ms] drop-shadow-[0_0_40px_rgba(255,255,255,0.12)]"
                                 />
-
-                                <div className="absolute bottom-5 inset-x-0 flex flex-col items-center z-20 pointer-events-none">
-                                    <div className="h-px w-24 bg-gradient-to-r from-transparent via-white/10 to-transparent mb-2.5" />
+                                <div className="absolute bottom-4 inset-x-0 flex flex-col items-center z-10 pointer-events-none">
+                                    <div className="h-px w-24 bg-gradient-to-r from-transparent via-white/10 to-transparent mb-2" />
                                     <p className="text-[9px] font-black text-white/15 uppercase tracking-[0.7em]">Hub · Operational · Secure</p>
                                 </div>
                             </div>

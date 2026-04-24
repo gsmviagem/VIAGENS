@@ -47,6 +47,8 @@ const MONTHS_MAP: { [key: string]: string } = {
 export function parseFlightMessage(message: string, isAmericanFormat: boolean = false): ProcessedData {
     // 0. Initial Sanitization
     let msg = message.toLowerCase().replace(/\t/g, ' '); // Replace tabs with spaces
+    msg = msg.replace(/\*/g, ' ');                       // Strip asterisks (GDS adult marker)
+    msg = msg.replace(/\bdob\b/g, ' ');                  // Strip DOB keyword
     msg = msg.replace(/\b(?:pls|please)\b/g, ' '); // Remove noise words
     // Remove 'for' as a standalone connector word (e.g. "...flight for Leah..." → "...flight  Leah...")
     msg = msg.replace(/\bfor\b/g, ' ');
@@ -68,6 +70,43 @@ export function parseFlightMessage(message: string, isAmericanFormat: boolean = 
     };
 
     let workingMsg = msg;
+
+    // --- PRE-PASS: extract routes first so IATA codes aren't matched as passenger names ---
+    const _routeRegexPre = /\b([a-z]{3})\s*(?:-|to|\/|\s+)\s*([a-z]{3})\b/g;
+    const _monthCodes = new Set(['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']);
+    const _preExcluded = new Set(['eco', 'pax', 'via', 'the', 'and', 'dep', 'arr', 'pls', 'now', 'day', ..._monthCodes]);
+    let _preMatch: RegExpExecArray | null;
+    const _preRouteRaws: string[] = [];
+    while ((_preMatch = _routeRegexPre.exec(msg)) !== null) {
+        const c1 = _preMatch[1], c2 = _preMatch[2];
+        if (!_preExcluded.has(c1) && !_preExcluded.has(c2)) {
+            _preRouteRaws.push(_preMatch[0]);
+        }
+    }
+    let msgForPassengers = msg;
+    for (const raw of _preRouteRaws) {
+        msgForPassengers = msgForPassengers.replace(raw, ' '.repeat(raw.length));
+    }
+
+    // --- 0b. GDS FORMAT: LASTNAME/FIRSTNAME DDMmmYY (e.g. "SALEM/GABRIEL 14Jun01") ---
+    const passengersToRemove: string[] = [];
+    const gdsNameRegex = /([a-zÀ-ÿ]+(?:\s+[a-zÀ-ÿ]+)*)\/([a-zÀ-ÿ]+)\*?\s+(?:dob\s+)?(\d{1,2})(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*(\d{2,4})/gi;
+    let gdsMatch: RegExpExecArray | null;
+    while ((gdsMatch = gdsNameRegex.exec(msgForPassengers)) !== null) {
+        const lastName  = gdsMatch[1];
+        const firstName = gdsMatch[2];
+        const day       = gdsMatch[3];
+        const monthStr  = gdsMatch[4].toLowerCase();
+        const yearRaw   = gdsMatch[5];
+        const month = MONTHS_MAP[monthStr];
+        if (!month) continue;
+        const yearNum = parseInt(yearRaw.length === 2 ? (parseInt(yearRaw) > 25 ? `19${yearRaw}` : `20${yearRaw}`) : yearRaw);
+        if (yearNum >= new Date().getFullYear()) continue;
+        addPassenger(data, firstName, lastName, day, month, yearNum.toString());
+        passengersToRemove.push(gdsMatch[0]);
+        // blank out in msgForPassengers so the main regex doesn't re-match it
+        msgForPassengers = msgForPassengers.replace(gdsMatch[0], ' '.repeat(gdsMatch[0].length));
+    }
 
     // --- 1. PASSENGER EXTRACTION (CONSUMER MODE) ---
     // This regex looks for: Name Title (optional) + Name + Date (Slashed or Textual)
@@ -92,9 +131,8 @@ export function parseFlightMessage(message: string, isAmericanFormat: boolean = 
     const passengerRegex = new RegExp(`${namePart}\\s+${datePart}`, 'gi');
     
     let match;
-    const passengersToRemove: string[] = [];
 
-    while ((match = passengerRegex.exec(msg)) !== null) {
+    while ((match = passengerRegex.exec(msgForPassengers)) !== null) {
         const fullMatch = match[0];
         const nameText = match[1].trim();
         const names = nameText.split(/\s+/);
@@ -182,13 +220,15 @@ export function parseFlightMessage(message: string, isAmericanFormat: boolean = 
     }
 
     // --- 2. ROUTE EXTRACTION (supports round-trips) ---
-    // e.g. "lhr-jfk vs 6:35pm, and apr13 jfk-lhr 11:40pm"
+    // Blank month names from pool first so "19 apr lhr jfk" doesn't consume "lhr" inside "apr lhr"
+    const monthBlankRegex = new RegExp(`\\b(${[..._monthCodes].join('|')})\\b`, 'gi');
+    const flightInfoPoolClean = flightInfoPool.replace(monthBlankRegex, m => ' '.repeat(m.length));
     const routeRegex = /\b([a-z]{3})\s*(?:-|to|\/|\s+)\s*([a-z]{3})\b/g;
-    const excludedWords = new Set(['eco', 'pax', 'via', 'the', 'and', 'dep', 'arr', 'pls', 'now', 'day']);
+    const excludedWords = new Set(['eco', 'pax', 'via', 'the', 'and', 'dep', 'arr', 'pls', 'now', 'day', ..._monthCodes]);
     
     let routeMatch;
     const foundRoutes: { code1: string; code2: string; raw: string }[] = [];
-    while ((routeMatch = routeRegex.exec(flightInfoPool)) !== null) {
+    while ((routeMatch = routeRegex.exec(flightInfoPoolClean)) !== null) {
         const code1 = routeMatch[1].toLowerCase();
         const code2 = routeMatch[2].toLowerCase();
         if (!excludedWords.has(code1) && !excludedWords.has(code2)) {
@@ -268,7 +308,7 @@ export function parseFlightMessage(message: string, isAmericanFormat: boolean = 
     else if (/\beconomy\b|\beconomica\b|\beco\b/i.test(msg)) data.classType = 'ECONOMICA';
     else if (/\bfirst\b|\bprimeira\b/i.test(msg)) data.classType = 'PRIMEIRA';
 
-    const partnerMap: { [key: string]: string } = { vs: 'Virgin', dl: 'Delta', la: 'LATAM', ad: 'Azul', af: 'Air France', kl: 'KLM', ib: 'Iberia', tp: 'TAP' };
+    const partnerMap: { [key: string]: string } = { vs: 'Virgin', dl: 'Delta', la: 'LATAM', ad: 'Azul', af: 'Air France', kl: 'KLM', ib: 'Iberia', tp: 'TAP', aa: 'American' };
     for (const code in partnerMap) {
         if (new RegExp(`\\b${code}\\b`, 'i').test(msg)) {
             data.partner = partnerMap[code];
@@ -276,13 +316,19 @@ export function parseFlightMessage(message: string, isAmericanFormat: boolean = 
         }
     }
     if (!data.partner) {
-        const fullPartners = ['delta', 'virgin', 'latam', 'azul', 'smiles', 'tap', 'iberia', 'qatar', 'emirates'];
+        const fullPartners = ['delta', 'virgin', 'latam', 'azul', 'smiles', 'tap', 'iberia', 'qatar', 'emirates', 'american'];
         for (const p of fullPartners) {
             if (msg.includes(p)) {
                 data.partner = p.charAt(0).toUpperCase() + p.slice(1);
                 break;
             }
         }
+    }
+    // Detect partner from flight number code (e.g. AA141, UA88, BA203)
+    if (!data.partner) {
+        const flightCodeMap: { [key: string]: string } = { aa: 'American', ua: 'United', ba: 'British', lh: 'Lufthansa', g3: 'Gol', jj: 'LATAM', cm: 'Copa', av: 'Avianca', ac: 'Air Canada', ek: 'Emirates', qr: 'Qatar', nh: 'ANA', jl: 'JAL' };
+        const flightNumMatch = msg.match(/\b(aa|ua|ba|lh|g3|jj|cm|av|ac|ek|qr|nh|jl)\d+\b/i);
+        if (flightNumMatch) data.partner = flightCodeMap[flightNumMatch[1].toLowerCase()] || '';
     }
 
     // Final adjustments
