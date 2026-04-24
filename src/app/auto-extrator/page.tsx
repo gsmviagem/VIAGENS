@@ -42,6 +42,73 @@ const COLOR_MAP: Record<string, string> = {
     red: 'text-blue-400 border-blue-500/30 bg-blue-500/10',
 };
 
+// ─── Agent Status Card ────────────────────────────────────────────────────────
+function AgentStatusCard() {
+    const [state, setState] = useState<{
+        running: boolean; lastSeen: string | null; ageSeconds: number | null; loading: boolean; starting: boolean;
+    }>({ running: false, lastSeen: null, ageSeconds: null, loading: true, starting: false });
+
+    const check = useCallback(async () => {
+        try {
+            const r = await fetch('/api/agent/status');
+            const d = await r.json();
+            setState(prev => ({ ...prev, ...d, loading: false }));
+        } catch {
+            setState(prev => ({ ...prev, loading: false }));
+        }
+    }, []);
+
+    useEffect(() => {
+        check();
+        const t = setInterval(check, 15000);
+        return () => clearInterval(t);
+    }, [check]);
+
+    const handleStart = async () => {
+        setState(prev => ({ ...prev, starting: true }));
+        const r = await fetch('/api/agent/start', { method: 'POST' });
+        const d = await r.json();
+        if (!r.ok) {
+            toast.error(d.error ?? 'Erro ao iniciar agente');
+            setState(prev => ({ ...prev, starting: false }));
+            return;
+        }
+        toast.success('Agente iniciado — aguardando heartbeat...');
+        setTimeout(() => { check(); setState(prev => ({ ...prev, starting: false })); }, 8000);
+    };
+
+    const dot = state.loading ? 'bg-slate-600' : state.running ? 'bg-green-400' : 'bg-red-400';
+    const label = state.loading ? 'Verificando...' : state.running
+        ? `Online · ${state.ageSeconds != null ? `${state.ageSeconds}s` : ''}` : 'Offline';
+
+    return (
+        <div className="flex items-center justify-between p-3 rounded-xl border border-white/8 bg-white/3 gap-4">
+            <div className="flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-slate-400 text-base">smart_toy</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Agente Local</span>
+                <div className="flex items-center gap-1.5">
+                    <span className={cn('w-2 h-2 rounded-full shrink-0', dot, state.running && 'animate-pulse')} />
+                    <span className={cn('text-xs font-mono', state.running ? 'text-green-400' : 'text-slate-500')}>{label}</span>
+                </div>
+            </div>
+            {!state.loading && !state.running && (
+                <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={state.starting}
+                    onClick={handleStart}
+                    className="h-7 px-3 text-sky-400 hover:text-sky-300 border border-sky-500/20 hover:border-sky-500/40 rounded-lg text-[10px] font-black shrink-0"
+                >
+                    {state.starting
+                        ? <span className="material-symbols-outlined text-sm animate-spin">refresh</span>
+                        : <><span className="material-symbols-outlined text-sm mr-1">play_arrow</span>Iniciar</>
+                    }
+                </Button>
+            )}
+        </div>
+    );
+}
+
 // ─── Airline Credential Card ──────────────────────────────────────────────────
 function AirlineCard({
     airline,
@@ -56,7 +123,7 @@ function AirlineCard({
     isRunning: boolean;
     onAddAccount: (airlineId: string, cpf: string, password: string, description: string) => Promise<void>;
     onDeleteAccount: (id: string) => Promise<void>;
-    onSync: (airline: AirlineConfig, account: Account, full?: boolean) => Promise<void>;
+    onSync: (airline: AirlineConfig, accounts: Account[], full?: boolean) => Promise<void>;
 }) {
     const [showForm, setShowForm] = useState(false);
     const [cpf, setCpf] = useState('');
@@ -64,6 +131,15 @@ function AirlineCard({
     const [description, setDescription] = useState('');
     const [showPass, setShowPass] = useState(false);
     const [adding, setAdding] = useState(false);
+    const [selected, setSelected] = useState<Set<string>>(new Set());
+
+    const toggle = (id: string) => setSelected(prev => {
+        const next = new Set(prev);
+        next.has(id) ? next.delete(id) : next.add(id);
+        return next;
+    });
+    const allSelected = accounts.length > 0 && selected.size === accounts.length;
+    const toggleAll = () => setSelected(allSelected ? new Set() : new Set(accounts.map(a => a.id)));
 
     const colorClass = COLOR_MAP[airline.color] ?? 'text-slate-400 border-white/10 bg-white/5';
     const airlineAccounts = accounts.filter(a => {
@@ -171,74 +247,93 @@ function AirlineCard({
             </AnimatePresence>
 
             {/* Accounts List */}
-            <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar pr-0.5">
+            <div className="space-y-2 max-h-[240px] overflow-y-auto custom-scrollbar pr-0.5">
                 {airlineAccounts.length === 0 ? (
                     <div className="text-center py-6 text-slate-600 border border-dashed border-white/8 rounded-xl">
                         <span className="material-symbols-outlined text-2xl mx-auto mb-2 opacity-30 block">key</span>
                         <p className="text-[10px] font-black uppercase tracking-widest">Nenhuma conta cadastrada</p>
                     </div>
                 ) : (
-                    airlineAccounts.map(account => (
-                        <motion.div
-                            key={account.id}
-                            layout
-                            initial={{ opacity: 0, scale: 0.97 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.97 }}
-                            className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 group hover:border-white/10 transition-all"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className={cn("w-7 h-7 rounded-full flex items-center justify-center border text-[10px] font-black", colorClass)}>
-                                    {account.login_cpf.slice(-3)}
-                                </div>
-                                <div>
-                                    <div className="text-xs font-bold text-white">{account.description || 'Conta de extração'}</div>
-                                    <div className="text-[10px] text-slate-500 font-mono">
-                                        {account.login_cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '***.$2.$3-**')}
+                    <>
+                        {/* Select-all row */}
+                        <div className="flex items-center justify-between px-1 pb-1">
+                            <button onClick={toggleAll} className="flex items-center gap-1.5 text-[10px] text-slate-500 hover:text-slate-300 font-bold uppercase tracking-widest transition-colors">
+                                <span className={cn("w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors",
+                                    allSelected ? 'bg-primary border-primary' : 'border-white/20 bg-white/5')}>
+                                    {allSelected && <span className="material-symbols-outlined text-[10px] text-white leading-none">check</span>}
+                                </span>
+                                {allSelected ? 'Desmarcar todas' : 'Selecionar todas'}
+                            </button>
+                            <span className="text-[10px] text-slate-600">{selected.size} selecionada{selected.size !== 1 ? 's' : ''}</span>
+                        </div>
+
+                        {airlineAccounts.map(account => (
+                            <motion.div
+                                key={account.id}
+                                layout
+                                initial={{ opacity: 0, scale: 0.97 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.97 }}
+                                className={cn("flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer",
+                                    selected.has(account.id)
+                                        ? 'bg-primary/10 border-primary/30'
+                                        : 'bg-white/5 border-white/5 hover:border-white/10'
+                                )}
+                                onClick={() => toggle(account.id)}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <span className={cn("w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors",
+                                        selected.has(account.id) ? 'bg-primary border-primary' : 'border-white/20 bg-white/5')}>
+                                        {selected.has(account.id) && <span className="material-symbols-outlined text-[10px] text-white leading-none">check</span>}
+                                    </span>
+                                    <div className={cn("w-7 h-7 rounded-full flex items-center justify-center border text-[10px] font-black", colorClass)}>
+                                        {account.login_cpf.slice(-3)}
+                                    </div>
+                                    <div>
+                                        <div className="text-xs font-bold text-white">{account.description || 'Conta de extração'}</div>
+                                        <div className="text-[10px] text-slate-500 font-mono">
+                                            {account.login_cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '***.$2.$3-**')}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                {airline.syncEndpoint && (
-                                    <>
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            disabled={isRunning}
-                                            onClick={() => onSync(airline, account, false)}
-                                            className="h-7 px-2 text-slate-400 hover:text-primary border border-white/5 hover:border-primary/20 rounded-lg text-[10px] font-black"
-                                            title="Extrai apenas emissões novas (para no primeiro localizador já existente)"
-                                        >
-                                            {isRunning
-                                                ? <span className="material-symbols-outlined text-sm animate-spin">refresh</span>
-                                                : <><span className="material-symbols-outlined text-sm mr-1">sync</span> Sync</>
-                                            }
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            disabled={isRunning}
-                                            onClick={() => onSync(airline, account, true)}
-                                            className="h-7 px-2 text-slate-600 hover:text-yellow-400 border border-white/5 hover:border-yellow-500/20 rounded-lg text-[10px] font-black"
-                                            title="Extrai todas as emissões ignorando a base"
-                                        >
-                                            <span className="material-symbols-outlined text-sm mr-1">download_for_offline</span> Tudo
-                                        </Button>
-                                    </>
-                                )}
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-7 w-7 p-0 text-slate-600 hover:text-blue-400 rounded-lg"
-                                    onClick={() => onDeleteAccount(account.id)}
+                                    className="h-7 w-7 p-0 text-slate-600 hover:text-red-400 rounded-lg shrink-0"
+                                    onClick={e => { e.stopPropagation(); onDeleteAccount(account.id); }}
                                 >
                                     <span className="material-symbols-outlined text-sm">delete</span>
                                 </Button>
-                            </div>
-                        </motion.div>
-                    ))
+                            </motion.div>
+                        ))}
+                    </>
                 )}
             </div>
+
+            {/* Bulk sync buttons */}
+            {airline.syncEndpoint && selected.size > 0 && (
+                <div className="flex gap-2 pt-1">
+                    <Button
+                        className="flex-1 h-9 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 font-black text-xs rounded-xl"
+                        disabled={isRunning}
+                        onClick={() => onSync(airline, accounts.filter(a => selected.has(a.id)), false)}
+                    >
+                        {isRunning
+                            ? <span className="material-symbols-outlined animate-spin mr-1.5 text-sm">refresh</span>
+                            : <span className="material-symbols-outlined mr-1.5 text-sm">sync</span>}
+                        Sync {selected.size} selecionada{selected.size !== 1 ? 's' : ''}
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        className="h-9 px-3 text-slate-500 hover:text-yellow-400 border border-white/5 hover:border-yellow-500/20 font-black text-xs rounded-xl"
+                        disabled={isRunning}
+                        onClick={() => onSync(airline, accounts.filter(a => selected.has(a.id)), true)}
+                        title="Extrai todas as emissões ignorando a base"
+                    >
+                        <span className="material-symbols-outlined text-sm mr-1">download_for_offline</span> Tudo
+                    </Button>
+                </div>
+            )}
         </motion.div>
     );
 }
@@ -330,69 +425,71 @@ export default function AutoExtratorPage() {
     };
 
     // ─── Run sync ────────────────────────────────────────────────────────────
-    const handleSync = async (airline: AirlineConfig, account: Account, full = false) => {
+    const handleSync = async (airline: AirlineConfig, accountsToSync: Account[], full = false) => {
         if (!airline.syncEndpoint) {
             toast.error('Sincronia ainda não disponível para ' + airline.name);
             return;
         }
 
         setRunningAirline(airline.id);
-        addLog('info', `[${airline.id.toUpperCase()}] Enfileirando extração ${full ? '(COMPLETA)' : '(incremental)'} para ${account.login_cpf}...`);
+        addLog('info', `[${airline.id.toUpperCase()}] Enfileirando ${accountsToSync.length} conta(s) ${full ? '(COMPLETA)' : '(incremental)'}...`);
 
-        try {
-            const res = await fetch(airline.syncEndpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ accountId: account.id, full })
-            });
-            const data = await res.json();
-
-            if (!res.ok || !data.success) {
-                addLog('error', `[${airline.id.toUpperCase()}] ${data.error ?? 'Erro desconhecido'}`);
-                toast.error(data.error ?? 'Erro');
-                setRunningAirline(null);
-                return;
+        // Queue all selected accounts in parallel (agent handles parallel execution)
+        const queued: { jobKey: string; cpf: string }[] = [];
+        for (const account of accountsToSync) {
+            try {
+                const res = await fetch(airline.syncEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ accountId: account.id, full })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    addLog('error', `[${airline.id.toUpperCase()}] ${account.login_cpf}: ${data.error ?? 'Erro'}`);
+                } else if (data.queued) {
+                    queued.push({ jobKey: data.jobKey, cpf: account.login_cpf });
+                    addLog('info', `[${airline.id.toUpperCase()}] ${account.login_cpf} enfileirado.`);
+                }
+            } catch {
+                addLog('error', `[${airline.id.toUpperCase()}] ${account.login_cpf}: erro de conexão.`);
             }
-
-            if (data.queued) {
-                addLog('info', `[${airline.id.toUpperCase()}] Aguardando agente local...`);
-                const jobKey = data.jobKey;
-                let attempts = 0;
-                const poll = setInterval(async () => {
-                    attempts++;
-                    try {
-                        const sr = await fetch(`/api/sync/azul/status?jobKey=${jobKey}`);
-                        const s = await sr.json();
-                        if (s.status === 'running') {
-                            addLog('info', `[${airline.id.toUpperCase()}] Extraindo...`);
-                        } else if (s.status === 'done') {
-                            clearInterval(poll);
-                            addLog('success', `[${airline.id.toUpperCase()}] ${s.count} emissões salvas!`);
-                            toast.success(`${s.count} emissões salvas! Baixe o Excel abaixo.`);
-                            setRunningAirline(null);
-                        } else if (s.status === 'error') {
-                            clearInterval(poll);
-                            addLog('error', `[${airline.id.toUpperCase()}] Erro na extração.`);
-                            toast.error('Erro na extração');
-                            setRunningAirline(null);
-                        } else if (attempts > 60) {
-                            clearInterval(poll);
-                            addLog('error', `[${airline.id.toUpperCase()}] Timeout — agente local não respondeu.`);
-                            toast.error('Agente local não respondeu em 5 min.');
-                            setRunningAirline(null);
-                        }
-                    } catch { /* ignore poll errors */ }
-                }, 5000);
-            } else {
-                addLog('success', `[${airline.id.toUpperCase()}] ${data.message}`);
-                toast.success(data.message);
-                setRunningAirline(null);
-            }
-        } catch (err) {
-            addLog('error', `[${airline.id.toUpperCase()}] Erro de conexão.`);
-            toast.error('Erro de conexão com o servidor.');
-            setRunningAirline(null);
         }
+
+        if (queued.length === 0) { setRunningAirline(null); return; }
+
+        addLog('info', `[${airline.id.toUpperCase()}] ${queued.length} job(s) enfileirados. Aguardando agente...`);
+
+        // Poll all jobs until all done/error
+        const pending = new Map(queued.map(q => [q.jobKey, q.cpf]));
+        let totalSaved = 0;
+        let attempts = 0;
+        const poll = setInterval(async () => {
+            attempts++;
+            for (const [jobKey, cpf] of [...pending]) {
+                try {
+                    const sr = await fetch(`/api/sync/azul/status?jobKey=${jobKey}`);
+                    const s = await sr.json();
+                    if (s.status === 'done') {
+                        pending.delete(jobKey);
+                        totalSaved += s.count ?? 0;
+                        addLog('success', `[${airline.id.toUpperCase()}] ${cpf}: ${s.count} emissões salvas.`);
+                    } else if (s.status === 'error') {
+                        pending.delete(jobKey);
+                        addLog('error', `[${airline.id.toUpperCase()}] ${cpf}: erro na extração.`);
+                    }
+                } catch { /* ignore */ }
+            }
+            if (pending.size === 0) {
+                clearInterval(poll);
+                toast.success(`${totalSaved} emissões salvas no total.`);
+                setRunningAirline(null);
+            } else if (attempts > 120) {
+                clearInterval(poll);
+                addLog('error', `[${airline.id.toUpperCase()}] Timeout — ${pending.size} job(s) não responderam.`);
+                toast.error('Timeout na extração.');
+                setRunningAirline(null);
+            }
+        }, 5000);
     };
 
     return (
@@ -418,6 +515,9 @@ export default function AutoExtratorPage() {
                     </Badge>
                 )}
             </motion.div>
+
+            {/* Agent Status */}
+            <AgentStatusCard />
 
             {/* Scrollable Content Area */}
             <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-8 min-h-0">

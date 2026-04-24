@@ -5,7 +5,7 @@ Usage:
   python scripts/azul-extract.py <cpf> <senha>          # incremental (para no 1º já existente)
   python scripts/azul-extract.py <cpf> <senha> --full   # extrai tudo sem verificar base
 """
-import sys, json, time, urllib.request, subprocess, os
+import sys, json, time, urllib.request, subprocess, os, re
 from pathlib import Path
 
 CPF      = sys.argv[1] if len(sys.argv) > 1 else None
@@ -36,15 +36,16 @@ def start_server():
     env = os.environ.copy()
     env["PORT"] = "6222"
     env["HEADLESS"] = "false"
+    flags = subprocess.CREATE_NEW_CONSOLE if sys.platform == "win32" else 0
     proc = subprocess.Popen([python, server], env=env, cwd=str(SKILL_DIR),
-                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                             creationflags=flags)
     print("[AZUL] Iniciando browser stealth...")
-    for _ in range(20):
+    for _ in range(60):
         time.sleep(1)
         if server_ready():
             print("[AZUL] Browser pronto.")
             return proc
-    raise RuntimeError("Stealth browser nao iniciou em 20s")
+    raise RuntimeError("Stealth browser nao iniciou em 60s")
 
 def api_post(path, body):
     data = json.dumps(body).encode()
@@ -123,6 +124,12 @@ def to_iso_date(d):
         return f"{parts[2]}-{parts[1]}-{parts[0]}"
     return d
 
+CANCELLED_STATUSES = {"CANCEL", "REFUND", "REEMBOLSO", "ESTORNO", "VOID", "CANCELADO", "REFUNDADO"}
+
+def is_cancelled(booking):
+    status = str(booking.get("status") or "").upper()
+    return any(s in status for s in CANCELLED_STATUSES)
+
 def map_booking(b):
     item   = (b.get("cart") or {}).get("items", [{}])
     item   = item[0] if item else {}
@@ -132,11 +139,26 @@ def map_booking(b):
     totals = (b.get("cart") or {}).get("total", [])
     miles  = next((t["value"] for t in totals if t.get("currency") == "POINTS"), 0)
     cash   = next((t["value"] for t in totals if t.get("currency") == "BRL"), 0)
-    pax    = (b.get("passengers") or [{}])[0]
+
+    # All passengers joined
+    paxes = b.get("passengers") or [{}]
+    pax   = paxes[0]
+    all_names = " / ".join(
+        f"{p.get('name','')} {p.get('lastName','')}".strip()
+        for p in paxes if p.get("name") or p.get("lastName")
+    ) or ""
+    all_tickets = " / ".join(p.get("ticketNumber", "") for p in paxes if p.get("ticketNumber")) or pax.get("ticketNumber", "")
+
+    # Emission date — try several field names the Azul API may use
+    emission_raw = (b.get("orderDate") or b.get("issueDate") or b.get("createdAt")
+                    or b.get("bookingDate") or b.get("purchaseDate") or b.get("transactionDate") or "")
+    emission_date = to_iso_date(str(emission_raw)[:10]) if emission_raw else ""
+
     return {
         "locator":             b.get("pnrNumber"),
-        "passengerName":       f"{pax.get('name','')} {pax.get('lastName','')}".strip(),
-        "passengerTicket":     pax.get("ticketNumber", ""),
+        "passengerName":       all_names,
+        "passengerTicket":     all_tickets,
+        "emissionDate":        emission_date,
         "origin":              item.get("origin", ""),
         "destination":         item.get("destination", ""),
         "flightDate":          to_iso_date(dep.get("departureDate", "")),
@@ -162,7 +184,13 @@ def fetch_existing_locators():
         req = urllib.request.Request(LOCATORS_URL, headers={"Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=15) as r:
             data = json.loads(r.read())
-        locs = set(str(x).strip().upper() for x in data.get("locators", []) if x)
+        locs = set()
+        for x in data.get("locators", []):
+            if x:
+                for part in re.split(r'[/,]', str(x)):
+                    part = part.strip().upper()
+                    if part:
+                        locs.add(part)
         print(f"[AZUL] {len(locs)} localizadores ja na base.")
         return locs
     except Exception as e:
@@ -170,20 +198,9 @@ def fetch_existing_locators():
         return set()
 
 def filter_new_bookings(bookings, existing):
-    """
-    Percorre bookings (mais recentes primeiro).
-    Para no primeiro que ja existe na base — assume que os seguintes tambem existem.
-    Retorna apenas os novos.
-    """
-    new = []
-    for b in bookings:
-        loc = str(b.get("locator") or "").upper()
-        if loc in existing:
-            print(f"[AZUL] Localizador {loc} ja na base — parando aqui. {len(new)} novos encontrados.")
-            break
-        new.append(b)
-    else:
-        print(f"[AZUL] Nenhum ja existente encontrado — {len(new)} novos.")
+    new = [b for b in bookings if str(b.get("locator") or "").upper() not in existing]
+    skipped = len(bookings) - len(new)
+    print(f"[AZUL] {len(new)} novos de {len(bookings)} total ({skipped} ja na base).")
     return new
 
 def clear_existing_bookings():
@@ -224,11 +241,23 @@ def main():
 
     try:
         page = "azul"
+        # Close stale page if it exists, then recreate fresh
+        try:
+            req = urllib.request.Request(f"{SERVER_URL}/pages/{page}", method="DELETE")
+            urllib.request.urlopen(req, timeout=5)
+        except Exception:
+            pass
         api_post("/pages", {"name": page})
 
         login(page)
         raw = capture_bookings(page)
         bookings = [map_booking(b) for b in raw]
+
+        # Drop cancelled/refunded bookings
+        before = len(bookings)
+        bookings = [b for b in bookings if not is_cancelled(b)]
+        if before != len(bookings):
+            print(f"[AZUL] {before - len(bookings)} canceladas ignoradas.")
 
         if not FULL:
             existing = fetch_existing_locators()
@@ -236,12 +265,12 @@ def main():
         else:
             print(f"[AZUL] Modo --full: enviando todas as {len(bookings)} emissoes.")
 
+        print(f"[AZUL] Limpando banco antes de inserir...")
+        clear_existing_bookings()
+
         if not bookings:
             print("[AZUL] Nenhuma emissao nova para enviar.")
             return
-
-        print(f"[AZUL] Limpando banco antes de inserir...")
-        clear_existing_bookings()
 
         print(f"[AZUL] Enviando {len(bookings)} emissoes para o hub...")
         result = post_to_hub(bookings, account_id)

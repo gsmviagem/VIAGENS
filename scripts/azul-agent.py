@@ -5,6 +5,7 @@ Instalar como tarefa do Windows: scripts\azul-agent-install.bat
 """
 import sys, os, json, time, subprocess, urllib.request, re
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
 
 # Fix Windows console encoding
 if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
@@ -14,6 +15,7 @@ SCRIPT_DIR = Path(__file__).parent
 SUPA_URL = os.environ.get("NEXT_PUBLIC_SUPABASE_URL", "https://gvoqerbrzvyzarxqpwvd.supabase.co")
 SUPA_KEY = os.environ.get("NEXT_PUBLIC_SUPABASE_ANON_KEY", "sb_publishable_8L84Hb3ctwEsUf86wWVjrA_iC-DFbl3")
 POLL_INTERVAL = 20
+MAX_PARALLEL  = 4
 
 def log(msg):
     try:
@@ -87,10 +89,25 @@ def set_job_status(key, status, count=None, error=None, base_val=None):
         val.pop("password", None)
     supa_upsert("settings", {"key": key, "value": json.dumps(val), "updated_at": now})
 
+def lookup_account(account_id):
+    rows = supa_get(f"airline_accounts?id=eq.{account_id}&select=login_cpf,password")
+    if rows:
+        return rows[0]["login_cpf"], rows[0]["password"]
+    return None, None
+
 def run_extraction(job):
     key = job["key"]
-    cpf = job["cpf"]
-    password = job["password"]
+    cpf = job.get("cpf")
+    password = job.get("password")
+
+    if (not cpf or not password) and job.get("account_id"):
+        cpf, password = lookup_account(job["account_id"])
+
+    if not cpf or not password:
+        log(f"[AGENT] {key}: sem CPF/senha — ignorando job corrompido.")
+        set_job_status(key, "error", error="missing cpf/password", base_val=job)
+        return
+
     log(f"[AGENT] Extraindo CPF {cpf} (job: {key})...")
 
     set_job_status(key, "running", base_val=job)
@@ -119,13 +136,20 @@ def run_extraction(job):
         set_job_status(key, "error", error=err, base_val=job)
         log(f"[AGENT] {key}: ERRO — {err[:120]}")
 
+def write_heartbeat():
+    now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    supa_upsert("settings", {"key": "azul_agent_heartbeat",
+                              "value": json.dumps({"ts": now}), "updated_at": now})
+
 def main():
-    log(f"[AGENT] Iniciado. Poleia a cada {POLL_INTERVAL}s...")
+    log(f"[AGENT] Iniciado. Poleia a cada {POLL_INTERVAL}s (paralelo: {MAX_PARALLEL})...")
     while True:
         try:
+            write_heartbeat()
             jobs = get_pending_jobs()
-            for job in jobs:
-                run_extraction(job)
+            if jobs:
+                with ThreadPoolExecutor(max_workers=MAX_PARALLEL) as pool:
+                    list(pool.map(run_extraction, jobs))
         except Exception as e:
             log(f"[AGENT] Erro no ciclo: {e}")
         time.sleep(POLL_INTERVAL)
